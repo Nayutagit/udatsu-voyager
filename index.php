@@ -10,33 +10,65 @@ if ($userPlan !== 'guest') {
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>Udatsu - ログイン</title>
+  <title>Udatsu - Login</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" type="image/png" href="img/favicon.png">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="css/style.css">
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      justify-content: center;
+      align-items: center;
+      background-image: url('img/concrete_bg.png');
+      background-size: cover;
+      background-position: center;
+    }
+    .hero-logo {
+      width: 120px;
+      margin-bottom: 20px;
+      filter: drop-shadow(0 0 15px rgba(252, 200, 0, 0.6));
+      animation: float 6s ease-in-out infinite;
+    }
+    @keyframes float {
+      0% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+      100% { transform: translateY(0px); }
+    }
+  </style>
 </head>
 <body>
 
-  <img src="img/udatsu-logo.png" alt="Udatsuロゴ" class="logo">
-  <h1>Udatsu にログインしよう</h1>
-  <div class="subtitle">音声文字起こしツール「Udatsu Voyager」もここから使えます</div>
-
-  <div class="login-box">
-    <div class="lead-message">
-      あなたの「声」が未来をつくる。<br>
-      記事作成も音声解析も、ここからスタート！<br>
-      <strong>あなたのうだつを上げる第一歩です。</strong>
+  <div class="container" style="text-align: center; max-width: 500px;">
+    
+    <div class="animate-fadeup">
+      <img src="img/udatsu-logo.png" alt="Udatsu Logo" class="hero-logo">
+      <h1 class="text-neon" style="font-size: 3rem; margin-bottom: 10px; letter-spacing: 0.1em;">UDATSU</h1>
+      <p class="text-muted" style="font-family: var(--font-serif); letter-spacing: 0.2em; margin-bottom: 40px;">VOICE & THOUGHT ASSETS</p>
     </div>
 
-    <button id="login-btn">
-      <img src="img/google-icon.png" alt="Google" width="20" height="20" style="margin-right: 10px;">
-      Googleではじめる
-    </button>
+    <div class="glass-card animate-fadeup delay-100" style="padding: 40px;">
+      <h2 style="font-size: 1.5rem; margin-bottom: 20px;">Welcome Back</h2>
+      <p class="text-muted" style="margin-bottom: 30px; line-height: 1.6;">
+        あなたの「声」が未来をつくる。<br>
+        思考資産を蓄積し、うだつを上げよう。
+      </p>
 
-    <div class="small-note">
-      🔐 ご利用には Googleアカウントが必要です。<br>
-      💡 Safari または Chrome からご利用ください。
+      <button id="login-btn" class="btn btn-primary" style="width: 100%; padding: 15px; font-size: 1.1rem;">
+        <i class="fab fa-google"></i> Googleでログイン
+      </button>
+
+      <div style="margin-top: 20px; font-size: 0.8rem; color: var(--text-muted);">
+        <i class="fas fa-lock"></i> Secure Access via Firebase
+      </div>
     </div>
+
+    <div class="animate-fadeup delay-200" style="margin-top: 40px; font-size: 0.8rem; color: var(--text-muted);">
+      &copy; 2025 Nyct Studio. All Rights Reserved.
+    </div>
+
   </div>
 
   <script type="module">
@@ -73,7 +105,7 @@ if ($userPlan !== 'guest') {
         const btn = document.getElementById("login-btn");
         btn.style.opacity = "0.7";
         btn.style.pointerEvents = "none";
-        btn.innerHTML = "ログイン中...";
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 認証中...';
         
         const result = await signInWithPopup(auth, provider);
         const user = result.user;
@@ -118,21 +150,9 @@ if ($userPlan !== 'guest') {
         const btn = document.getElementById("login-btn");
         btn.style.opacity = "1";
         btn.style.pointerEvents = "auto";
-        btn.innerHTML = '<img src="img/google-icon.png" alt="Google" width="20" height="20" style="margin-right: 10px;"> Googleではじめる';
+        btn.innerHTML = '<i class="fab fa-google"></i> Googleでログイン';
         alert("ログイン失敗: " + error.message);
       }
-    });
-
-    // ページロード時のアニメーション
-    window.addEventListener('load', () => {
-      // ロゴにクリックでスピン効果
-      document.querySelector('.logo').addEventListener('click', function() {
-        this.style.transition = 'transform 1s ease';
-        this.style.transform = 'rotate(360deg)';
-        setTimeout(() => {
-          this.style.transform = 'rotate(0deg)';
-        }, 1000);
-      });
     });
   </script>
 

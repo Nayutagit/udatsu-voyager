@@ -8,9 +8,15 @@
 /* ───────────────
    セッション & Cookie
 ──────────────── */
+$isLocal = ($_SERVER['HTTP_HOST'] === '127.0.0.1:8000' || $_SERVER['HTTP_HOST'] === 'localhost:8000');
+$cookieDomain = $isLocal ? '' : '.udatsu-voyager.com';
+$cookieSecure = $isLocal ? '0' : '1';
+
 ini_set('session.cookie_samesite', 'None');
-ini_set('session.cookie_secure',  '1');
-ini_set('session.cookie_domain',  '.udatsu-voyager.com');
+ini_set('session.cookie_secure',  $cookieSecure);
+if ($cookieDomain) {
+    ini_set('session.cookie_domain', $cookieDomain);
+}
 ini_set('session.use_cookies',    '1');
 ini_set('session.use_only_cookies','1');
 

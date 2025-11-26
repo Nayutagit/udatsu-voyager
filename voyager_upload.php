@@ -76,87 +76,143 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$limitReached) {
   <title>Udatsu Voyager - 音声アップロード</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" type="image/png" href="img/favicon.png">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="css/style.css">
-  <style>
-    .container {
-      width: 100%;
-      max-width: 800px;
-      margin: 0 auto;
-      position: relative;
-      z-index: 1;
-    }
-  </style>
 </head>
 <body>
-<div class="container">
-  <!-- Udatsuロゴ -->
-  <div class="logo-wrapper" style="text-align: center;">
-    <a href="https://udatsuageteko.com/" target="_blank">
-      <img src="/img/udatsu-logo.png" alt="Udatsuロゴ" class="logo">
-    </a>
-  </div>
 
-  <!-- ユーザー情報 -->
-  <div class="user-info">
-    <span><?= htmlspecialchars($userName) ?> さん　現在のプラン：<strong><?= htmlspecialchars($userPlan) ?></strong></span>
-    <a href="mypage/dashboard.php" class="mypage-btn">マイページ</a>
-  </div>
-
-  <h1>Udatsu Voyager</h1>
-  <div class="subtitle">音声をアップして、思考をカタチに。</div>
-
-  <div class="info-box">
-    ⏱ アップロード上限：<strong><?= $durationLimit ?>分</strong><br>
-    📤 今日の残り回数：<strong><?= $remaining ?> / <?= $uploadLimit ?> 回</strong>
-  </div>
-
-  <?php if ($limitReached): ?>
-    <div class="info-box" style="color: var(--warning-red); border-color: var(--warning-red); background: rgba(255, 107, 107, 0.1);">
-      ⚠️ 今日のアップロード回数が上限に達しました。<br>また明日お試しください。
+  <!-- Header -->
+  <header class="header">
+    <div class="container header-inner">
+      <a href="index.php" class="logo">
+        <img src="img/udatsu-logo.png" alt="Udatsu Logo">
+        <span>Voyager</span>
+      </a>
+      <div class="nav-user">
+        <div class="user-badge">
+          <i class="fas fa-user-circle"></i> <?= htmlspecialchars($userName) ?>
+        </div>
+        <div class="user-badge">
+          Plan: <strong><?= htmlspecialchars($userPlan) ?></strong>
+        </div>
+        <a href="mypage/dashboard.php" class="btn btn-secondary" style="padding: 8px 20px; font-size: 0.9rem;">
+          <i class="fas fa-columns"></i> Dashboard
+        </a>
+      </div>
     </div>
-  <?php else: ?>
-    <form class="upload-form" action="voyager_upload.php" method="POST" enctype="multipart/form-data">
-      <p style="text-align: center; margin-bottom: 1.5rem;">音声ファイルを選んでください（対応形式：m4a, mp3）</p>
-      <input type="file" name="audioFile" accept=".m4a,.mp3,.wav" required>
-      <button type="submit" style="width: 100%;">送信して解析</button>
-    </form>
-  <?php endif; ?>
+  </header>
 
-  <p class="footer-note">
-    📌 音声は自動で文字起こしされ、整文まで行われます。<br>
-    完了後はマイページから記事として編集・保存できます。
-  </p>
+  <div class="container" style="padding-top: 120px; padding-bottom: 60px;">
+    
+    <div class="glass-card animate-fadeup" style="max-width: 800px; margin: 0 auto; text-align: center;">
+      <h1 class="text-neon" style="font-size: 2.5rem; margin-bottom: 10px;">Voice Analysis</h1>
+      <p class="text-muted" style="margin-bottom: 40px;">音声をアップロードして、思考資産を蓄積しよう。</p>
 
-  <!-- ログアウトボタン -->
-  <div class="logout-wrapper" style="text-align: center; margin-top: 3rem;">
-    <form method="POST" action="mypage/logout.php">
-      <button type="submit" class="logout-link">ログアウト</button>
-    </form>
+      <div class="info-box" style="display: flex; justify-content: center; gap: 30px; margin-bottom: 40px; font-family: var(--font-mono); font-size: 0.9rem;">
+        <div>
+          <span class="text-teal"><i class="fas fa-stopwatch"></i> Limit:</span> 
+          <strong><?= $durationLimit ?> min</strong>
+        </div>
+        <div>
+          <span class="text-teal"><i class="fas fa-cloud-upload-alt"></i> Today:</span> 
+          <strong><?= $remaining ?> / <?= $uploadLimit ?></strong>
+        </div>
+      </div>
+
+      <?php if ($limitReached): ?>
+        <div style="background: rgba(255, 68, 68, 0.1); border: 1px solid var(--warning-red); padding: 20px; border-radius: 8px; color: var(--warning-red); margin-bottom: 30px;">
+          <i class="fas fa-exclamation-triangle"></i> 本日のアップロード上限に達しました。
+        </div>
+      <?php else: ?>
+        <form class="upload-form" action="voyager_upload.php" method="POST" enctype="multipart/form-data">
+          
+          <label for="audioFile" class="upload-zone" id="drop-zone">
+            <div class="upload-icon">
+              <i class="fas fa-microphone-alt"></i>
+            </div>
+            <h3 style="margin-bottom: 10px;">Click or Drag Audio File</h3>
+            <p class="text-muted" style="font-size: 0.9rem;">Supported: m4a, mp3, wav</p>
+            <input type="file" name="audioFile" id="audioFile" accept=".m4a,.mp3,.wav" required style="display: none;">
+            <div id="file-name" class="text-neon" style="margin-top: 20px; font-weight: 700; min-height: 1.5em;"></div>
+          </label>
+
+          <button type="submit" class="btn btn-primary" style="margin-top: 30px; width: 100%; max-width: 300px;">
+            <i class="fas fa-rocket"></i> 解析を開始する
+          </button>
+        </form>
+      <?php endif; ?>
+
+    </div>
+
+    <div style="text-align: center; margin-top: 40px;">
+      <form method="POST" action="mypage/logout.php">
+        <button type="submit" style="background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 0.9rem; transition: 0.3s;">
+          <i class="fas fa-sign-out-alt"></i> ログアウト
+        </button>
+      </form>
+    </div>
+
   </div>
-</div>
 
 <script>
-// ページロード時のアニメーション強化
 document.addEventListener('DOMContentLoaded', function() {
-  // ロゴクリック時の特別エフェクト
-  const logo = document.querySelector('.logo');
-  if(logo) {
-    logo.addEventListener('click', function() {
-      this.style.transition = 'transform 1s ease';
-      this.style.transform = 'rotate(360deg)';
-      setTimeout(() => {
-        this.style.transform = 'rotate(0deg)';
-      }, 1000);
-    });
-  }
-  
-  // フォーム送信時のローディング効果
+  const dropZone = document.getElementById('drop-zone');
+  const fileInput = document.getElementById('audioFile');
+  const fileNameDisplay = document.getElementById('file-name');
   const form = document.querySelector('.upload-form');
+
+  // Drag & Drop Effects
+  ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+    dropZone.addEventListener(eventName, preventDefaults, false);
+  });
+
+  function preventDefaults(e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+
+  ['dragenter', 'dragover'].forEach(eventName => {
+    dropZone.addEventListener(eventName, highlight, false);
+  });
+
+  ['dragleave', 'drop'].forEach(eventName => {
+    dropZone.addEventListener(eventName, unhighlight, false);
+  });
+
+  function highlight(e) {
+    dropZone.classList.add('dragover');
+  }
+
+  function unhighlight(e) {
+    dropZone.classList.remove('dragover');
+  }
+
+  dropZone.addEventListener('drop', handleDrop, false);
+
+  function handleDrop(e) {
+    const dt = e.dataTransfer;
+    const files = dt.files;
+    fileInput.files = files;
+    updateFileName(files[0]);
+  }
+
+  fileInput.addEventListener('change', function() {
+    updateFileName(this.files[0]);
+  });
+
+  function updateFileName(file) {
+    if (file) {
+      fileNameDisplay.textContent = `Selected: ${file.name}`;
+      fileNameDisplay.style.opacity = '1';
+    }
+  }
+
+  // Loading State
   if (form) {
     form.addEventListener('submit', function() {
       const submitBtn = this.querySelector('button[type="submit"]');
       if (submitBtn) {
-        submitBtn.textContent = '解析開始中...';
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 解析中...';
         submitBtn.style.pointerEvents = 'none';
         submitBtn.style.opacity = '0.7';
       }

@@ -14,234 +14,189 @@ $redirectMypage = 'https://udatsu-voyager.com/mypage/dashboard.php';
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>解析結果 | Udatsu Voyager</title>
+  <title>Analysis Result | Udatsu Voyager</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" type="image/png" href="img/favicon.png">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="css/style.css">
   <style>
-    /* Page specific styles */
-    .container {
-      max-width: 1000px;
-      margin: 0 auto;
-      position: relative;
-      z-index: 1;
-      padding: 2rem;
+    .hud-container {
+      display: grid;
+      grid-template-columns: 1fr 300px;
+      gap: 20px;
+      margin-top: 20px;
     }
-    .completion-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.9);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 9999;
-      animation: fadeOut 0.3s ease 1.2s forwards;
-    }
-    .completion-text {
-      font-size: 3rem;
-      font-weight: 400;
-      color: var(--primary-neon);
-      text-shadow: 0 0 20px var(--primary-neon);
-      animation: glowPulse 1s ease-in-out;
-    }
-    @keyframes glowPulse {
-      0% { opacity: 0; transform: scale(0.8); }
-      50% { opacity: 1; transform: scale(1); }
-      100% { opacity: 0; transform: scale(0.9) translateY(-100px); }
-    }
-    @keyframes fadeOut {
-      to { opacity: 0; visibility: hidden; }
-    }
-    .header-login {
-      display: flex;
-      justify-content: flex-end;
-      align-items: center;
-      gap: 1rem;
-      padding: 1rem;
-      background: var(--bg-panel);
-      backdrop-filter: blur(20px);
-      border-radius: 4px;
+    .hud-main {
+      background: rgba(0, 0, 0, 0.4);
       border: 1px solid rgba(255, 255, 255, 0.1);
-      margin-bottom: 2rem;
-      animation: slideDown 1s ease 1.5s both;
-    }
-    @keyframes slideDown {
-      from { transform: translateY(-30px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
-    }
-    .raw-section {
-      margin: 3rem auto;
-      animation: fadeInUp 1s ease 2.3s both;
-    }
-    .raw-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1rem;
-      flex-wrap: wrap;
-      gap: 1rem;
-    }
-    .raw-box {
-      max-height: 200px;
-      overflow-y: auto;
-      background: rgba(0, 0, 0, 0.3);
-      color: var(--text-white);
-      padding: 1.5rem;
-      border-radius: 4px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      text-align: left;
-      line-height: 1.6;
-    }
-    .tabs {
-      margin: 3rem auto;
-      display: flex;
-      justify-content: center;
-      flex-wrap: wrap;
-      gap: 1rem;
-      animation: fadeInUp 1s ease 2.5s both;
-    }
-    .tabs button {
-      padding: 1rem 2rem;
-      border: 1px solid var(--accent-teal);
-      background: transparent;
-      color: var(--text-white);
-      border-radius: 50px;
-      cursor: pointer;
-      font-size: 1rem;
-      font-weight: 600;
-      transition: all 0.3s ease;
-    }
-    .tabs button:hover, .tabs button.active {
-      background: var(--accent-teal);
-      color: white;
-      box-shadow: 0 0 15px rgba(0, 104, 136, 0.4);
-    }
-    .content-box {
-      margin: 2rem auto;
-      text-align: left;
-      background: rgba(0, 0, 0, 0.3);
-      color: var(--text-white);
-      border-radius: 4px;
-      padding: 2rem;
-      min-height: 300px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      line-height: 1.6;
-      animation: fadeInUp 1s ease 2.7s both;
-    }
-    .action-buttons {
-      display: flex;
-      justify-content: center;
-      gap: 1.5rem;
-      margin: 2rem 0;
-      flex-wrap: wrap;
-      animation: fadeInUp 1s ease 2.9s both;
-    }
-    .copy-modal {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.7);
+      border-radius: 8px;
+      padding: 20px;
       backdrop-filter: blur(10px);
+    }
+    .hud-sidebar {
       display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 8888;
-      opacity: 0;
-      visibility: hidden;
-      transition: all 0.3s ease;
+      flex-direction: column;
+      gap: 20px;
     }
-    .copy-modal.show {
-      opacity: 1;
-      visibility: visible;
-    }
-    .copy-modal-content {
-      background: var(--bg-panel);
-      padding: 3rem;
+    .hud-panel {
+      background: rgba(0, 0, 0, 0.6);
+      border: 1px solid var(--accent-teal);
       border-radius: 4px;
-      text-align: center;
-      border: 1px solid var(--primary-neon);
-      box-shadow: 0 0 30px rgba(252, 200, 0, 0.2);
+      padding: 15px;
+      position: relative;
     }
-    .after-msg {
-      margin-top: 3rem;
-      font-size: 1rem;
-      color: var(--text-muted);
-      animation: fadeInUp 1s ease 3.1s both;
-      text-align: center;
+    .hud-panel::before {
+      content: '';
+      position: absolute;
+      top: -2px; left: -2px;
+      width: 10px; height: 10px;
+      border-top: 2px solid var(--primary-neon);
+      border-left: 2px solid var(--primary-neon);
     }
-    .after-msg a {
+    .hud-panel::after {
+      content: '';
+      position: absolute;
+      bottom: -2px; right: -2px;
+      width: 10px; height: 10px;
+      border-bottom: 2px solid var(--primary-neon);
+      border-right: 2px solid var(--primary-neon);
+    }
+    .hud-title {
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      color: var(--accent-teal);
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      border-bottom: 1px solid rgba(0, 164, 216, 0.3);
+      padding-bottom: 5px;
+    }
+    .tab-btn {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 10px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-white);
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+    }
+    .tab-btn:hover, .tab-btn.active {
+      background: rgba(0, 164, 216, 0.2);
+      border-color: var(--accent-teal);
       color: var(--primary-neon);
+      padding-left: 20px;
+    }
+    .tab-btn.active::before {
+      content: '►';
+      margin-right: 10px;
+    }
+    @media (max-width: 900px) {
+      .hud-container {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
 <body>
 
-<div class="completion-overlay">
-  <div class="completion-text">解析完了</div>
-</div>
-
-<div class="container">
-  <div class="header-login">
-    <span><?= htmlspecialchars($displayName) ?> さん</span>
-    <a href="<?= $redirectMypage ?>" class="mypage-btn">マイページ</a>
-    <form method="POST" action="mypage/logout.php" style="display:inline;">
-      <button type="submit" class="logout-link">ログアウト</button>
-    </form>
-  </div>
-
-  <h1 onclick="location.href='index.php'" style="cursor: pointer;">🎙️Udatsu Voyager</h1>
-
-  <?php if (file_exists($audioPath)): ?>
-    <div class="audio-player" style="text-align: center; margin: 2rem auto;">
-      <audio controls preload="auto" style="width: 100%; max-width: 500px;"><source src="<?= htmlspecialchars($audioPath) ?>"></audio>
+  <!-- Header -->
+  <header class="header">
+    <div class="container header-inner">
+      <a href="index.php" class="logo">
+        <img src="img/udatsu-logo.png" alt="Udatsu Logo">
+        <span>Voyager</span>
+      </a>
+      <div class="nav-user">
+        <span class="text-muted" style="font-size: 0.9rem; margin-right: 10px;">ID: <?= htmlspecialchars($uid) ?></span>
+        <a href="<?= $redirectMypage ?>" class="btn btn-secondary" style="padding: 5px 15px; font-size: 0.8rem;">
+          <i class="fas fa-columns"></i> Dashboard
+        </a>
+      </div>
     </div>
-    <p class="note" style="text-align: center; color: var(--text-muted);">⚠️ ページを離れると解析結果が消える可能性があります</p>
-  <?php endif; ?>
+  </header>
 
-  <div class="raw-section">
-    <div class="raw-header">
-      <h3 style="margin: 0;">📝 文字起こし原文</h3>
-      <button class="btn" style="padding: 5px 15px; font-size: 0.8rem;" onclick="copyRawText()">📋 原文をコピー</button>
+  <div class="container" style="padding-top: 100px; padding-bottom: 60px;">
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+      <h1 class="text-neon" style="font-size: 1.8rem; margin: 0;">Analysis Result</h1>
+      <div style="font-family: var(--font-mono); color: var(--accent-teal); font-size: 0.9rem;">
+        STATUS: <span style="color: var(--primary-neon);">COMPLETE</span>
+      </div>
     </div>
-    <div class="raw-box" contenteditable="true"><?= nl2br(htmlspecialchars($raw)) ?></div>
+
+    <div class="hud-container">
+      
+      <!-- Main Content Area -->
+      <div class="hud-main">
+        <div id="result-area" style="min-height: 400px; line-height: 1.8; font-size: 1.05rem; white-space: pre-wrap;">
+          <p class="text-muted" style="text-align: center; padding-top: 100px;">
+            <i class="fas fa-arrow-right"></i> Select a format from the right panel to generate content.
+          </p>
+        </div>
+      </div>
+
+      <!-- Sidebar -->
+      <div class="hud-sidebar">
+        
+        <!-- Audio Player -->
+        <?php if (file_exists($audioPath)): ?>
+        <div class="hud-panel">
+          <div class="hud-title">Source Audio</div>
+          <audio controls style="width: 100%; height: 30px;">
+            <source src="<?= htmlspecialchars($audioPath) ?>">
+          </audio>
+        </div>
+        <?php endif; ?>
+
+        <!-- Raw Text -->
+        <div class="hud-panel">
+          <div class="hud-title">Raw Transcription</div>
+          <div style="max-height: 150px; overflow-y: auto; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px;">
+            <?= nl2br(htmlspecialchars($raw)) ?>
+          </div>
+          <button class="btn btn-secondary" style="width: 100%; font-size: 0.8rem; padding: 5px;" onclick="copyRawText()">
+            <i class="fas fa-copy"></i> Copy Raw
+          </button>
+        </div>
+
+        <!-- Generators -->
+        <div class="hud-panel">
+          <div class="hud-title">Generators</div>
+          <button class="tab-btn" onclick="generateText('blog')" data-type="blog">Blog / Note</button>
+          <button class="tab-btn" onclick="generateText('summary')" data-type="summary">Summary</button>
+          <button class="tab-btn" onclick="generateText('podcast')" data-type="podcast">Podcast Script</button>
+        </div>
+
+        <!-- Actions -->
+        <div class="hud-panel">
+          <div class="hud-title">Actions</div>
+          <button class="btn btn-primary" style="width: 100%; margin-bottom: 10px;" onclick="createPost()">
+            <i class="fas fa-save"></i> Save as Post
+          </button>
+          <button class="btn btn-secondary" style="width: 100%;" onclick="copyText()">
+            <i class="fas fa-copy"></i> Copy Result
+          </button>
+        </div>
+
+      </div>
+    </div>
+
   </div>
 
-  <div class="tabs">
-    <button onclick="generateText('blog')" data-type="blog">ブログ・note用</button>
-    <button onclick="generateText('summary')" data-type="summary">要約</button>
-    <button onclick="generateText('podcast')" data-type="podcast">Podcast原稿</button>
+  <!-- Copy Modal -->
+  <div class="modal-overlay" id="copyModal">
+    <div class="modal-content" style="max-width: 400px; text-align: center; padding: 40px;">
+      <i class="fas fa-check-circle text-neon" style="font-size: 3rem; margin-bottom: 20px;"></i>
+      <h3 style="margin-bottom: 10px;">Copied!</h3>
+      <p class="text-muted">Content copied to clipboard.</p>
+      <button class="btn btn-secondary" onclick="hideCopyModal()" style="margin-top: 20px;">Close</button>
+    </div>
   </div>
-
-  <div class="content-box" id="result-area">
-    <p id="loading-text" style="text-align: center; color: var(--text-muted); font-style: italic;">整文タイプを選択してください</p>
-  </div>
-
-  <div class="action-buttons">
-    <button class="btn" onclick="copyText()">📋 コピー</button>
-    <button class="btn" onclick="createPost()">📄 記事作成ページへ</button>
-  </div>
-
-  <div class="after-msg">
-    <p>🛠 外部AIで整えるのもおすすめ：
-      <a href="https://chat.openai.com/" target="_blank">ChatGPT</a> /
-      <a href="https://claude.ai/" target="_blank">Claude</a> /
-      <a href="https://www.notion.so/product/ai" target="_blank">Notion AI</a>
-    </p>
-  </div>
-</div>
-
-<div class="copy-modal" id="copyModal">
-  <div class="copy-modal-content">
-    <h3 style="color: var(--primary-neon); margin-bottom: 1rem;">📋 コピー完了</h3>
-    <p style="margin-bottom: 2rem;">クリップボードにコピーしました！</p>
-    <button class="btn" onclick="hideCopyModal()">OK</button>
-  </div>
-</div>
 
 <script>
 const rawText = <?= json_encode($raw) ?>;
@@ -250,10 +205,9 @@ let currentType = '';
 
 function generateText(type) {
   const area = document.getElementById('result-area');
-  area.innerHTML = '<p id="loading-text" style="text-align: center; animation: pulse 1.5s infinite;">整文中です...</p>';
+  area.innerHTML = '<div style="text-align: center; padding-top: 100px; color: var(--accent-teal);"><i class="fas fa-circle-notch fa-spin fa-3x"></i><p style="margin-top: 20px;">Generating Content...</p></div>';
   
-  // タブのアクティブ状態更新
-  document.querySelectorAll('.tabs button').forEach(btn => {
+  document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.classList.remove('active');
     if (btn.dataset.type === type) {
       btn.classList.add('active');
@@ -273,7 +227,7 @@ function generateText(type) {
     area.innerHTML = text.replace(/\n/g, '<br>');
   })
   .catch(() => {
-    area.innerHTML = '<p id="loading-text">⚠️ 整文化に失敗しました</p>';
+    area.innerHTML = '<p class="text-warning">Generation failed.</p>';
   });
 }
 
@@ -292,42 +246,32 @@ function copyRawText() {
 
 function showCopyModal() {
   const modal = document.getElementById('copyModal');
-  modal.classList.add('show');
+  modal.classList.add('active');
+  setTimeout(hideCopyModal, 2000);
 }
 
 function hideCopyModal() {
   const modal = document.getElementById('copyModal');
-  modal.classList.remove('show');
+  modal.classList.remove('active');
 }
 
 function createPost() {
   if (!currentContent) {
-    alert('まず整文タイプを選択してください');
+    alert('Please generate content first.');
     return;
   }
   
-  // タイトルを短く生成（30文字まで）
   let title = currentContent.substring(0, 30).replace(/\n/g, ' ').trim();
   if (title.length >= 30) {
     title += '...';
   }
   
-  // セッションストレージに全文を保存
   sessionStorage.setItem('udatsu_auto_title', title);
   sessionStorage.setItem('udatsu_auto_content', currentContent);
   sessionStorage.setItem('udatsu_auto_fill', '1');
   
-  // シンプルにページ移動
   window.location.href = 'mypage/create_post.php?auto_redirect=1';
 }
-
-// 1.5秒後にオーバーレイを削除
-setTimeout(() => {
-  const overlay = document.querySelector('.completion-overlay');
-  if (overlay) {
-    overlay.remove();
-  }
-}, 1500);
 </script>
 </body>
 </html>
