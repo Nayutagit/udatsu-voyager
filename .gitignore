@@ -1,0 +1,11 @@
+config/openai_key.php
+vendor/
+uploads/
+users/
+*.log
+debug_log.txt
+debug_upload.log
+php-error.log
+session_debug.log
+stripe/webhook_log.txt
+.DS_Store

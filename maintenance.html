@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Udatsu Voyager - メンテナンス中</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="img/favicon.png" type="image/png">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      text-align: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    img.logo {
+      width: 160px;
+      margin-bottom: 1.5rem;
+      filter: drop-shadow(0 0 15px rgba(252, 200, 0, 0.6));
+      animation: logoGlow 3s ease-in-out infinite alternate;
+    }
+
+    @keyframes logoGlow {
+      from {
+        filter: drop-shadow(0 0 10px rgba(252, 200, 0, 0.4));
+        transform: scale(1);
+      }
+
+      to {
+        filter: drop-shadow(0 0 25px rgba(252, 200, 0, 0.8));
+        transform: scale(1.05);
+      }
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      margin-bottom: 1rem;
+      font-weight: 700;
+      color: var(--text-white);
+      text-shadow: 0 0 10px rgba(252, 200, 0, 0.5);
+    }
+
+    p {
+      font-size: 1rem;
+      margin-bottom: 2rem;
+      max-width: 400px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    a.button {
+      background: linear-gradient(45deg, var(--primary-neon), #ffda44);
+      color: #000;
+      padding: 0.75rem 1.5rem;
+      text-decoration: none;
+      border-radius: 50px;
+      font-size: 1rem;
+      font-weight: bold;
+      box-shadow: 0 0 15px rgba(252, 200, 0, 0.4);
+      transition: all 0.3s ease;
+    }
+
+    a.button:hover {
+      transform: translateY(-3px) scale(1.05);
+      box-shadow: 0 0 25px rgba(252, 200, 0, 0.6);
+    }
+  </style>
+</head>
+
+<body>
+  <img src="img/udatsu-logo.png" alt="Udatsuロゴ" class="logo">
+  <h1>ただいまメンテナンス中です</h1>
+  <p>ご不便をおかけして申し訳ありません。<br>
+    現在、一時的にサービスを停止しております。<br>
+    ご用の方はUdatsu公式サイトをご確認ください。</p>
+  <a href="https://udatsuageteko.com/" class="button">Udatsu公式サイトに移動する</a>
+</body>
+
+</html>

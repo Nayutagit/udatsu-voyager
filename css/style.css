@@ -1,0 +1,351 @@
+@charset "UTF-8";
+
+/* ==========================================================================
+   Variables & Reset (From Nist Studio)
+   ========================================================================== */
+:root {
+    /* Colors */
+    --primary-neon: #FCC800;
+    /* Neon Gold */
+    --accent-teal: #00A4D8;
+    /* Brighter Teal */
+    --accent-teal-dark: #006888;
+
+    --bg-dark: #1a1a1a;
+    --text-white: #f0f0f0;
+    --text-gray: #cccccc;
+    --text-muted: #888;
+
+    /* Udatsu Specific Colors (Mapped to Nist Theme) */
+    --bg-panel: rgba(0, 0, 0, 0.6);
+    --bg-panel-hover: rgba(0, 0, 0, 0.8);
+    --border-neon: rgba(252, 200, 0, 0.3);
+    --shadow-neon: 0 0 20px rgba(252, 200, 0, 0.2);
+    --shadow-strong: 0 0 40px rgba(252, 200, 0, 0.4);
+    --warning-red: #ff6b6b;
+
+    /* Fonts */
+    --font-main: "Tsukushi B Round Gothic", "Tsukushi B Gothic", "筑紫B丸ゴシック", "Zen Maru Gothic", "Zen Kaku Gothic New", sans-serif;
+    --font-serif: "Zen Old Mincho", "Times New Roman", serif;
+
+    /* Transitions */
+    --transition-fast: 0.3s ease;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--font-main);
+    color: var(--text-white);
+    background-color: #2a2a2a;
+    background-image: url('../img/concrete_bg.png');
+    background-size: cover;
+    background-attachment: fixed;
+    line-height: 1.8;
+    letter-spacing: 0.05em;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+    transition: var(--transition-fast);
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* ==========================================================================
+   Typography & Common
+   ========================================================================== */
+h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: var(--text-white);
+    text-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    animation: fadeInUp 1s ease 0.3s both;
+    text-align: center;
+}
+
+.subtitle {
+    font-size: 1.1rem;
+    font-weight: 400;
+    color: var(--accent-teal);
+    margin-bottom: 3rem;
+    animation: fadeInUp 1s ease 0.6s both;
+    text-align: center;
+    font-family: var(--font-serif);
+    letter-spacing: 0.1em;
+    text-shadow: 0 0 10px rgba(0, 164, 216, 0.3);
+}
+
+.logo {
+    width: 180px;
+    height: auto;
+    margin-bottom: 2rem;
+    filter: drop-shadow(0 0 15px rgba(252, 200, 0, 0.4));
+    transition: filter 0.3s ease;
+}
+
+.logo:hover {
+    filter: drop-shadow(0 0 25px var(--primary-neon));
+}
+
+/* ==========================================================================
+   Components (Udatsu Specific)
+   ========================================================================== */
+
+/* Login Box & Upload Form Container */
+.login-box,
+.upload-form {
+    background: var(--bg-panel);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 3rem;
+    border-radius: 2px;
+    /* Sharp edges like Nist */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    max-width: 600px;
+    width: 90%;
+    position: relative;
+    overflow: hidden;
+    animation: slideInUp 1s ease 0.9s both;
+    transition: all 0.3s ease;
+}
+
+.login-box:hover,
+.upload-form:hover {
+    border-color: var(--primary-neon);
+    box-shadow: 0 0 20px rgba(252, 200, 0, 0.2);
+    transform: translateY(-5px);
+}
+
+.lead-message {
+    font-size: 1.2rem;
+    margin: 0 0 2.5rem 0;
+    color: var(--text-white);
+    line-height: 1.7;
+    text-align: center;
+}
+
+.lead-message strong {
+    color: var(--primary-neon);
+    text-shadow: 0 0 10px rgba(252, 200, 0, 0.4);
+}
+
+/* Buttons */
+button,
+.btn,
+#login-btn,
+.mypage-btn {
+    background: var(--primary-neon);
+    color: #000;
+    border: none;
+    padding: 15px 40px;
+    font-size: 1rem;
+    font-weight: 700;
+    border-radius: 50px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 20px rgba(252, 200, 0, 0.4);
+    text-decoration: none;
+    font-family: var(--font-main);
+}
+
+button:hover,
+.btn:hover,
+#login-btn:hover,
+.mypage-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 0 30px rgba(252, 200, 0, 0.7);
+    background: #ffdb4d;
+}
+
+/* Secondary Button (Mypage) */
+.mypage-btn {
+    background: transparent;
+    color: var(--text-white);
+    border: 2px solid var(--accent-teal);
+    box-shadow: 0 0 10px rgba(0, 104, 136, 0.2);
+    padding: 10px 30px;
+}
+
+.mypage-btn:hover {
+    background: var(--accent-teal);
+    color: var(--text-white);
+    box-shadow: 0 0 20px rgba(0, 104, 136, 0.6);
+}
+
+/* Form Elements */
+input[type=file] {
+    margin: 1.5rem 0;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    color: var(--text-white);
+    width: 100%;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+input[type=file]:hover {
+    border-color: var(--primary-neon);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+input[type=file]::-webkit-file-upload-button {
+    background: var(--accent-teal);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-right: 1rem;
+    transition: all 0.3s ease;
+}
+
+input[type=file]::-webkit-file-upload-button:hover {
+    background: var(--accent-teal-dark);
+}
+
+/* Info Box */
+.info-box {
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid var(--accent-teal);
+    padding: 1.5rem;
+    border-radius: 4px;
+    margin: 2rem auto;
+    font-size: 1rem;
+    max-width: 600px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    color: var(--text-white);
+    text-align: center;
+}
+
+.info-box strong {
+    color: var(--primary-neon);
+}
+
+.info-box[style*="red"] {
+    border-color: var(--warning-red);
+    color: var(--warning-red);
+    background: rgba(255, 107, 107, 0.1);
+}
+
+/* User Info Panel */
+.user-info {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 2rem;
+    background: rgba(0, 0, 0, 0.6);
+    padding: 1rem 2rem;
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 2rem;
+    backdrop-filter: blur(5px);
+}
+
+.user-info span {
+    font-weight: 500;
+}
+
+.user-info strong {
+    color: var(--primary-neon);
+}
+
+/* Small Note */
+.small-note {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin-top: 2rem;
+    line-height: 1.6;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    text-align: center;
+}
+
+.footer-note {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin-top: 2rem;
+    text-align: center;
+}
+
+.logout-link {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    text-decoration: underline;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: color 0.3s;
+}
+
+.logout-link:hover {
+    color: var(--primary-neon);
+}
+
+/* Animations */
+@keyframes fadeInUp {
+    from {
+        transform: translateY(30px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideInUp {
+    from {
+        transform: translateY(50px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    h1 {
+        font-size: 2rem;
+    }
+
+    .user-info {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .login-box,
+    .upload-form {
+        padding: 2rem;
+    }
+}

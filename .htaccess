@@ -1,0 +1,18 @@
+##############################
+# 1. いつでも有効：HTTPS 強制
+##############################
+RewriteEngine On
+RewriteCond %{HTTPS} off
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+
+###########################################################
+# 2. メンテナンスモード（使う時だけ ON）
+#    手順:
+#      A) maintenance.html をルートにアップ
+#      B) 次の 4 行の先頭 # を外して保存
+#      C) 解除するときは # を戻す or maintenance.html を削除
+###########################################################
+#RewriteCond %{REQUEST_URI} !^/maintenance\.html$
+#RewriteCond %{REQUEST_URI} !^/img/.*$
+#RewriteCond %{REQUEST_URI} !^/favicon\.ico$
+#RewriteRule ^.*$ /maintenance.html [R=302,L]
