@@ -46,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$limitReached) {
 
     $finfo = new finfo(FILEINFO_MIME_TYPE);
     $mimeType = $finfo->file($fileKey['tmp_name']);
-    $allowedTypes = ['audio/m4a','audio/mp4','audio/x-m4a','audio/mpeg','audio/mp3','audio/x-mp3','audio/wav','audio/x-wav','audio/webm','video/webm','audio/ogg'];
+    $allowedTypes = ['audio/m4a','audio/mp4','audio/x-m4a','audio/mpeg','audio/mp3','audio/x-mp3','audio/wav','audio/x-wav','audio/webm','video/webm','audio/ogg','video/mp4'];
     if (!in_array($mimeType, $allowedTypes, true)) {
       exit("対応していないファイル形式です。({$mimeType})");
     }
@@ -357,7 +357,17 @@ document.addEventListener('DOMContentLoaded', function() {
         // Start Recording
         try {
           const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          mediaRecorder = new MediaRecorder(stream);
+          
+          // Check for supported MIME types (Safari fix)
+          let options = {};
+          if (MediaRecorder.isTypeSupported('audio/mp4')) {
+            options = { mimeType: 'audio/mp4' };
+          } else if (MediaRecorder.isTypeSupported('audio/webm')) {
+            options = { mimeType: 'audio/webm' };
+          }
+          // If neither, let browser choose default
+
+          mediaRecorder = new MediaRecorder(stream, options);
           audioChunks = [];
 
           mediaRecorder.ondataavailable = (event) => {
