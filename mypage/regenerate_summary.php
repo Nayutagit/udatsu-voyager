@@ -45,7 +45,7 @@ $finalPrompt = <<<PROMPT
 ・PREAP構成を軽く意識（主張→理由→具体→反論理解→再主張）
 PROMPT;
 
-$url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" . $apiKey;
+$url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-001:generateContent?key=" . $apiKey;
 
 $postData = [
   "contents" => [
