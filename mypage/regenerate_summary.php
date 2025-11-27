@@ -1,7 +1,8 @@
 <?php
 require_once __DIR__ . '/../core/bootstrap.php';
 
-$apiKey = include __DIR__ . '/../config/openai_key.php';
+require_once __DIR__ . '/../config/gemini_key.php';
+$apiKey = $geminiApiKey;
 header('Content-Type: application/json');
 
 // セッション確認
@@ -44,25 +45,32 @@ $finalPrompt = <<<PROMPT
 ・PREAP構成を軽く意識（主張→理由→具体→反論理解→再主張）
 PROMPT;
 
-$ch = curl_init("https://api.openai.com/v1/chat/completions");
+$url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" . $apiKey;
+
+$postData = [
+  "contents" => [
+    [
+      "parts" => [
+        ["text" => $finalPrompt]
+      ]
+    ]
+  ],
+  "generationConfig" => [
+      "temperature" => 0.7
+  ]
+];
+
+$ch = curl_init($url);
 curl_setopt($ch, CURLOPT_HTTPHEADER, [
-  "Content-Type: application/json",
-  "Authorization: Bearer $apiKey"
+  "Content-Type: application/json"
 ]);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_POST, true);
-curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
-  'model' => 'gpt-4',
-  'messages' => [
-    ['role' => 'system', 'content' => 'あなたは思考整理の専門家であり、やわらかくも構造的に要約するアシスタントです。'],
-    ['role' => 'user', 'content' => $finalPrompt]
-  ],
-  'temperature' => 0.7,
-]));
+curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postData));
 
 $response = curl_exec($ch);
 curl_close($ch);
 $result = json_decode($response, true);
-$summary = $result['choices'][0]['message']['content'] ?? '';
+$summary = $result['candidates'][0]['content']['parts'][0]['text'] ?? '';
 
 echo json_encode(['summary' => trim($summary)]);

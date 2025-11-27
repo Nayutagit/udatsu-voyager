@@ -1,4 +1,5 @@
 config/openai_key.php
+config/gemini_key.php
 uploads/
 users/
 *.log

@@ -13,58 +13,62 @@ if (!$type || !$raw) {
   exit();
 }
 
-// 🔸 OpenAI APIキー
-$apiKey = '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';  // ★ご自身のキーに差し替えてください
+// 🔸 Gemini APIキー読み込み
+require_once __DIR__ . '/config/gemini_key.php';
+$apiKey = $geminiApiKey;
 
 function buildPrompt($type, $raw) {
   switch ($type) {
     case 'blog':
-      return "以下の音声文字起こしを『ブログ・note用』に整文してください。読んだ人が真似したくなる構成で、小見出しには「・」を使い、親しみのある語り口で書いてください。
-
-" . $raw;
+      return "以下の音声文字起こしを『ブログ・note用』に整文してください。読んだ人が真似したくなる構成で、小見出しには「・」を使い、親しみのある語り口で書いてください。\n\n" . $raw;
     case 'summary':
-      return "以下の内容をビジネス用途で誰が読んでもわかるように簡潔に要約してください：
-
-" . $raw;
+      return "以下の内容をビジネス用途で誰が読んでもわかるように簡潔に要約してください：\n\n" . $raw;
     case 'podcast':
-      return "以下の文字起こしをPodcastの原稿として自然に話す口調で整文してください：
-
-" . $raw;
+      return "以下の文字起こしをPodcastの原稿として自然に話す口調で整文してください：\n\n" . $raw;
     default:
       return $raw;
   }
 }
 
 function generateText($prompt, $apiKey) {
+  $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" . $apiKey;
+
   $postData = [
-    "model" => "gpt-4o",
-    "messages" => [
-      ["role" => "system", "content" => "あなたはプロの編集者です。"],
-      ["role" => "user", "content" => $prompt]
+    "contents" => [
+      [
+        "parts" => [
+          ["text" => $prompt]
+        ]
+      ]
     ],
-    "temperature" => 0.7
+    "generationConfig" => [
+        "temperature" => 0.7
+    ]
   ];
 
   $headers = [
-    "Content-Type: application/json",
-    "Authorization: Bearer " . $apiKey
+    "Content-Type: application/json"
   ];
 
-  $ch = curl_init("https://api.openai.com/v1/chat/completions");
+  $ch = curl_init($url);
   curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
   curl_setopt($ch, CURLOPT_POST, true);
   curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
   curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postData));
   $response = curl_exec($ch);
+  
+  if (curl_errno($ch)) {
+      return json_encode(["error" => "Curl error: " . curl_error($ch)]);
+  }
   curl_close($ch);
 
   $data = json_decode($response, true);
 
   if (isset($data['error'])) {
-    return json_encode(["error" => $data['error']]);
+    return json_encode(["error" => $data['error']['message'] ?? 'Unknown Gemini API Error']);
   }
 
-  return $data['choices'][0]['message']['content'] ?? "整文エラーが発生しました。";
+  return $data['candidates'][0]['content']['parts'][0]['text'] ?? "整文エラーが発生しました（Gemini）。";
 }
 
 // 🔸 実行

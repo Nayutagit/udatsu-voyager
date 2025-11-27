@@ -32,8 +32,10 @@ if (!isset($posts[$index])) {
 }
 
 // OpenAIを使って整文・要約・キーワードを取得
-function callChatGPTForRefinement(string $originalText): array {
-  $apiKey = include __DIR__ . '/../config/openai_key.php';
+// Geminiを使って整文・要約・キーワードを取得
+function callGeminiForRefinement(string $originalText): array {
+  require __DIR__ . '/../config/gemini_key.php';
+  $apiKey = $geminiApiKey;
 
   $prompt = "以下の文章を整文して、思考資産として保存できるように構造化してください。\n\n"
           . "【原文】\n$originalText\n\n"
@@ -44,23 +46,32 @@ function callChatGPTForRefinement(string $originalText): array {
           . "  \"keywords\": [\"...\", \"...\", \"...\"]\n"
           . "}";
 
-  $body = [
-    "model" => "gpt-4",
-    "messages" => [
-      ["role" => "system", "content" => "あなたは思考整理解説者です。ユーザーの話し言葉を、整った文章・要約・キーワードに構造化して出力します。"],
-      ["role" => "user", "content" => $prompt],
+  $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" . $apiKey;
+
+  $postData = [
+    "contents" => [
+      [
+        "parts" => [
+          ["text" => $prompt]
+        ]
+      ]
     ],
-    "temperature" => 0.7,
+    "generationConfig" => [
+        "temperature" => 0.7,
+        "response_mime_type" => "application/json"
+    ]
   ];
 
-  $ch = curl_init('https://api.openai.com/v1/chat/completions');
-  curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-  curl_setopt($ch, CURLOPT_HTTPHEADER, [
-    'Content-Type: application/json',
-    'Authorization: Bearer ' . $apiKey
-  ]);
-  curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($body));
+  $headers = [
+    "Content-Type: application/json"
+  ];
 
+  $ch = curl_init($url);
+  curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+  curl_setopt($ch, CURLOPT_POST, true);
+  curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+  curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postData));
+  
   $result = curl_exec($ch);
 
   if (curl_errno($ch)) {
@@ -76,8 +87,8 @@ function callChatGPTForRefinement(string $originalText): array {
   curl_close($ch);
 
   $json = json_decode($result, true);
-  $text = $json['choices'][0]['message']['content'] ?? '';
-
+  $text = $json['candidates'][0]['content']['parts'][0]['text'] ?? '';
+  
   $data = json_decode($text, true);
 
   return is_array($data) ? $data : [
@@ -104,7 +115,7 @@ switch ($action) {
     $posts[$index]['status'] = 'My Udastack追加済';
     $posts[$index]['date'] = date('Y-m-d');
 
-    $result = callChatGPTForRefinement($original);
+    $result = callGeminiForRefinement($original);
     $posts[$index]['refined_text'] = $result['refined_text'] ?? '';
     $posts[$index]['summary']      = $result['summary'] ?? '';
     $posts[$index]['keywords']     = $result['keywords'] ?? [];
