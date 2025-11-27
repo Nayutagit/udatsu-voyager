@@ -46,9 +46,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$limitReached) {
 
     $finfo = new finfo(FILEINFO_MIME_TYPE);
     $mimeType = $finfo->file($fileKey['tmp_name']);
-    $allowedTypes = ['audio/m4a','audio/mp4','audio/x-m4a','audio/mpeg','audio/mp3','audio/x-mp3','audio/wav','audio/x-wav','audio/webm'];
+    $allowedTypes = ['audio/m4a','audio/mp4','audio/x-m4a','audio/mpeg','audio/mp3','audio/x-mp3','audio/wav','audio/x-wav','audio/webm','video/webm','audio/ogg'];
     if (!in_array($mimeType, $allowedTypes, true)) {
-      exit("対応していないファイル形式です。");
+      exit("対応していないファイル形式です。({$mimeType})");
     }
 
     if (move_uploaded_file($fileKey['tmp_name'], $targetPath)) {
@@ -110,6 +110,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$limitReached) {
       box-shadow: 0 0 10px rgba(0, 255, 204, 0.5);
     }
     
+    /* Upload Zone Fix */
+    .upload-zone {
+      display: block; /* Ensure it behaves like a block */
+      width: 100%;
+    }
+
     /* Recording UI */
     .record-ui {
       display: none;
@@ -359,13 +365,22 @@ document.addEventListener('DOMContentLoaded', function() {
           };
 
           mediaRecorder.onstop = () => {
-            const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' }); // Chrome records as webm usually, but we label mp3 for simplicity or convert
+            // Determine MIME type
+            const mimeType = mediaRecorder.mimeType || 'audio/webm';
+            const audioBlob = new Blob(audioChunks, { type: mimeType });
             const audioUrl = URL.createObjectURL(audioBlob);
             audioPreview.src = audioUrl;
             audioPreview.style.display = 'block';
             
-            // Create File object and set to input
-            const file = new File([audioBlob], "recorded_audio.mp3", { type: "audio/mp3" });
+            // Determine extension based on MIME type
+            let ext = 'webm';
+            if (mimeType.includes('mp4') || mimeType.includes('m4a')) ext = 'm4a';
+            else if (mimeType.includes('mp3')) ext = 'mp3';
+            else if (mimeType.includes('wav')) ext = 'wav';
+            else if (mimeType.includes('ogg')) ext = 'ogg';
+
+            // Create File object
+            const file = new File([audioBlob], `recorded_audio.${ext}`, { type: mimeType });
             const dataTransfer = new DataTransfer();
             dataTransfer.items.add(file);
             fileInput.files = dataTransfer.files;
