@@ -73,7 +73,7 @@ function geminiTranscribe($audioPath) {
     $fileUri = $uploadResult['uri'];
 
     // Generate Content (Transcribe)
-    $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=$apiKey";
+    $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=$apiKey";
     
     $postData = [
         "contents" => [

@@ -31,7 +31,7 @@ function buildPrompt($type, $raw) {
 }
 
 function generateText($prompt, $apiKey) {
-  $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=$apiKey";
+  $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=$apiKey";
 
   $postData = [
     "contents" => [
