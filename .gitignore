@@ -1,5 +1,4 @@
 config/openai_key.php
-vendor/
 uploads/
 users/
 *.log
