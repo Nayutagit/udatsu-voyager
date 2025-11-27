@@ -353,50 +353,67 @@ document.addEventListener('DOMContentLoaded', function() {
 
   if (micBtn) {
     micBtn.addEventListener('click', async () => {
+      // Clear previous errors
+      statusDisplay.style.color = 'var(--text-muted)';
+      
       if (!isRecording) {
         // Start Recording
         try {
           const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
           
-          // Check for supported MIME types (Safari fix)
           let options = {};
-          if (MediaRecorder.isTypeSupported('audio/mp4')) {
-            options = { mimeType: 'audio/mp4' };
-          } else if (MediaRecorder.isTypeSupported('audio/webm')) {
-            options = { mimeType: 'audio/webm' };
+          // Safely check for supported types
+          if (typeof MediaRecorder.isTypeSupported === 'function') {
+            if (MediaRecorder.isTypeSupported('audio/mp4')) {
+              options = { mimeType: 'audio/mp4' };
+            } else if (MediaRecorder.isTypeSupported('audio/webm')) {
+              options = { mimeType: 'audio/webm' };
+            }
           }
-          // If neither, let browser choose default
 
-          mediaRecorder = new MediaRecorder(stream, options);
+          try {
+            mediaRecorder = new MediaRecorder(stream, options);
+          } catch (e) {
+            console.warn('MediaRecorder init failed with options, trying default', e);
+            mediaRecorder = new MediaRecorder(stream);
+          }
+
           audioChunks = [];
 
           mediaRecorder.ondataavailable = (event) => {
-            audioChunks.push(event.data);
+            if (event.data.size > 0) {
+              audioChunks.push(event.data);
+            }
           };
 
           mediaRecorder.onstop = () => {
-            // Determine MIME type
-            const mimeType = mediaRecorder.mimeType || 'audio/webm';
-            const audioBlob = new Blob(audioChunks, { type: mimeType });
-            const audioUrl = URL.createObjectURL(audioBlob);
-            audioPreview.src = audioUrl;
-            audioPreview.style.display = 'block';
-            
-            // Determine extension based on MIME type
-            let ext = 'webm';
-            if (mimeType.includes('mp4') || mimeType.includes('m4a')) ext = 'm4a';
-            else if (mimeType.includes('mp3')) ext = 'mp3';
-            else if (mimeType.includes('wav')) ext = 'wav';
-            else if (mimeType.includes('ogg')) ext = 'ogg';
+            try {
+              // Determine MIME type
+              const mimeType = mediaRecorder.mimeType || 'audio/mp4'; // Fallback to mp4 for iOS
+              const audioBlob = new Blob(audioChunks, { type: mimeType });
+              const audioUrl = URL.createObjectURL(audioBlob);
+              audioPreview.src = audioUrl;
+              audioPreview.style.display = 'block';
+              
+              // Determine extension based on MIME type
+              let ext = 'm4a'; // Default to m4a (good for mp4/aac)
+              if (mimeType.includes('webm')) ext = 'webm';
+              else if (mimeType.includes('wav')) ext = 'wav';
+              else if (mimeType.includes('ogg')) ext = 'ogg';
+              else if (mimeType.includes('mp3')) ext = 'mp3';
 
-            // Create File object
-            const file = new File([audioBlob], `recorded_audio.${ext}`, { type: mimeType });
-            const dataTransfer = new DataTransfer();
-            dataTransfer.items.add(file);
-            fileInput.files = dataTransfer.files;
-            
-            updateFileName(file);
-            statusDisplay.textContent = "録音完了！解析ボタンを押してください";
+              // Create File object
+              const file = new File([audioBlob], `recorded_audio.${ext}`, { type: mimeType });
+              const dataTransfer = new DataTransfer();
+              dataTransfer.items.add(file);
+              fileInput.files = dataTransfer.files;
+              
+              updateFileName(file);
+              statusDisplay.textContent = "録音完了！解析ボタンを押してください";
+            } catch (err) {
+              statusDisplay.textContent = "処理エラー: " + err.message;
+              statusDisplay.style.color = '#ff4444';
+            }
           };
 
           mediaRecorder.start();
@@ -421,11 +438,16 @@ document.addEventListener('DOMContentLoaded', function() {
           }, 100);
 
         } catch (err) {
-          alert("マイクへのアクセスが拒否されました: " + err);
+          console.error(err);
+          statusDisplay.textContent = "エラー: " + err.message;
+          statusDisplay.style.color = '#ff4444';
+          alert("録音を開始できませんでした: " + err.message);
         }
       } else {
         // Stop Recording
-        mediaRecorder.stop();
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+          mediaRecorder.stop();
+        }
         isRecording = false;
         micBtn.classList.remove('recording');
         micBtn.innerHTML = '<i class="fas fa-microphone"></i>';
