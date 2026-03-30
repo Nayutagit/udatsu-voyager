@@ -94,26 +94,36 @@ class GeminiService {
     private function waitForFileActive($fileUri) {
         $url = "https://generativelanguage.googleapis.com/v1beta/files/" . basename($fileUri) . "?key={$this->apiKey}";
         
-        $maxRetries = 30; // 30 seconds max
+        $maxRetries = 60; // 60 seconds max
+        $lastResponse = "";
+        
         for ($i = 0; $i < $maxRetries; $i++) {
             $ch = curl_init($url);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             $response = curl_exec($ch);
             curl_close($ch);
             
+            $lastResponse = $response;
             $data = json_decode($response, true);
+            
+            if (isset($data['error'])) {
+                // If the check itself fails (e.g. Rate limit, High Demand)
+                $errMsg = $data['error']['message'] ?? 'Unknown API Error';
+                throw new Exception("サーバー混雑または制限エラー: " . $errMsg);
+            }
+            
             $state = $data['state'] ?? 'UNKNOWN';
             
             if ($state === 'ACTIVE') {
                 return;
             }
             if ($state === 'FAILED') {
-                throw new Exception("Gemini file processing failed.");
+                throw new Exception("Geminiでの音声ファイル処理が失敗しました。");
             }
             
             sleep(1);
         }
-        throw new Exception("Gemini file processing timed out.");
+        throw new Exception("タイムアウトしました。APIからの最後の応答: " . $lastResponse);
     }
 
     private function generateContent($fileUri, $mimeType) {
