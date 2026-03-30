@@ -4,24 +4,23 @@
    Variables & Reset
    ========================================================================== */
 :root {
-    /* Colors */
-    --primary-neon: #FCC800;
-    /* Neon Gold */
-    --accent-teal: #00A4D8;
-    /* Brighter Teal */
-    --accent-teal-dark: #006888;
-    --bg-dark: #1a1a1a;
-    --bg-darker: #111111;
+    /* Colors - Udatsu Fruit Theme */
+    --primary-neon: #FFE600; /* Banana Yellow */
+    --accent-teal: #FF007F; /* Strawberry Magenta */
+    --accent-teal-dark: #cc0066;
+    --kiwi-green: #8EE53F; /* Kiwi Green */
+    --bg-dark: #0a0a0a;
+    --bg-darker: #050505;
     --text-white: #f0f0f0;
     --text-gray: #cccccc;
     --text-muted: #888888;
     --warning-red: #ff4444;
 
-    /* Glassmorphism */
-    --glass-bg: rgba(20, 20, 20, 0.7);
-    --glass-border: rgba(255, 255, 255, 0.1);
-    --glass-blur: 20px;
-    --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    /* Glassmorphism - Underground Club vibe */
+    --glass-bg: rgba(10, 10, 10, 0.85);
+    --glass-border: rgba(255, 230, 0, 0.15);
+    --glass-blur: 25px;
+    --glass-shadow: 0 10px 40px 0 rgba(0, 0, 0, 0.5);
 
     /* Fonts */
     --font-main: "Tsukushi B Round Gothic", "Tsukushi B Gothic", "筑紫B丸ゴシック", "Zen Maru Gothic", "Zen Kaku Gothic New", sans-serif;

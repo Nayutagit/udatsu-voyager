@@ -185,34 +185,36 @@ $redirectMypage = 'https://udatsu-voyager.com/mypage/dashboard.php';
         </div>
         <?php endif; ?>
 
-        <!-- Raw Text -->
+        <!-- Raw Text (Editable) -->
         <div class="hud-panel">
-          <div class="hud-title">Raw Transcription</div>
-          <div style="max-height: 150px; overflow-y: auto; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px;">
-            <?= nl2br(htmlspecialchars($raw)) ?>
-          </div>
+          <div class="hud-title">Step 1: Edit Transcription</div>
+          <p class="text-muted" style="font-size: 0.75rem; margin-bottom: 5px;">ここで誤字を修正したり、追記できます。</p>
+          <textarea id="raw-text-area" style="width: 100%; height: 200px; background: rgba(0,0,0,0.5); border: 1px solid var(--accent-teal); color: var(--text-white); padding: 10px; font-family: var(--font-main); font-size: 0.9rem; border-radius: 4px; resize: vertical; margin-bottom: 10px;"><?= htmlspecialchars($raw) ?></textarea>
           <button class="btn btn-secondary" style="width: 100%; font-size: 0.8rem; padding: 5px;" onclick="copyRawText()">
-            <i class="fas fa-copy"></i> Copy Raw
+            <i class="fas fa-copy"></i> 下書きコピー
           </button>
         </div>
 
         <!-- Generators -->
         <div class="hud-panel">
-          <div class="hud-title">Generators</div>
-          <button class="tab-btn" onclick="generateText('blog')" data-type="blog">Blog / Note</button>
-          <button class="tab-btn" onclick="generateText('summary')" data-type="summary">Summary</button>
+          <div class="hud-title">Step 2: Generate Asset</div>
+          <button class="tab-btn" onclick="generateText('blog')" data-type="blog">YouTube / Note / Thumb</button>
+          <button class="tab-btn" onclick="generateText('summary')" data-type="summary">Quick Summary</button>
           <button class="tab-btn" onclick="generateText('podcast')" data-type="podcast">Podcast Script</button>
         </div>
 
         <!-- Actions -->
         <div class="hud-panel">
-          <div class="hud-title">Actions</div>
+          <div class="hud-title">Step 3: Post</div>
           <button class="btn btn-primary" style="width: 100%; margin-bottom: 10px;" onclick="createPost()">
-            <i class="fas fa-save"></i> Save as Post
+            <i class="fas fa-save"></i> 記録を残す
           </button>
-          <button class="btn btn-secondary" style="width: 100%;" onclick="copyText()">
-            <i class="fas fa-copy"></i> Copy Result
+          <button class="btn btn-secondary" style="width: 100%; margin-bottom: 10px;" onclick="copyText()">
+            <i class="fas fa-copy"></i> 結果をすべてコピー
           </button>
+          <a href="voyager_upload.php" class="btn btn-secondary" style="width: 100%; display: block; text-align: center;">
+            <i class="fas fa-undo"></i> 録音に戻る
+          </a>
         </div>
 
       </div>
@@ -237,7 +239,14 @@ let currentType = '';
 
 function generateText(type) {
   const area = document.getElementById('result-area');
-  area.innerHTML = '<div style="text-align: center; padding-top: 100px; color: var(--accent-teal);"><i class="fas fa-circle-notch fa-spin fa-3x"></i><p style="margin-top: 20px;">Generating Content...</p></div>';
+  const userEditedText = document.getElementById('raw-text-area').value;
+  
+  if (!userEditedText.trim()) {
+      alert("テキストがありません。");
+      return;
+  }
+
+  area.innerHTML = '<div style="text-align: center; padding-top: 100px; color: var(--accent-teal);"><i class="fas fa-circle-notch fa-spin fa-3x"></i><p style="margin-top: 20px;">Nayutaペルソナで思考資産を構築中...</p></div>';
   
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.classList.remove('active');
@@ -251,7 +260,7 @@ function generateText(type) {
   fetch('generate.php', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: 'type=' + encodeURIComponent(type) + '&raw=' + encodeURIComponent(rawText)
+    body: 'type=' + encodeURIComponent(type) + '&raw=' + encodeURIComponent(userEditedText)
   })
   .then(res => res.text())
   .then(text => {
@@ -271,7 +280,8 @@ function copyText() {
 }
 
 function copyRawText() {
-  navigator.clipboard.writeText(rawText).then(() => {
+  const text = document.getElementById('raw-text-area').value;
+  navigator.clipboard.writeText(text).then(() => {
     showCopyModal();
   });
 }

@@ -199,8 +199,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$limitReached) {
   <div class="container" style="padding-top: 120px; padding-bottom: 60px;">
     
     <div class="glass-card animate-fadeup" style="max-width: 800px; margin: 0 auto; text-align: center;">
-      <h1 class="text-neon" style="font-size: 2.5rem; margin-bottom: 10px;">Voice Analysis</h1>
-      <p class="text-muted" style="margin-bottom: 40px;">音声をアップロードして、思考資産を蓄積しよう。</p>
+      <h1 class="text-neon" style="font-size: 2.5rem; margin-bottom: 10px;">Udatsu Voyager</h1>
+      <p class="text-muted" style="margin-bottom: 40px;">自分の声（パトス）から思考（ロゴス）を取り出し、マークダウン資産を精製します。</p>
 
       <div class="info-box" style="display: flex; justify-content: center; gap: 30px; margin-bottom: 40px; font-family: var(--font-mono); font-size: 0.9rem;">
         <div>

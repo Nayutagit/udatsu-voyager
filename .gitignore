@@ -9,3 +9,4 @@ php-error.log
 session_debug.log
 stripe/webhook_log.txt
 .DS_Store
+upload.zip
