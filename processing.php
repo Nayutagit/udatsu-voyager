@@ -88,28 +88,54 @@
   </style>
   <script>
   window.addEventListener("DOMContentLoaded", () => {
-    // Progress Simulation
     const fill = document.querySelector('.progress-fill');
     const status = document.getElementById('status-text');
-    const steps = [
-      { w: '20%', t: 'Uploading Audio...' },
-      { w: '45%', t: 'Processing Waveform...' },
-      { w: '70%', t: 'Transcribing Speech...' },
-      { w: '90%', t: 'Finalizing...' },
-      { w: '100%', t: 'Complete!' }
-    ];
     
-    let i = 0;
+    // Step 1: Start AJAX process
+    status.textContent = "AI解析を開始します...";
+    fill.style.width = '20%';
+
+    fetch('analyze.php')
+      .then(response => response.json())
+      .then(data => {
+        if (data.status === 'success') {
+          fill.style.width = '100%';
+          status.textContent = "解析完了！画面を切り替えます...";
+          setTimeout(() => {
+            window.location.href = "result.php";
+          }, 1000);
+        } else {
+          status.textContent = "エラー: " + (data.message || "解析に失敗しました。");
+          status.style.color = "var(--warning-red)";
+          fill.style.backgroundColor = "var(--warning-red)";
+          document.querySelector('.loader-icon').className = "fas fa-exclamation-triangle loader-icon";
+          
+          // エラー時に戻るボタンを表示
+          const btn = document.createElement('a');
+          btn.href = 'voyager_upload.php';
+          btn.className = 'btn btn-secondary';
+          btn.style.marginTop = '20px';
+          btn.innerHTML = '<i class="fas fa-undo"></i> 録音に戻る';
+          document.querySelector('.container').appendChild(btn);
+        }
+      })
+      .catch(error => {
+        status.textContent = "通信エラーが発生しました。";
+        status.style.color = "var(--warning-red)";
+      });
+
+    // 進行状況のフェイク（通信中であることを示すためにゆっくり動かす）
+    let progress = 20;
     const interval = setInterval(() => {
-      if (i < steps.length) {
-        fill.style.width = steps[i].w;
-        status.textContent = steps[i].t;
-        i++;
+      if (progress < 90) {
+        progress += (90 - progress) * 0.1;
+        fill.style.width = progress + '%';
+        if (progress > 40 && progress < 70) status.textContent = "音声をテキストに変換中...";
+        if (progress > 70) status.textContent = "仕上げを行っています...";
       } else {
         clearInterval(interval);
-        window.location.href = "analyze.php";
       }
-    }, 800);
+    }, 2000);
   });
   </script>
 </head>
