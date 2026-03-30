@@ -246,7 +246,7 @@ function generateText(type) {
       return;
   }
 
-  area.innerHTML = '<div style="text-align: center; padding-top: 100px; color: var(--accent-teal);"><i class="fas fa-circle-notch fa-spin fa-3x"></i><p style="margin-top: 20px;">Nayutaペルソナで思考資産を構築中...</p></div>';
+  area.innerHTML = '<div style="text-align: center; padding-top: 100px; color: var(--accent-teal);"><i class="fas fa-circle-notch fa-spin fa-3x"></i><p style="margin-top: 20px;">思考資産を構築中...</p></div>';
   
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.classList.remove('active');
