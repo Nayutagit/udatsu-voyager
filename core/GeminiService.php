@@ -136,21 +136,50 @@ class GeminiService {
         ];
 
         $headers = ["Content-Type: application/json"];
-
-        $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postData));
-        $response = curl_exec($ch);
         
-        if (curl_errno($ch)) {
-            throw new Exception("Curl error: " . curl_error($ch));
+        $maxRetries = 3;
+        $attempt = 0;
+        
+        while ($attempt < $maxRetries) {
+            $ch = curl_init($url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postData));
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $curlError = curl_error($ch);
+            curl_close($ch);
+            
+            if ($curlError) {
+                return "文字起こし中に通信エラーが発生しました: " . $curlError;
+            }
+            
+            $data = json_decode($response, true);
+            
+            // 成功時
+            if ($httpCode >= 200 && $httpCode < 300 && isset($data['candidates'][0]['content']['parts'][0]['text'])) {
+                return $data['candidates'][0]['content']['parts'][0]['text'];
+            }
+            
+            // APIエラー（503 high demand等）の場合は再試行
+            if (isset($data['error'])) {
+                $errorMsg = $data['error']['message'] ?? 'Unknown error';
+                // 400系なら再試行しても無駄なことが多いが、500/503は再試行する
+                if ($httpCode >= 500 || strpos(strtolower($errorMsg), 'demand') !== false || strpos(strtolower($errorMsg), 'quota') !== false) {
+                    $attempt++;
+                    if ($attempt < $maxRetries) {
+                        sleep(2 * $attempt); // Exponential backoff (2s, 4s, 6s...)
+                        continue;
+                    }
+                    return "AIサーバーが混雑しています（" . $errorMsg . "）。時間をおいて再度アップロードしてください。";
+                }
+                return "APIエラーが発生しました: " . $errorMsg;
+            }
+            
+            return "予期せぬレスポンスが返されました。";
         }
-        curl_close($ch);
-
-        $data = json_decode($response, true);
         
-        return $data['candidates'][0]['content']['parts'][0]['text'] ?? "文字起こしエラーが発生しました（Gemini）。";
+        return "サーバー混雑により文字起こしを完了できませんでした。後ほど再試行してください。";
     }
 }

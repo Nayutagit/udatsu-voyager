@@ -47,7 +47,7 @@ body {
     font-family: var(--font-main);
     color: var(--text-white);
     background-color: var(--bg-dark);
-    background-image: url('../img/concrete_bg.png');
+    background-image: linear-gradient(rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.85)), url('../img/concrete_bg.png');
     background-size: cover;
     background-attachment: fixed;
     line-height: 1.8;

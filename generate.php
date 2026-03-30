@@ -52,25 +52,45 @@ function generateText($prompt, $apiKey) {
     "Content-Type: application/json"
   ];
 
-  $ch = curl_init($url);
-  curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-  curl_setopt($ch, CURLOPT_POST, true);
-  curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-  curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postData));
-  $response = curl_exec($ch);
-  
-  if (curl_errno($ch)) {
-      return json_encode(["error" => "Curl error: " . curl_error($ch)]);
+  $maxRetries = 3;
+  $attempt = 0;
+
+  while ($attempt < $maxRetries) {
+      $ch = curl_init($url);
+      curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+      curl_setopt($ch, CURLOPT_POST, true);
+      curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+      curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postData));
+      $response = curl_exec($ch);
+      $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+      $curlError = curl_error($ch);
+      curl_close($ch);
+    
+      if ($curlError) {
+          return "⚠ 通信エラーが発生しました: " . $curlError;
+      }
+    
+      $data = json_decode($response, true);
+    
+      if ($httpCode >= 200 && $httpCode < 300 && isset($data['candidates'][0]['content']['parts'][0]['text'])) {
+          return $data['candidates'][0]['content']['parts'][0]['text'];
+      }
+    
+      if (isset($data['error'])) {
+        $errorMsg = $data['error']['message'] ?? 'Unknown Gemini API Error';
+        if ($httpCode >= 500 || strpos(strtolower($errorMsg), 'demand') !== false || strpos(strtolower($errorMsg), 'quota') !== false) {
+            $attempt++;
+            if ($attempt < $maxRetries) {
+                sleep(2 * $attempt);
+                continue;
+            }
+            return "⚠ AIサーバーが混雑しています（High Demand）。\n時間をおいてから再度「Generate Asset」ボタンを押してください。\n\n[詳細: $errorMsg]";
+        }
+        return "⚠ APIエラー: " . $errorMsg;
+      }
+      
+      return "⚠ 予期せぬエラーが発生しました。";
   }
-  curl_close($ch);
-
-  $data = json_decode($response, true);
-
-  if (isset($data['error'])) {
-    return json_encode(["error" => $data['error']['message'] ?? 'Unknown Gemini API Error']);
-  }
-
-  return $data['candidates'][0]['content']['parts'][0]['text'] ?? "整文エラーが発生しました（Gemini）。";
 }
 
 // 🔸 実行
