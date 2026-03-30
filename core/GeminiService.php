@@ -94,7 +94,7 @@ class GeminiService {
     private function waitForFileActive($fileUri) {
         $url = "https://generativelanguage.googleapis.com/v1beta/files/" . basename($fileUri) . "?key={$this->apiKey}";
         
-        $maxRetries = 60; // 60 seconds max
+        $maxRetries = 15; // APIリミット(1分15回)を使い切らないように最大15回
         $lastResponse = "";
         
         for ($i = 0; $i < $maxRetries; $i++) {
@@ -109,7 +109,11 @@ class GeminiService {
             if (isset($data['error'])) {
                 // If the check itself fails (e.g. Rate limit, High Demand)
                 $errMsg = $data['error']['message'] ?? 'Unknown API Error';
-                throw new Exception("サーバー混雑または制限エラー: " . $errMsg);
+                $code = $data['error']['code'] ?? '';
+                if ($code == 429) {
+                    throw new Exception("無料枠の1分間あたりの利用制限をオーバーしました。1分待ってから再度お試しください。");
+                }
+                throw new Exception("サーバー混雑または制限エラー: [" . $code . "] " . $errMsg);
             }
             
             $state = $data['state'] ?? 'UNKNOWN';
@@ -121,9 +125,10 @@ class GeminiService {
                 throw new Exception("Geminiでの音声ファイル処理が失敗しました。");
             }
             
-            sleep(1);
+            // 重要：1秒ではなく、4〜5秒待つことで、Free Tierの「1分間15リクエスト上限」を突破しないようにする
+            sleep(4);
         }
-        throw new Exception("タイムアウトしました。APIからの最後の応答: " . $lastResponse);
+        throw new Exception("タイムアウトしました。音声ファイル処理中のまま進みません。");
     }
 
     private function generateContent($fileUri, $mimeType) {
