@@ -200,4 +200,55 @@ class GeminiService {
         
         return "サーバー混雑により文字起こしを完了できませんでした。後ほど再試行してください。";
     }
+
+    /**
+     * Sends a plain text prompt to Gemini and returns the generated text.
+     *
+     * @param string $prompt Prompt text to generate content from.
+     * @param bool $useJson If true, expects JSON structured output.
+     * @return string The generated text or JSON string.
+     * @throws Exception If generation fails.
+     */
+    public function generateText($prompt, $useJson = false) {
+        $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key={$this->apiKey}";
+        
+        $postData = [
+            "contents" => [
+                [
+                    "role" => "user",
+                    "parts" => [
+                        ["text" => $prompt]
+                    ]
+                ]
+            ],
+            "generationConfig" => [
+                "responseMimeType" => $useJson ? "application/json" : "text/plain"
+            ]
+        ];
+
+        $headers = ["Content-Type: application/json"];
+        
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 120);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postData));
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curlError = curl_error($ch);
+        curl_close($ch);
+        
+        if ($curlError) {
+            throw new Exception("通信エラーが発生しました: " . $curlError);
+        }
+        
+        $data = json_decode($response, true);
+        if ($httpCode >= 200 && $httpCode < 300 && isset($data['candidates'][0]['content']['parts'][0]['text'])) {
+            return $data['candidates'][0]['content']['parts'][0]['text'];
+        }
+        
+        $errorMsg = $data['error']['message'] ?? 'Unknown API error';
+        throw new Exception("AI生成エラー [HTTP {$httpCode}]: " . $errorMsg);
+    }
 }

@@ -12,6 +12,10 @@ $uploadSuccess = $_GET['upload_success'] ?? '0';
 $userDir     = __DIR__ . '/../users/';
 $profileFile = $userDir . $uid . '_profile.json';
 $postsFile   = $userDir . $uid . '_posts.json';
+$dictFile    = $userDir . $uid . '_dictionary.json';
+
+$thoughtDict = file_exists($dictFile) ? json_decode(file_get_contents($dictFile), true) : [];
+if (!is_array($thoughtDict)) $thoughtDict = [];
 
 $profile = ["display_name" => $userName, "title" => '', "bio" => '', "image" => ''];
 if (file_exists($profileFile)) {
@@ -143,6 +147,31 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
       </a>
     </div>
 
+    <!-- Thought Tendencies -->
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px;" class="animate-fadeup delay-100">
+      <h2 class="section-title" style="font-size: 1.8rem; margin-bottom: 0;">🧠 Thought Core</h2>
+      <button onclick="updateBrain()" class="btn btn-secondary" style="padding: 5px 15px; font-size: 0.8rem; height: fit-content;" id="updateBrainBtn">
+        <i class="fas fa-sync-alt"></i> 最新データで分析する
+      </button>
+    </div>
+    
+    <div class="glass-card animate-fadeup delay-100" style="margin-bottom: 60px; padding: 20px;">
+      <?php if (empty($thoughtDict)): ?>
+        <p class="text-muted" style="text-align: center; margin: 20px 0;">まだ脳内分析データがありません。「最新データで分析する」ボタンを押すとAIがあなたの傾向を分析します。</p>
+      <?php else: ?>
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px;">
+        <?php foreach ($thoughtDict as $keyword => $description): ?>
+          <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 15px; transition: transform 0.2s;">
+            <h4 style="color: var(--primary-neon); margin-bottom: 10px; font-size: 1.1rem;">#<?= htmlspecialchars($keyword) ?></h4>
+            <p style="color: var(--text-white); font-size: 0.9rem; line-height: 1.5; margin: 0;">
+              <?= htmlspecialchars($description) ?>
+            </p>
+          </div>
+        <?php endforeach; ?>
+        </div>
+      <?php endif; ?>
+    </div>
+
     <!-- Recent Posts -->
     <h2 class="section-title animate-fadeup delay-200" style="font-size: 1.8rem; margin-bottom: 30px;">Recent Posts</h2>
     
@@ -222,6 +251,31 @@ function checkPostLimit() {
     })
     .catch(() => {
       window.location.href = 'create_post.php'; // Fallback
+    });
+}
+
+function updateBrain() {
+  const btn = document.getElementById('updateBrainBtn');
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 分析中(数分かかります)...';
+  btn.classList.add('disabled');
+  btn.disabled = true;
+
+  fetch('analyze_brain.php')
+    .then(res => res.json())
+    .then(data => {
+      if (data.status === 'async_started') {
+        alert("バックグラウンドで分析を開始しました。数分後にリロードすると傾向がアップデートされます！");
+        btn.innerHTML = '<i class="fas fa-check"></i> 分析中';
+      } else {
+        alert(data.message || "エラーが発生しました");
+        btn.innerHTML = '<i class="fas fa-sync-alt"></i> 最新データで分析する';
+        btn.disabled = false;
+      }
+    })
+    .catch(e => {
+        alert("通信エラーが発生しました");
+        btn.innerHTML = '<i class="fas fa-sync-alt"></i> 最新データで分析する';
+        btn.disabled = false;
     });
 }
 </script>
