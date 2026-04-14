@@ -106,7 +106,7 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
 
   <?php if ($uploadSuccess === '1'): ?>
   <div id="toast" style="position:fixed; bottom:20px; right:20px; background:var(--primary-neon); color:#000; padding:15px 20px; border-radius:8px; font-weight:bold; box-shadow:0 10px 30px rgba(0,255,204,0.3); z-index:9999; animation: slideIn 0.5s ease-out;">
-    <i class="fas fa-check-circle"></i> アップロード完了！裏側のAIに送信しました。
+    <i class="fas fa-check-circle"></i> 音声解析中です。他の音声も続けてアップロードできます。
   </div>
   <script>
     setTimeout(() => {
@@ -205,6 +205,12 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
               <h3 class="post-title" style="min-height: 3em;">
                 <a href="view_post.php?index=<?= $i ?>"><?= htmlspecialchars(mb_strimwidth($post['title'], 0, 50, '...')) ?></a>
               </h3>
+              
+              <?php if (!empty($post['audio_file'])): ?>
+                <div style="margin-top: 10px; margin-bottom: 10px;">
+                  <audio controls style="width: 100%; height: 36px; border-radius: 18px;" src="../<?= htmlspecialchars($post['audio_file']) ?>"></audio>
+                </div>
+              <?php endif; ?>
               
               <div style="display: flex; gap: 10px; margin-top: 20px;">
                 <a href="edit_post.php?index=<?= $i ?>" class="btn btn-secondary" style="padding: 5px 15px; font-size: 0.8rem; flex: 1;">

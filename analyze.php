@@ -31,7 +31,8 @@ $newPost = [
     'content' => '',
     'date' => date('Y-m-d'),
     'category' => 'Voice Memo',
-    'status' => '解析中'
+    'status' => '解析中',
+    'audio_file' => $audioPath
 ];
 $posts[] = $newPost;
 file_put_contents($userPostsFile, json_encode($posts, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
@@ -92,11 +93,11 @@ try {
             $p['content'] = ''; // AI生成用コンテンツ
             $p['status'] = '下書き';
             $p['category'] = 'Voice Memo';
+            $p['audio_file'] = $audioPath;
             break;
         }
     }
     file_put_contents($userPostsFile, json_encode($posts, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-    @unlink($audioPath);
 
 } catch (Exception $e) {
     // 解析失敗
@@ -106,10 +107,10 @@ try {
             $p['title'] = '❌ 解析エラー';
             $p['text'] = 'エラーが発生しました：' . $e->getMessage();
             $p['status'] = '下書き'; // 読めるように下書きにしておく
+            $p['audio_file'] = $audioPath;
             break;
         }
     }
     file_put_contents($userPostsFile, json_encode($posts, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-    @unlink($audioPath);
 }
 exit();
