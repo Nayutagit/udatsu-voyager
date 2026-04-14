@@ -67,13 +67,26 @@ try {
     $gemini = new GeminiService();
     $raw = $gemini->transcribe($audioPath, $mimeType);
     
+    // タイトルの自動生成 (テキストの冒頭5000文字を使って短いタイトルを作る)
+    $titlePrompt = "以下の文字起こしテキストの内容を端的に表す、15文字以下のシンプルでキャッチーなタイトルを作成してください。結果の文字列のみを出力してください。\n\n" . mb_strimwidth($raw, 0, 5000);
+    try {
+        $generatedTitle = $gemini->generateText($titlePrompt, false);
+        // 余計な記号などを除去
+        $generatedTitle = str_replace(["\n", "\r", "\"", "'", "「", "」"], "", trim($generatedTitle));
+    } catch (Exception $e) {
+        $generatedTitle = mb_strimwidth(str_replace("\n", " ", $raw), 0, 15, '');
+    }
+    
+    // VJ20260414_タイトル の形式にする
+    $datePrefix = "VJ" . date('Ymd');
+    $finalTitle = $datePrefix . "_" . $generatedTitle;
+    
     // 解析成功：JSON読み直し（並行でユーザーが追加している可能性があるため）
     $posts = json_decode(file_get_contents($userPostsFile), true);
     foreach ($posts as &$p) {
         if (($p['id'] ?? '') === $jobId) {
             // 解析結果を上書きし、ステータスを下書きへ
-            $cleanTitle = mb_strimwidth(str_replace("\n", " ", $raw), 0, 40, '...');
-            $p['title'] = $cleanTitle;
+            $p['title'] = $finalTitle;
             $p['text'] = "【自動文字起こし】\n\n" . $raw;
             $p['original_text'] = $raw;
             $p['content'] = ''; // AI生成用コンテンツ
