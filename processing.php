@@ -91,51 +91,20 @@
     const fill = document.querySelector('.progress-fill');
     const status = document.getElementById('status-text');
     
-    // Step 1: Start AJAX process
-    status.textContent = "AI解析を開始します...";
-    fill.style.width = '20%';
+    status.textContent = "AIに音声を送信中...";
+    fill.style.width = '50%';
 
-    fetch('analyze.php')
-      .then(response => response.json())
-      .then(data => {
-        if (data.status === 'success') {
-          fill.style.width = '100%';
-          status.textContent = "解析完了！画面を切り替えます...";
-          setTimeout(() => {
-            window.location.href = "result.php";
-          }, 1000);
-        } else {
-          status.textContent = "エラー: " + (data.message || "解析に失敗しました。");
-          status.style.color = "var(--warning-red)";
-          fill.style.backgroundColor = "var(--warning-red)";
-          document.querySelector('.loader-icon').className = "fas fa-exclamation-triangle loader-icon";
-          
-          // エラー時に戻るボタンを表示
-          const btn = document.createElement('a');
-          btn.href = 'voyager_upload.php';
-          btn.className = 'btn btn-secondary';
-          btn.style.marginTop = '20px';
-          btn.innerHTML = '<i class="fas fa-undo"></i> 録音に戻る';
-          document.querySelector('.container').appendChild(btn);
-        }
-      })
-      .catch(error => {
-        status.textContent = "通信エラーが発生しました。";
-        status.style.color = "var(--warning-red)";
-      });
+    // Fire the async task and DO NOT wait for it to finish!
+    fetch('analyze.php').catch(e => console.error(e));
 
-    // 進行状況のフェイク（通信中であることを示すためにゆっくり動かす）
-    let progress = 20;
-    const interval = setInterval(() => {
-      if (progress < 90) {
-        progress += (90 - progress) * 0.1;
-        fill.style.width = progress + '%';
-        if (progress > 40 && progress < 70) status.textContent = "音声をテキストに変換中...";
-        if (progress > 70) status.textContent = "仕上げを行っています...";
-      } else {
-        clearInterval(interval);
-      }
-    }, 2000);
+    // Wait just a tiny bit for the UI effect, then redirect to Dashboard
+    setTimeout(() => {
+        fill.style.width = '100%';
+        status.textContent = "バックグラウンド移行完了";
+        setTimeout(() => {
+            window.location.href = "mypage/dashboard.php?upload_success=1";
+        }, 800);
+    }, 1000);
   });
   </script>
 </head>
@@ -154,7 +123,7 @@
     </div>
 
     <p class="text-muted" style="margin-top: 20px; font-size: 0.9rem;">
-      <i class="fas fa-info-circle"></i> Please do not close this window.
+      <i class="fas fa-info-circle"></i> 解析をダッシュボードの裏側に移行しています...
     </p>
 
   </div>

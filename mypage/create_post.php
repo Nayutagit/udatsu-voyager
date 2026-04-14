@@ -44,6 +44,7 @@ if ($isRealSubmission) {
 
   $title     = htmlspecialchars($_POST['title'] ?? '', ENT_QUOTES, 'UTF-8');
   $text      = htmlspecialchars($_POST['text'] ?? '', ENT_QUOTES, 'UTF-8');
+  $rawText   = htmlspecialchars($_POST['raw_text'] ?? '', ENT_QUOTES, 'UTF-8');
   $date      = $_POST['date'] ?? date('Y-m-d');
   $category  = htmlspecialchars($_POST['category'] ?? '', ENT_QUOTES, 'UTF-8');
   $status    = '下書き';
@@ -63,7 +64,7 @@ if ($isRealSubmission) {
   $newPost = [
     'title'        => $title,
     'text'         => $text,
-    'original_text'=> $text,
+    'original_text'=> $rawText ? $rawText : $text,
     'content'      => $text,
     'date'         => $date,
     'category'     => $category,
@@ -398,6 +399,7 @@ if ($isRealSubmission) {
   </div>
 
   <form method="POST" enctype="multipart/form-data">
+    <input type="hidden" name="raw_text" id="rawTextInput">
     <label>タイトル（必須）</label>
     <input type="text" name="title" id="titleInput" required>
 
@@ -449,13 +451,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const autoTitle = sessionStorage.getItem('udatsu_auto_title');
     const autoContent = sessionStorage.getItem('udatsu_auto_content');
     const autoFill = sessionStorage.getItem('udatsu_auto_fill');
+    const autoRaw = sessionStorage.getItem('udatsu_auto_raw');
     
     if (autoTitle && autoContent && autoFill === '1') {
       const titleInput = document.getElementById('titleInput');
       const contentTextarea = document.getElementById('contentTextarea');
+      const rawInput = document.getElementById('rawTextInput');
       
       titleInput.value = autoTitle;
       contentTextarea.value = autoContent;
+      if (autoRaw) rawInput.value = autoRaw;
       
       // ハイライト効果
       titleInput.style.borderColor = 'var(--primary-neon)';
@@ -475,6 +480,7 @@ document.addEventListener('DOMContentLoaded', function() {
       sessionStorage.removeItem('udatsu_auto_title');
       sessionStorage.removeItem('udatsu_auto_content');
       sessionStorage.removeItem('udatsu_auto_fill');
+      sessionStorage.removeItem('udatsu_auto_raw');
     }
   }
 });

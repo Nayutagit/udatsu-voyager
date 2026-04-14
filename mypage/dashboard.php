@@ -7,6 +7,8 @@ if (empty($uid) || empty($userName) || empty($userPlan)) {
   exit();
 }
 
+$uploadSuccess = $_GET['upload_success'] ?? '0';
+
 $userDir     = __DIR__ . '/../users/';
 $profileFile = $userDir . $uid . '_profile.json';
 $postsFile   = $userDir . $uid . '_posts.json';
@@ -98,6 +100,28 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
       </div>
     </div>
 
+  <?php if ($uploadSuccess === '1'): ?>
+  <div id="toast" style="position:fixed; bottom:20px; right:20px; background:var(--primary-neon); color:#000; padding:15px 20px; border-radius:8px; font-weight:bold; box-shadow:0 10px 30px rgba(0,255,204,0.3); z-index:9999; animation: slideIn 0.5s ease-out;">
+    <i class="fas fa-check-circle"></i> アップロード完了！裏側のAIに送信しました。
+  </div>
+  <script>
+    setTimeout(() => {
+      const toast = document.getElementById('toast');
+      if (toast) {
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.5s ease';
+        setTimeout(() => toast.remove(), 500);
+      }
+    }, 5000);
+  </script>
+  <style>
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+  </style>
+  <?php endif; ?>
+
     <!-- Main Actions -->
     <div class="dashboard-grid animate-fadeup delay-100" style="margin-bottom: 60px;">
       <a href="my_udastack.php" class="glass-card" style="text-align: center; display: block; text-decoration: none; border-color: var(--accent-teal);">
@@ -106,10 +130,16 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
         <p class="text-muted">蓄積された思考資産を確認</p>
       </a>
       
-      <a href="javascript:void(0)" onclick="checkPostLimit()" class="glass-card" style="text-align: center; display: block; text-decoration: none; border-color: var(--primary-neon);">
-        <i class="fas fa-pen-fancy text-neon" style="font-size: 3rem; margin-bottom: 20px;"></i>
-        <h3 style="margin-bottom: 10px;">Create Post</h3>
-        <p class="text-muted">新しい記事を作成する</p>
+      <a href="../voyager_upload.php" class="glass-card" style="text-align: center; display: block; text-decoration: none; border-color: var(--primary-neon);">
+        <i class="fas fa-microphone-alt text-neon" style="font-size: 3rem; margin-bottom: 20px;"></i>
+        <h3 style="margin-bottom: 10px;">Record Journal</h3>
+        <p class="text-muted">声で新しい思考を記録する</p>
+      </a>
+    </div>
+
+    <div style="text-align: right; margin-top: -40px; margin-bottom: 40px;">
+      <a href="javascript:void(0)" onclick="checkPostLimit()" style="color: var(--text-muted); font-size: 0.9rem; text-decoration: none; transition: 0.3s;" onmouseover="this.style.color='var(--text-white)'" onmouseout="this.style.color='var(--text-muted)'">
+        <i class="fas fa-keyboard"></i> 手入力で記録を作成する
       </a>
     </div>
 
@@ -130,9 +160,18 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
         <?php foreach ($visiblePosts as $i => $post): ?>
           <div class="post-card">
             <div class="post-content">
-              <div class="post-meta" style="margin-bottom: 10px;">
+              <div class="post-meta" style="margin-bottom: 10px; display: flex; align-items: center; gap: 10px;">
                 <span><i class="far fa-calendar-alt"></i> <?= htmlspecialchars($post['date']) ?></span>
-                <span class="text-teal"><?= htmlspecialchars($post['category'] ?? 'Uncategorized') ?></span>
+                <span class="text-teal" style="background: rgba(0, 164, 216, 0.1); padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;"><?= htmlspecialchars($post['category'] ?? 'Uncategorized') ?></span>
+                <?php if (($post['status'] ?? '') === '解析中'): ?>
+                  <span style="background: rgba(0, 255, 204, 0.2); color: var(--primary-neon); padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;"><i class="fas fa-spinner fa-spin"></i> 解析中...</span>
+                <?php elseif (($post['status'] ?? '') === 'エラー'): ?>
+                  <span style="background: rgba(255, 68, 68, 0.1); color: var(--warning-red); padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;"><i class="fas fa-exclamation-triangle"></i> 解析エラー</span>
+                <?php elseif (($post['status'] ?? '') === '下書き'): ?>
+                  <span style="background: rgba(255, 255, 255, 0.1); color: var(--text-muted); padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;">下書き</span>
+                <?php elseif (($post['status'] ?? '') === 'My Udastack追加済'): ?>
+                  <span style="background: rgba(252, 200, 0, 0.1); color: var(--primary-neon); padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;"><i class="fas fa-check"></i> Stacked</span>
+                <?php endif; ?>
               </div>
               <h3 class="post-title" style="min-height: 3em;">
                 <a href="view_post.php?index=<?= $i ?>"><?= htmlspecialchars(mb_strimwidth($post['title'], 0, 50, '...')) ?></a>

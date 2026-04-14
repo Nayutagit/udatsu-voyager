@@ -46,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$limitReached) {
 
     $finfo = new finfo(FILEINFO_MIME_TYPE);
     $mimeType = $finfo->file($fileKey['tmp_name']);
-    $allowedTypes = ['audio/m4a','audio/mp4','audio/x-m4a','audio/mpeg','audio/mp3','audio/x-mp3','audio/wav','audio/x-wav','audio/webm','video/webm','audio/ogg','video/mp4'];
+    $allowedTypes = ['audio/m4a','audio/mp4','audio/x-m4a','audio/mpeg','audio/mp3','audio/x-mp3','audio/wav','audio/x-wav','audio/webm','video/webm','audio/ogg','video/mp4','audio/aac','audio/x-aac','audio/mp4a-latm'];
     if (!in_array($mimeType, $allowedTypes, true)) {
       exit("対応していないファイル形式です。({$mimeType})");
     }

@@ -312,6 +312,9 @@ function createPost() {
   sessionStorage.setItem('udatsu_auto_content', currentContent);
   sessionStorage.setItem('udatsu_auto_fill', '1');
   
+  const userEditedText = document.getElementById('raw-text-area').value;
+  sessionStorage.setItem('udatsu_auto_raw', userEditedText);
+  
   window.location.href = 'mypage/create_post.php?auto_redirect=1';
 }
 </script>

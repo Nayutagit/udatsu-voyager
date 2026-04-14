@@ -55,6 +55,7 @@ class GeminiService {
         curl_setopt($ch, CURLOPT_HEADER, true);
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 600); // 10 minutes timeout for large file upload
         curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
         $response = curl_exec($ch);
         $headerSize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
@@ -77,6 +78,7 @@ class GeminiService {
         $ch = curl_init($uploadUrl);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 600); // 10 minutes timeout for large file transmission
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $fileData);
         $response = curl_exec($ch);
@@ -94,7 +96,7 @@ class GeminiService {
     private function waitForFileActive($fileUri) {
         $url = "https://generativelanguage.googleapis.com/v1beta/files/" . basename($fileUri) . "?key={$this->apiKey}";
         
-        $maxRetries = 15; // APIリミット(1分15回)を使い切らないように最大15回
+        $maxRetries = 120; // 60分音声対応：最大10分間 (5秒 x 120回) 待機
         $lastResponse = "";
         
         for ($i = 0; $i < $maxRetries; $i++) {
@@ -125,14 +127,14 @@ class GeminiService {
                 throw new Exception("Geminiでの音声ファイル処理が失敗しました。");
             }
             
-            // 重要：1秒ではなく、4〜5秒待つことで、Free Tierの「1分間15リクエスト上限」を突破しないようにする
-            sleep(4);
+            // 重要：1秒ではなく、5秒待つことで、Free Tierの「1分間15リクエスト上限」を突破しないようにする
+            sleep(5);
         }
         throw new Exception("タイムアウトしました。音声ファイル処理中のまま進みません。");
     }
 
     private function generateContent($fileUri, $mimeType) {
-        $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={$this->apiKey}";
+        $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key={$this->apiKey}";
         
         $postData = [
             "contents" => [
@@ -159,6 +161,7 @@ class GeminiService {
             $ch = curl_init($url);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 600); // 10 minutes timeout for generation response
             curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
             curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postData));
             $response = curl_exec($ch);

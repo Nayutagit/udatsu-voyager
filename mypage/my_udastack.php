@@ -13,11 +13,18 @@ $posts     = file_exists($postsFile) ? json_decode(file_get_contents($postsFile)
 $stackedPosts = array_values(array_reverse(array_filter($posts, fn($p) => $p['status'] === 'My Udastack追加済')));
 
 $allSummaries = [];
+$allKeywords = [];
 foreach ($stackedPosts as $p) {
   if (!empty($p['summary'])) {
     $allSummaries[] = $p['summary'];
   }
+  if (!empty($p['keywords']) && is_array($p['keywords'])) {
+    foreach ($p['keywords'] as $kw) {
+      $allKeywords[$kw] = true;
+    }
+  }
 }
+$uniqueKeywords = array_keys($allKeywords);
 $summaryText = count($allSummaries) > 0 ? implode(" / ", array_slice($allSummaries, 0, 3)) : '（要約がまだありません）';
 ?>
 <!DOCTYPE html>
@@ -367,6 +374,23 @@ $summaryText = count($allSummaries) > 0 ? implode(" / ", array_slice($allSummari
     📚 積み上げた投稿一覧
   </div>
 
+  <?php if (!empty($uniqueKeywords)): ?>
+  <div style="margin-bottom: 2rem; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;">
+    <?php foreach ($uniqueKeywords as $kw): ?>
+      <span class="keyword-filter-tag" data-kw="<?= htmlspecialchars($kw) ?>" onclick="toggleFilter('<?= htmlspecialchars($kw) ?>')" style="
+        background: rgba(255, 255, 255, 0.1); 
+        border: 1px solid var(--accent-teal); 
+        color: var(--text-white); 
+        padding: 5px 15px; 
+        border-radius: 20px; 
+        cursor: pointer; 
+        transition: all 0.2s;">
+        #<?= htmlspecialchars($kw) ?>
+      </span>
+    <?php endforeach; ?>
+  </div>
+  <?php endif; ?>
+
   <?php 
   // 元の投稿データからスタック済みのものを見つけるためのマッピング
   $originalIndexMap = [];
@@ -378,7 +402,7 @@ $summaryText = count($allSummaries) > 0 ? implode(" / ", array_slice($allSummari
   ?>
 
   <?php foreach ($stackedPosts as $i => $post): ?>
-  <div class="stack-item" id="stack-item-<?= $i ?>">
+  <div class="stack-item" id="stack-item-<?= $i ?>" data-keywords="<?= htmlspecialchars(json_encode($post['keywords'] ?? [])) ?>">
     <h3><?= htmlspecialchars($post['title'] ?? '（タイトル未設定）') ?></h3>
     <div class="field-label">🧠 整文:</div>
     <div><?= nl2br(htmlspecialchars($post['refined_text'] ?? '（なし）')) ?></div>
@@ -523,6 +547,49 @@ function unstackPost(stackIndex, originalIndex) {
     document.getElementById('unstackingModal').style.display = 'none';
     alert('通信エラーが発生しました');
     console.error(err);
+  });
+}
+
+let currentFilterKw = null;
+function toggleFilter(kw) {
+  const allTags = document.querySelectorAll('.keyword-filter-tag');
+  allTags.forEach(tag => {
+    if (tag.dataset.kw === kw) {
+      if (currentFilterKw === kw) {
+        // Reset
+        tag.style.background = 'rgba(255, 255, 255, 0.1)';
+        tag.style.borderColor = 'var(--accent-teal)';
+        tag.style.color = 'var(--text-white)';
+      } else {
+        // Select
+        tag.style.background = 'var(--primary-neon)';
+        tag.style.borderColor = 'var(--primary-neon)';
+        tag.style.color = '#000';
+      }
+    } else {
+      // Unselected
+      tag.style.background = 'rgba(255, 255, 255, 0.1)';
+      tag.style.borderColor = 'var(--accent-teal)';
+      tag.style.color = 'var(--text-white)';
+    }
+  });
+
+  if (currentFilterKw === kw) {
+    currentFilterKw = null;
+  } else {
+    currentFilterKw = kw;
+  }
+
+  // Filter items
+  const items = document.querySelectorAll('.stack-item');
+  items.forEach(item => {
+    if (!item.dataset.keywords) return; // empty state item
+    const kws = JSON.parse(item.dataset.keywords || '[]');
+    if (currentFilterKw && !kws.includes(currentFilterKw)) {
+      item.style.display = 'none';
+    } else {
+      item.style.display = 'block';
+    }
   });
 }
 </script>
