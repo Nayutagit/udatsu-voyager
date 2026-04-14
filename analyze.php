@@ -87,7 +87,7 @@ try {
         if (($p['id'] ?? '') === $jobId) {
             // 解析結果を上書きし、ステータスを下書きへ
             $p['title'] = $finalTitle;
-            $p['text'] = "【自動文字起こし】\n\n" . $raw;
+            $p['text'] = $raw;
             $p['original_text'] = $raw;
             $p['content'] = ''; // AI生成用コンテンツ
             $p['status'] = '下書き';
