@@ -139,6 +139,12 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
         <h3 style="margin-bottom: 10px;">Record Journal</h3>
         <p class="text-muted">声で新しい思考を記録する</p>
       </a>
+
+      <a href="shortcut_setup.php" class="glass-card" style="text-align: center; display: block; text-decoration: none; border-color: #007aff;">
+        <i class="fab fa-apple" style="font-size: 3rem; margin-bottom: 20px; color: #007aff;"></i>
+        <h3 style="margin-bottom: 10px;">iPhone Shortcut</h3>
+        <p class="text-muted">共有ボタンから直接アップロード</p>
+      </a>
     </div>
 
     <div style="text-align: right; margin-top: -40px; margin-bottom: 40px;">
