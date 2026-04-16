@@ -5,72 +5,60 @@ use Kreait\Firebase\Factory;
 
 class FirebaseService {
     private $factory;
-    private $firestore;
-    private $storageBucket;
+    private $bucket;
     private $bucketName = 'udatsu-ageteko.appspot.com';
 
     public function __construct() {
         $credentialsPath = __DIR__ . '/../config/firebase_credentials.json';
         if (!file_exists($credentialsPath)) {
-            throw new Exception("Firebase credentials not found.");
+            throw new Exception("Firebase credentials not found at: " . $credentialsPath);
         }
-
-        $this->factory = (new Factory)
-            ->withServiceAccount($credentialsPath);
+        $this->factory = (new Factory)->withServiceAccount($credentialsPath);
     }
 
-    public function getFirestore() {
-        if (!$this->firestore) {
-            $this->firestore = $this->factory->createFirestore()->database();
+    private function getBucket() {
+        if (!$this->bucket) {
+            $this->bucket = $this->factory->createStorage()->getBucket($this->bucketName);
         }
-        return $this->firestore;
-    }
-
-    public function getBucket() {
-        if (!$this->storageBucket) {
-            $this->storageBucket = $this->factory->createStorage()->getBucket($this->bucketName);
-        }
-        return $this->storageBucket;
+        return $this->bucket;
     }
 
     /**
-     * Store/Update a post in Firestore
+     * Upload an audio file to Firebase Storage.
+     * @return string The storage path (e.g. "audio/{uid}/filename.m4a")
      */
-    public function savePost($uid, $postId, $postData) {
-        $db = $this->getFirestore();
-        if (!isset($postData['created_at'])) {
-            $postData['created_at'] = time();
+    public function uploadAudio(string $localPath, string $uid): string {
+        $filename = basename($localPath);
+        $storagePath = "audio/{$uid}/{$filename}";
+
+        $bucket = $this->getBucket();
+        $bucket->upload(
+            fopen($localPath, 'r'),
+            ['name' => $storagePath]
+        );
+
+        return $storagePath;
+    }
+
+    /**
+     * Generate a short-lived signed URL (1 week) for a storage path.
+     */
+    public function getSignedUrl(string $storagePath, int $expiryMinutes = 10080): string {
+        $bucket = $this->getBucket();
+        $object = $bucket->object($storagePath);
+
+        $signedUrl = $object->signedUrl(new \DateTime("+{$expiryMinutes} minutes"));
+        return (string) $signedUrl;
+    }
+
+    /**
+     * Check if a storage object exists.
+     */
+    public function audioExists(string $storagePath): bool {
+        try {
+            return $this->getBucket()->object($storagePath)->exists();
+        } catch (\Exception $e) {
+            return false;
         }
-        $db->collection('users')->document($uid)->collection('posts')->document($postId)->set($postData);
-    }
-
-    /**
-     * Get a single post
-     */
-    public function getPost($uid, $postId) {
-        $db = $this->getFirestore();
-        $doc = $db->collection('users')->document($uid)->collection('posts')->document($postId)->snapshot();
-        return $doc->exists() ? $doc->data() : null;
-    }
-
-    /**
-     * Get all posts for a user, sorted descending by created_at
-     */
-    public function getAllPosts($uid) {
-        $db = $this->getFirestore();
-        $query = $db->collection('users')->document($uid)->collection('posts')->orderBy('created_at', 'DESC');
-        $docs = $query->documents();
-        $posts = [];
-        foreach ($docs as $doc) {
-            $posts[] = $doc->data();
-        }
-        return $posts;
-    }
-
-    /**
-     * Delete a post
-     */
-    public function deletePost($uid, $postId) {
-        $this->getFirestore()->collection('users')->document($uid)->collection('posts')->document($postId)->delete();
     }
 }
