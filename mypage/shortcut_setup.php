@@ -64,6 +64,16 @@ $apiToken = $profile['api_token'] ?? null;
 
   <?php if ($apiToken): ?>
 
+  <!-- PREREQUISITE WARNING -->
+  <div style="background: rgba(255,200,0,0.1); border: 1px solid rgba(255,200,0,0.4); border-radius: 12px; padding: 1.2rem 1.4rem; margin-bottom: 2rem;">
+    <p style="margin:0 0 0.6rem; color: var(--primary-neon); font-weight:700;">⚙️ まず1回だけiOS設定が必要です</p>
+    <p style="margin:0; color:var(--text-muted); font-size:0.9rem; line-height:1.6;">
+      <strong style="color:var(--text-white);">設定アプリ</strong> → <strong style="color:var(--text-white);">ショートカット</strong> →
+      <strong style="color:var(--primary-neon);">「信頼されていないショートカットを許可」をON</strong><br>
+      <span style="font-size:0.82rem; opacity:0.7;">(この設定がないとiOSがファイルを開けません)</span>
+    </p>
+  </div>
+
   <div class="flow">
     <div class="flow-step">
       <div class="flow-icon">⬇️</div>
