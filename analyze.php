@@ -15,14 +15,10 @@ if (!$audioPath || !file_exists($audioPath) || !$uid) {
 }
 
 // === ダッシュボードに「解析中」のダミーデータを即時作成 ===
-$userDir = __DIR__ . '/users/';
-if (!file_exists($userDir)) mkdir($userDir, 0755, true);
-$userPostsFile = $userDir . $uid . '_posts.json';
-
-$posts = file_exists($userPostsFile) ? json_decode(file_get_contents($userPostsFile), true) : [];
-if (!is_array($posts)) $posts = [];
-
+require_once __DIR__ . '/core/FirebaseService.php';
+$firebase = new FirebaseService();
 $jobId = 'job_' . time() . '_' . rand(1000, 9999);
+
 $newPost = [
     'id' => $jobId,
     'title' => '🎙 ' . date('H:i') . 'の音声を解析中...',
@@ -32,10 +28,10 @@ $newPost = [
     'date' => date('Y-m-d'),
     'category' => 'Voice Memo',
     'status' => '解析中',
-    'audio_file' => $audioPath
+    'audio_file' => '' // We will set this after upload
 ];
-$posts[] = $newPost;
-file_put_contents($userPostsFile, json_encode($posts, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+
+$firebase->savePost($uid, $jobId, $newPost);
 
 // 非同期実行のために変数待避＆セッションロック解放
 $mimeType = mime_content_type($audioPath);
@@ -82,35 +78,39 @@ try {
     $datePrefix = "VJ" . date('Ymd');
     $finalTitle = $datePrefix . "_" . $generatedTitle;
     
-    // 解析成功：JSON読み直し（並行でユーザーが追加している可能性があるため）
-    $posts = json_decode(file_get_contents($userPostsFile), true);
-    foreach ($posts as &$p) {
-        if (($p['id'] ?? '') === $jobId) {
-            // 解析結果を上書きし、ステータスを下書きへ
-            $p['title'] = $finalTitle;
-            $p['text'] = $raw;
-            $p['original_text'] = $raw;
-            $p['content'] = ''; // AI生成用コンテンツ
-            $p['status'] = '下書き';
-            $p['category'] = 'Voice Memo';
-            $p['audio_file'] = $audioPath;
-            break;
-        }
+    // 音声ファイルをFirebase Storageにアップロード
+    $bucket = $firebase->getBucket();
+    $storagePath = "audio/{$uid}/" . basename($audioPath);
+    try {
+        $bucket->upload(
+            fopen($audioPath, 'r'),
+            ['name' => $storagePath]
+        );
+        $audioUrlRef = $storagePath;
+    } catch (Exception $e) {
+        $audioUrlRef = '';
     }
-    file_put_contents($userPostsFile, json_encode($posts, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+    
+    // 解析成功：Firestore上書き
+    $post = $firebase->getPost($uid, $jobId) ?? $newPost;
+    $post['title'] = $finalTitle;
+    $post['text'] = $raw;
+    $post['original_text'] = $raw;
+    $post['content'] = ''; 
+    $post['status'] = '下書き';
+    $post['category'] = 'Voice Memo';
+    $post['audio_file'] = $audioUrlRef;
+    
+    $firebase->savePost($uid, $jobId, $post);
+    @unlink($audioPath); // ローカルファイルを削除！
 
 } catch (Exception $e) {
     // 解析失敗
-    $posts = json_decode(file_get_contents($userPostsFile), true);
-    foreach ($posts as &$p) {
-        if (($p['id'] ?? '') === $jobId) {
-            $p['title'] = '❌ 解析エラー';
-            $p['text'] = 'エラーが発生しました：' . $e->getMessage();
-            $p['status'] = '下書き'; // 読めるように下書きにしておく
-            $p['audio_file'] = $audioPath;
-            break;
-        }
-    }
-    file_put_contents($userPostsFile, json_encode($posts, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+    $post = $firebase->getPost($uid, $jobId) ?? $newPost;
+    $post['title'] = '❌ 解析エラー';
+    $post['text'] = 'エラーが発生しました：' . $e->getMessage();
+    $post['status'] = '下書き'; 
+    $firebase->savePost($uid, $jobId, $post);
+    @unlink($audioPath);
 }
 exit();
