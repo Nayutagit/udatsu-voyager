@@ -17,5 +17,20 @@
             "sizes": "512x512",
             "type": "image/png"
         }
-    ]
+    ],
+    "share_target": {
+        "action": "./share_upload.php",
+        "method": "POST",
+        "enctype": "multipart/form-data",
+        "params": {
+            "title": "title",
+            "text": "text",
+            "files": [
+                {
+                    "name": "audioFile",
+                    "accept": ["audio/*", ".m4a", ".mp3", ".wav", ".aac"]
+                }
+            ]
+        }
+    }
 }
