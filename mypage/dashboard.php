@@ -17,6 +17,13 @@ $dictFile    = $userDir . $uid . '_dictionary.json';
 $thoughtDict = file_exists($dictFile) ? json_decode(file_get_contents($dictFile), true) : [];
 if (!is_array($thoughtDict)) $thoughtDict = [];
 
+// Thought DNA profile
+$profileDataFile = $userDir . $uid . '_thought_profile.json';
+$thoughtProfile  = file_exists($profileDataFile) ? json_decode(file_get_contents($profileDataFile), true) : null;
+$sessFile        = $userDir . $uid . '_quiz_sessions.json';
+$quizSessions    = file_exists($sessFile) ? json_decode(file_get_contents($sessFile), true) : [];
+$quizCount       = count($quizSessions ?? []);
+
 $profile = ["display_name" => $userName, "title" => '', "bio" => '', "image" => ''];
 if (file_exists($profileFile)) {
   $profile = json_decode(file_get_contents($profileFile), true);
@@ -145,6 +152,13 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
         <h3 style="margin-bottom: 10px;">iPhone Shortcut</h3>
         <p class="text-muted">共有ボタンから直接アップロード</p>
       </a>
+
+      <a href="thought_quiz.php" class="glass-card" style="text-align: center; display: block; text-decoration: none; border-color: #a855f7; position: relative; overflow: hidden;">
+        <div style="position:absolute; top:10px; right:12px; background: rgba(168,85,247,0.2); color:#a855f7; font-size:0.7rem; font-weight:700; padding:2px 8px; border-radius:99px;"><?= $quizCount > 0 ? $quizCount . '回目' : 'NEW' ?></div>
+        <i class="fas fa-dna" style="font-size: 3rem; margin-bottom: 20px; color: #a855f7;"></i>
+        <h3 style="margin-bottom: 10px;">思考DNA診断</h3>
+        <p class="text-muted">A/B質問で思考傾向を分析</p>
+      </a>
     </div>
 
     <div style="text-align: right; margin-top: -40px; margin-bottom: 40px;">
@@ -153,30 +167,58 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
       </a>
     </div>
 
-    <!-- Thought Tendencies -->
+    <!-- Thought Core -->
     <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px;" class="animate-fadeup delay-100">
       <h2 class="section-title" style="font-size: 1.8rem; margin-bottom: 0;">🧠 Thought Core</h2>
       <button onclick="updateBrain()" class="btn btn-secondary" style="padding: 5px 15px; font-size: 0.8rem; height: fit-content;" id="updateBrainBtn">
         <i class="fas fa-sync-alt"></i> 最新データで分析する
       </button>
     </div>
-    
-    <div class="glass-card animate-fadeup delay-100" style="margin-bottom: 60px; padding: 20px;">
+
+    <div class="glass-card animate-fadeup delay-100" style="margin-bottom: 30px; padding: 20px;">
       <?php if (empty($thoughtDict)): ?>
         <p class="text-muted" style="text-align: center; margin: 20px 0;">まだ脳内分析データがありません。「最新データで分析する」ボタンを押すとAIがあなたの傾向を分析します。</p>
       <?php else: ?>
         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px;">
         <?php foreach ($thoughtDict as $keyword => $description): ?>
-          <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 15px; transition: transform 0.2s;">
+          <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 15px;">
             <h4 style="color: var(--primary-neon); margin-bottom: 10px; font-size: 1.1rem;">#<?= htmlspecialchars($keyword) ?></h4>
-            <p style="color: var(--text-white); font-size: 0.9rem; line-height: 1.5; margin: 0;">
-              <?= htmlspecialchars($description) ?>
-            </p>
+            <p style="color: var(--text-white); font-size: 0.9rem; line-height: 1.5; margin: 0;"><?= htmlspecialchars($description) ?></p>
           </div>
         <?php endforeach; ?>
         </div>
       <?php endif; ?>
     </div>
+
+    <!-- Thought DNA Profile -->
+    <?php if ($thoughtProfile && !empty($thoughtProfile['markdown'])): ?>
+    <div class="glass-card animate-fadeup" style="margin-bottom: 60px; padding: 20px; border-color: rgba(168,85,247,0.3);">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+        <h3 style="margin:0; color:#a855f7;"><i class="fas fa-dna"></i> 思考DNAプロファイル
+          <span style="font-size:0.75rem; background:rgba(168,85,247,0.15); padding:2px 8px; border-radius:99px; margin-left:8px;"><?= $quizCount ?>回の診断に基づく</span>
+        </h3>
+        <a href="thought_quiz.php" class="btn btn-secondary" style="padding:5px 14px; font-size:0.8rem;">
+          <i class="fas fa-plus"></i> 追加診断
+        </a>
+      </div>
+      <div style="font-size:0.88rem; color:var(--text-muted); max-height:300px; overflow:hidden; position:relative;">
+        <div id="profilePreview" style="line-height:1.7;"><?= nl2br(htmlspecialchars(mb_strimwidth($thoughtProfile['markdown'], 0, 600, '...'))) ?></div>
+        <div style="position:absolute; bottom:0; left:0; right:0; height:80px; background:linear-gradient(transparent, var(--bg-card));"></div>
+      </div>
+      <a href="thought_quiz.php" style="display:block; text-align:center; margin-top:1rem; color:#a855f7; font-size:0.9rem; text-decoration:none;">
+        全文を読み・更に診断する →
+      </a>
+    </div>
+    <?php else: ?>
+    <div class="glass-card animate-fadeup" style="margin-bottom: 60px; padding: 2rem; text-align:center; border-color: rgba(168,85,247,0.2);">
+      <i class="fas fa-dna" style="font-size:2.5rem; color:#a855f7; margin-bottom:1rem;"></i>
+      <h3 style="margin-bottom:0.5rem;">思考DNA診断を始める</h3>
+      <p class="text-muted" style="margin-bottom:1.5rem; font-size:0.9rem;">10問A/Bクイズに答えるたびに、自分でも気づかなかった思考傾向が分かります。</p>
+      <a href="thought_quiz.php" class="btn btn-primary" style="display:inline-block; text-decoration:none;">
+        <i class="fas fa-play"></i> 診断を始める
+      </a>
+    </div>
+    <?php endif; ?>
 
     <!-- Recent Posts -->
     <h2 class="section-title animate-fadeup delay-200" style="font-size: 1.8rem; margin-bottom: 30px;">Recent Posts</h2>
