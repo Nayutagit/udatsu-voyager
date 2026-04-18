@@ -72,7 +72,10 @@ if (empty($uid)) { header('Location: ../index.php'); exit(); }
 <div class="quiz-container">
 
   <div class="page-header">
-    <h1><i class="fas fa-dna"></i> 思考DNA診断</h1>
+    <h1>
+      <i class="fas fa-dna"></i> 思考DNA診断
+      <span style="font-size:0.55rem; background:rgba(168,85,247,0.2); color:#a855f7; border:1px solid rgba(168,85,247,0.4); padding:3px 10px; border-radius:99px; font-weight:600; letter-spacing:0.08em; vertical-align: middle;">BETA</span>
+    </h1>
     <p class="subtitle">シナリオへの回答を重ねるたびに、あなたの思考傾向が精緻化されていきます</p>
   </div>
 
@@ -183,8 +186,15 @@ async function loadQuestions() {
 }
 
 function showState(id) {
-  ['loadingState','quizState','analyzingState','resultState','errorState']
-    .forEach(s => document.getElementById(s).style.display = (s === id) ? (s === 'quizState' ? 'block' : 'flex') : 'none');
+  const states = ['loadingState','quizState','analyzingState','resultState','errorState'];
+  states.forEach(s => {
+    const el = document.getElementById(s);
+    if (s === id) {
+      el.style.display = (s === 'loadingState' || s === 'analyzingState' || s === 'errorState') ? 'flex' : 'block';
+    } else {
+      el.style.display = 'none';
+    }
+  });
 }
 
 function showError(title, msg) {
@@ -238,12 +248,12 @@ async function submitAnswers() {
   showState('analyzingState');
 
   const payload = questions.map((q, i) => ({
-    question:     q.question,
-    scenario:     q.scenario,
-    a:            q.a,
-    b:            q.b,
-    chosen:       answers[i],
-    chosen_text:  answers[i] === 'A' ? q.a : q.b
+    question:    q.question,
+    scenario:    q.scenario,
+    a:           q.a,
+    b:           q.b,
+    chosen:      answers[i],
+    chosen_text: answers[i] === 'A' ? q.a : q.b
   }));
 
   try {
@@ -271,14 +281,45 @@ function startNew() {
 }
 
 function markdownToHtml(md) {
-  return md
-    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
-    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
-    .replace(/\*\*(.+?)\*\*/g, '<strong style="color:var(--text-white)">$1</strong>')
-    .replace(/^- (.+)$/gm, '<li>$1</li>')
-    .replace(/(<li>[^]*?<\/li>)/g, '<ul>$1</ul>')
-    .replace(/\n{2,}/g, '</p><p>') 
-    .replace(/^([^<\n].+)$/gm, (m) => m.startsWith('<') ? m : '<p>' + m + '</p>');
+  // Escape HTML entities first
+  let html = md
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+
+  // Convert markdown
+  const lines = html.split('\n');
+  const out = [];
+  let inUl = false;
+
+  for (const raw of lines) {
+    const line = raw.trimEnd();
+    if (line.startsWith('## ')) {
+      if (inUl) { out.push('</ul>'); inUl = false; }
+      out.push('<h2>' + line.slice(3) + '</h2>');
+    } else if (line.startsWith('### ')) {
+      if (inUl) { out.push('</ul>'); inUl = false; }
+      out.push('<h3>' + line.slice(4) + '</h3>');
+    } else if (line.startsWith('- ')) {
+      if (!inUl) { out.push('<ul>'); inUl = true; }
+      out.push('<li>' + bold(line.slice(2)) + '</li>');
+    } else if (line.match(/^\d+\. /)) {
+      if (inUl) { out.push('</ul>'); inUl = false; }
+      out.push('<p>' + bold(line) + '</p>');
+    } else if (line === '') {
+      if (inUl) { out.push('</ul>'); inUl = false; }
+      out.push('');
+    } else {
+      if (inUl) { out.push('</ul>'); inUl = false; }
+      out.push('<p>' + bold(line) + '</p>');
+    }
+  }
+  if (inUl) out.push('</ul>');
+  return out.join('\n');
+}
+
+function bold(s) {
+  return s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
 }
 
 loadQuestions();
