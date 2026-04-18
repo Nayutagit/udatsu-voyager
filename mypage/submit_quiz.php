@@ -4,7 +4,6 @@
  * Receives answers from the quiz, saves the session,
  * and regenerates the user's thought profile markdown.
  */
-session_start();
 header('Content-Type: application/json');
 require_once __DIR__ . '/../core/bootstrap.php';
 require_once __DIR__ . '/../core/GeminiService.php';

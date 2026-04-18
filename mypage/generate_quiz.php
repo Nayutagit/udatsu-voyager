@@ -4,7 +4,6 @@
  * Uses Gemini to generate 10 personalized A/B scenario questions
  * based on the user's VJ posts + previous quiz answers.
  */
-session_start();
 header('Content-Type: application/json');
 require_once __DIR__ . '/../core/bootstrap.php';
 require_once __DIR__ . '/../core/GeminiService.php';
@@ -87,7 +86,7 @@ try {
         throw new Exception('Invalid JSON from Gemini: ' . $raw);
     }
     
-    echo json_encode(['status' => 'ok', 'questions' => array_slice($questions, 0, 10)]);
+    echo json_encode(['status' => 'ok', 'questions' => array_values(array_slice($questions, 0, 10))]);
 } catch (Exception $e) {
     // Fallback: return generic questions
     echo json_encode([
@@ -105,5 +104,7 @@ try {
             ['scenario' => '自分の専門外の問題を任されたとき', 'question' => 'あなたはどうしますか？', 'a' => '専門家に相談しながら進める', 'b' => '自分で調べて解決する方法を探す'],
         ]
     ]);
+    // Log error for debugging
+    @file_put_contents(__DIR__ . '/../users/quiz_error.log', date('Y-m-d H:i:s') . ' ' . $e->getMessage() . "\n", FILE_APPEND);
 }
 exit();
