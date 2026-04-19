@@ -147,10 +147,10 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
         <p class="text-muted">声で新しい思考を記録する</p>
       </a>
 
-      <a href="mail_setup.php" class="glass-card" style="text-align: center; display: block; text-decoration: none; border-color: #007aff;">
-        <i class="fas fa-envelope" style="font-size: 3rem; margin-bottom: 20px; color: #007aff;"></i>
-        <h3 style="margin-bottom: 10px;">Mail Upload</h3>
-        <p class="text-muted">メール添付でバックグラウンド送信</p>
+      <a href="line_setup.php" class="glass-card" style="text-align: center; display: block; text-decoration: none; border-color: #06C755;">
+        <i class="fab fa-line" style="font-size: 3rem; margin-bottom: 20px; color: #06C755;"></i>
+        <h3 style="margin-bottom: 10px;">LINE Upload</h3>
+        <p class="text-muted">LINEで音声を送るだけで自動解析</p>
       </a>
 
       <a href="thought_quiz.php" class="glass-card" style="text-align: center; display: block; text-decoration: none; border-color: #a855f7; position: relative; overflow: hidden;">
