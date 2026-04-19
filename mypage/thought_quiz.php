@@ -6,7 +6,7 @@ if (empty($uid)) { header('Location: ../index.php'); exit(); }
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>思考DNA診断 | Udatsu Voyager</title>
+  <title>思考のチューニング | Udatsu Voyager</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="../css/style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -73,10 +73,10 @@ if (empty($uid)) { header('Location: ../index.php'); exit(); }
 
   <div class="page-header">
     <h1>
-      <i class="fas fa-dna"></i> 思考DNA診断
+      <i class="fas fa-sliders-h"></i> 思考のチューニング
       <span style="font-size:0.55rem; background:rgba(168,85,247,0.2); color:#a855f7; border:1px solid rgba(168,85,247,0.4); padding:3px 10px; border-radius:99px; font-weight:600; letter-spacing:0.08em; vertical-align: middle;">BETA</span>
     </h1>
-    <p class="subtitle">シナリオへの回答を重ねるたびに、あなたの思考傾向が精緻化されていきます</p>
+    <p class="subtitle">A/Bシナリオへの回答を重ねるたびに、あなたの思考プロファイルが精緻化されていきます</p>
   </div>
 
   <!-- Loading Questions -->
@@ -133,7 +133,7 @@ if (empty($uid)) { header('Location: ../index.php'); exit(); }
 
     <div class="action-row">
       <button onclick="startNew()" class="btn btn-secondary">
-        <i class="fas fa-redo"></i> もう10問やる
+        <i class="fas fa-redo"></i> さらに調整する
       </button>
       <a href="dashboard.php" class="btn btn-primary">
         <i class="fas fa-home"></i> ダッシュボードへ

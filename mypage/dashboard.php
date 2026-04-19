@@ -147,17 +147,17 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
         <p class="text-muted">声で新しい思考を記録する</p>
       </a>
 
-      <a href="shortcut_setup.php" class="glass-card" style="text-align: center; display: block; text-decoration: none; border-color: #007aff;">
-        <i class="fab fa-apple" style="font-size: 3rem; margin-bottom: 20px; color: #007aff;"></i>
-        <h3 style="margin-bottom: 10px;">iPhone Shortcut</h3>
-        <p class="text-muted">共有ボタンから直接アップロード</p>
+      <a href="mail_setup.php" class="glass-card" style="text-align: center; display: block; text-decoration: none; border-color: #007aff;">
+        <i class="fas fa-envelope" style="font-size: 3rem; margin-bottom: 20px; color: #007aff;"></i>
+        <h3 style="margin-bottom: 10px;">Mail Upload</h3>
+        <p class="text-muted">メール添付でバックグラウンド送信</p>
       </a>
 
       <a href="thought_quiz.php" class="glass-card" style="text-align: center; display: block; text-decoration: none; border-color: #a855f7; position: relative; overflow: hidden;">
         <div style="position:absolute; top:10px; right:12px; background: rgba(168,85,247,0.2); color:#a855f7; font-size:0.7rem; font-weight:700; padding:2px 8px; border-radius:99px;"><?= $quizCount > 0 ? $quizCount . '回目' : 'NEW' ?></div>
-        <i class="fas fa-dna" style="font-size: 3rem; margin-bottom: 20px; color: #a855f7;"></i>
-        <h3 style="margin-bottom: 10px;">思考DNA診断</h3>
-        <p class="text-muted">A/B質問で思考傾向を分析</p>
+        <i class="fas fa-sliders-h" style="font-size: 3rem; margin-bottom: 20px; color: #a855f7;"></i>
+        <h3 style="margin-bottom: 10px;">思考のチューニング</h3>
+        <p class="text-muted">A/Bシナリオで自己哲学を調整</p>
       </a>
     </div>
 
@@ -194,11 +194,11 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
     <?php if ($thoughtProfile && !empty($thoughtProfile['markdown'])): ?>
     <div class="glass-card animate-fadeup" style="margin-bottom: 60px; padding: 20px; border-color: rgba(168,85,247,0.3);">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-        <h3 style="margin:0; color:#a855f7;"><i class="fas fa-dna"></i> 思考DNAプロファイル
-          <span style="font-size:0.75rem; background:rgba(168,85,247,0.15); padding:2px 8px; border-radius:99px; margin-left:8px;"><?= $quizCount ?>回の診断に基づく</span>
+        <h3 style="margin:0; color:#a855f7;"><i class="fas fa-sliders-h"></i> 思考プロファイル
+          <span style="font-size:0.75rem; background:rgba(168,85,247,0.15); padding:2px 8px; border-radius:99px; margin-left:8px;"><?= $quizCount ?>回のチューニングに基づく</span>
         </h3>
         <a href="thought_quiz.php" class="btn btn-secondary" style="padding:5px 14px; font-size:0.8rem;">
-          <i class="fas fa-plus"></i> 追加診断
+          <i class="fas fa-plus"></i> セッションを開始
         </a>
       </div>
       <div style="font-size:0.88rem; color:var(--text-muted); max-height:300px; overflow:hidden; position:relative;">
@@ -206,16 +206,16 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
         <div style="position:absolute; bottom:0; left:0; right:0; height:80px; background:linear-gradient(transparent, var(--bg-card));"></div>
       </div>
       <a href="thought_quiz.php" style="display:block; text-align:center; margin-top:1rem; color:#a855f7; font-size:0.9rem; text-decoration:none;">
-        全文を読み・更に診断する →
+        全文を読み・更にチューニングする →
       </a>
     </div>
     <?php else: ?>
     <div class="glass-card animate-fadeup" style="margin-bottom: 60px; padding: 2rem; text-align:center; border-color: rgba(168,85,247,0.2);">
-      <i class="fas fa-dna" style="font-size:2.5rem; color:#a855f7; margin-bottom:1rem;"></i>
-      <h3 style="margin-bottom:0.5rem;">思考DNA診断を始める</h3>
-      <p class="text-muted" style="margin-bottom:1.5rem; font-size:0.9rem;">10問A/Bクイズに答えるたびに、自分でも気づかなかった思考傾向が分かります。</p>
+      <i class="fas fa-sliders-h" style="font-size:2.5rem; color:#a855f7; margin-bottom:1rem;"></i>
+      <h3 style="margin-bottom:0.5rem;">思考をチューニングする</h3>
+      <p class="text-muted" style="margin-bottom:1.5rem; font-size:0.9rem;">10個のA/Bシナリオに答えるたびに、あなたの思考プロファイルが精緻化されていきます。</p>
       <a href="thought_quiz.php" class="btn btn-primary" style="display:inline-block; text-decoration:none;">
-        <i class="fas fa-play"></i> 診断を始める
+        <i class="fas fa-play"></i> セッションを始める
       </a>
     </div>
     <?php endif; ?>
