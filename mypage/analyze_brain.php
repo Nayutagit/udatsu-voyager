@@ -43,6 +43,12 @@ foreach ($validPosts as $p) {
 // トークン節約のため最大文字数制限をかける（約2万文字）
 $aggregatedText = mb_strimwidth($aggregatedText, 0, 20000);
 
+$profileFile = $userDir . $uid . '_thought_profile.json';
+$existingProfile = file_exists($profileFile) ? json_decode(file_get_contents($profileFile), true) : null;
+$existingMd = $existingProfile['markdown'] ?? '';
+
+$mdContext = $existingMd ? "\n\n【過去の思考DNAプロファイル（これまでの全データを統合した分析結果）】\n{$existingMd}" : '';
+
 $prompt = <<<EOT
 以下のテキストデータは、ユーザーが日々の思考を記録した音声メモや日記の蓄積です。
 このデータを分析し、ユーザーの思考のコア（中心軸）となっている『よく出てくるキーワード・概念を最大5つ』抽出してください。
@@ -58,8 +64,9 @@ Markdownのバッククォート（```json）は含めず、純粋なJSONテキ�
 }
 
 ---
-【ユーザーの思考データ】
+【ユーザーの直近の思考データ (より具体的な最新の記録)】
 {$aggregatedText}
+{$mdContext}
 EOT;
 
 // 非同期実行のためにセッションを解放・通信切断
