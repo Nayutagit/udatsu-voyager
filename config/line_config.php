@@ -7,6 +7,6 @@
  */
 
 return [
-    'channel_access_token' => 'YOUR_CHANNEL_ACCESS_TOKEN_HERE',
-    'channel_secret'       => 'YOUR_CHANNEL_SECRET_HERE',
+    'channel_access_token' => 'UEvCIfU7FsQL4YPxu5lL3LGO7O14W7LSSzgHUm29uvJ/haJTeDtBRLRfLqIyEBJBZAMV3dhbm4Pv1gyO/TlynxAGd/eno3gnX535G/Kkcg/iSYdzSgAkxFNE9eQNw1QpVhAOtwj7xTYa4AGe1dQQYAdB04t89/1O/w1cDnyilFU=',
+    'channel_secret'       => '11c0bbbf8741f49f8d981b57020110da',
 ];
