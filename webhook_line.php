@@ -50,19 +50,22 @@ foreach ($events['events'] as $event) {
 
     if ($messageType === 'text') {
         replyLineMessage($channelAccessToken, $replyToken, "連携済みです！🎉\nボイスメッセージを吹き込むか、音声ファイル（m4a等）をここに直接送ると、自動でVoyagerに記録・解析されます。");
-    } elseif ($messageType === 'audio') {
+    } elseif ($messageType === 'audio' || $messageType === 'file') {
         $messageId = $event['message']['id'];
+        $originalFileName = $event['message']['fileName'] ?? 'voice_message.m4a';
         
         // Reply instantly
         replyLineMessage($channelAccessToken, $replyToken, "🎙 音声を受信しました！\n解析を開始します。数分後にダッシュボードをご確認ください🚀");
         
-        // Download audio data
+        // Download audio/file data
         $audioData = downloadLineAudio($channelAccessToken, $messageId);
         if ($audioData) {
             $uploadDir = __DIR__ . '/uploads/';
             if (!file_exists($uploadDir)) mkdir($uploadDir, 0755, true);
             
-            $filename = 'line_' . $messageId . '_' . time() . '.m4a'; // default to m4a
+            // Use safe filename based on original extension
+            $extension = pathinfo($originalFileName, PATHINFO_EXTENSION) ?: 'm4a';
+            $filename = 'line_' . $messageId . '_' . time() . '.' . $extension;
             $targetPath = 'uploads/' . $filename;
             file_put_contents(__DIR__ . '/' . $targetPath, $audioData);
             
