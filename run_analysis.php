@@ -65,13 +65,18 @@ try {
 
     $finalTitle = 'VJ' . date('Ymd') . '_' . $generatedTitle;
 
+    // 記事化（サマリー/清書）の生成
+    $articlePrompt = "以下の音声の文字起こしを元に、読みやすく整理された記事（ブログやジャーナル形式）を作成してください。見出しや箇条書きを適宜用いて、元の音声の意図や思考のプロセスが伝わるように構成してください。\n\n" . mb_strimwidth($raw, 0, 8000);
+    $article = trim($gemini->generateText($articlePrompt, false));
+
     $posts = json_decode(file_get_contents($userPostsFile), true);
     foreach ($posts as &$p) {
         if (($p['id'] ?? '') === $jobId) {
             $p['title']         = $finalTitle;
-            $p['text']          = $raw;
+            $p['text']          = $article; // 保存先を記事に
             $p['original_text'] = $raw;
             $p['content']       = '';
+
             $p['status']        = '下書き';
             $p['audio_file']    = $storagePath;
             break;
@@ -83,6 +88,42 @@ try {
     if ($storagePath !== $audioPath) {
         @unlink(__DIR__ . '/' . $audioPath);
     }
+
+    // LINEへプッシュ通知
+    $lineMapFile = __DIR__ . '/users/line_map.json';
+    $lineMap = file_exists($lineMapFile) ? json_decode(file_get_contents($lineMapFile), true) : [];
+    $lineUserId = null;
+    foreach ($lineMap as $lid => $mappedUid) {
+        if ($mappedUid === $uid) {
+            $lineUserId = $lid;
+            break;
+        }
+    }
+
+    if ($lineUserId) {
+        $configFile = __DIR__ . '/config/line_config.php';
+        $lineConfig = file_exists($configFile) ? require $configFile : null;
+        if ($lineConfig && !empty($lineConfig['channel_access_token'])) {
+            $messageText = "✨ 解析が完了しました！\n\n【{$finalTitle}】\n\n" . mb_strimwidth($article, 0, 800, '...') . "\n\n▼ 続きや編集はダッシュボードから\nhttps://udatsu-voyager.com/mypage/dashboard.php";
+            
+            $url = 'https://api.line.me/v2/bot/message/push';
+            $postData = [
+                'to' => $lineUserId,
+                'messages' => [['type' => 'text', 'text' => $messageText]]
+            ];
+            $ch = curl_init($url);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postData));
+            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                'Content-Type: application/json; charset=UTF-8',
+                'Authorization: Bearer ' . $lineConfig['channel_access_token']
+            ]);
+            curl_exec($ch);
+            curl_close($ch);
+        }
+    }
+
 } catch (Exception $e) {
     $posts = json_decode(file_get_contents($userPostsFile), true);
     foreach ($posts as &$p) {
