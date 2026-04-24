@@ -22,6 +22,10 @@ require_once __DIR__ . '/core/FirebaseService.php';
 ignore_user_abort(true);
 set_time_limit(1800);
 
+$logFile = __DIR__ . '/log/run_analysis_log.txt';
+if (!file_exists(__DIR__ . '/log')) mkdir(__DIR__ . '/log', 0755, true);
+file_put_contents($logFile, date('Y-m-d H:i:s') . " - START uid: $uid, audio: $audioPath\n", FILE_APPEND);
+
 $userDir       = __DIR__ . '/users/';
 $userPostsFile = $userDir . $uid . '_posts.json';
 $mimeType      = mime_content_type(__DIR__ . '/' . $audioPath);
@@ -57,7 +61,9 @@ try {
 // Transcribe
 try {
     $gemini = new GeminiService();
+    file_put_contents($logFile, date('Y-m-d H:i:s') . " - Transcribing...\n", FILE_APPEND);
     $raw    = $gemini->transcribe(__DIR__ . '/' . $audioPath, $mimeType);
+    file_put_contents($logFile, date('Y-m-d H:i:s') . " - Transcribed length: " . mb_strlen($raw) . "\n", FILE_APPEND);
 
     $titlePrompt    = "以下の文字起こしテキストの内容を端的に表す、15文字以下のキャッチーなタイトルを作成してください。結果の文字列のみを出力してください。\n\n" . mb_strimwidth($raw, 0, 5000);
     $generatedTitle = trim($gemini->generateText($titlePrompt, false));
@@ -119,12 +125,19 @@ try {
                 'Content-Type: application/json; charset=UTF-8',
                 'Authorization: Bearer ' . $lineConfig['channel_access_token']
             ]);
-            curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $response = curl_exec($ch);
             curl_close($ch);
+            file_put_contents($logFile, date('Y-m-d H:i:s') . " - Push sent. HTTP: $httpCode. Response: $response\n", FILE_APPEND);
+        } else {
+            file_put_contents($logFile, date('Y-m-d H:i:s') . " - Missing channel access token\n", FILE_APPEND);
         }
+    } else {
+        file_put_contents($logFile, date('Y-m-d H:i:s') . " - LINE user ID not found for uid: $uid\n", FILE_APPEND);
     }
 
 } catch (Exception $e) {
+    file_put_contents($logFile, date('Y-m-d H:i:s') . " - ERROR: " . $e->getMessage() . "\n", FILE_APPEND);
     $posts = json_decode(file_get_contents($userPostsFile), true);
     foreach ($posts as &$p) {
         if (($p['id'] ?? '') === $jobId) {
