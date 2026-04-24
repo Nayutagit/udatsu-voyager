@@ -61,6 +61,7 @@ foreach ($events['events'] as $event) {
         // Download audio/file data
         $audioData = downloadLineAudio($channelAccessToken, $messageId);
         if ($audioData) {
+            file_put_contents(__DIR__ . '/webhook_debug.txt', date('Y-m-d H:i:s') . " - Audio downloaded successfully. Size: " . strlen($audioData) . "\n", FILE_APPEND);
             $uploadDir = __DIR__ . '/uploads/';
             if (!file_exists($uploadDir)) mkdir($uploadDir, 0755, true);
             
@@ -76,7 +77,10 @@ foreach ($events['events'] as $event) {
                 . " " . escapeshellarg($uid)
                 . " " . escapeshellarg($targetPath)
                 . " > /dev/null 2>&1 &";
+            file_put_contents(__DIR__ . '/webhook_debug.txt', date('Y-m-d H:i:s') . " - Executing: $cmd\n", FILE_APPEND);
             exec($cmd);
+        } else {
+            file_put_contents(__DIR__ . '/webhook_debug.txt', date('Y-m-d H:i:s') . " - Failed to download audio. Message ID: $messageId\n", FILE_APPEND);
         }
     } else {
         replyLineMessage($channelAccessToken, $replyToken, "音声ファイル（ボイスメッセージなど）を送ってください！");
@@ -116,7 +120,10 @@ function downloadLineAudio($accessToken, $messageId) {
     ]);
     $data = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $error = curl_error($ch);
     curl_close($ch);
+    
+    file_put_contents(__DIR__ . '/webhook_debug.txt', date('Y-m-d H:i:s') . " - downloadLineAudio HTTP code: $httpCode, error: $error\n", FILE_APPEND);
     
     return ($httpCode === 200) ? $data : false;
 }
