@@ -71,9 +71,9 @@ foreach ($events['events'] as $event) {
             $targetPath = 'uploads/' . $filename;
             file_put_contents(__DIR__ . '/' . $targetPath, $audioData);
             
-            // Kick background analysis
+            // Kick background analysis using XServer's PHP 8.1 CLI binary
             $analyzeScript = __DIR__ . '/run_analysis.php';
-            $cmd = "php " . escapeshellarg($analyzeScript)
+            $cmd = "/usr/bin/php8.1 " . escapeshellarg($analyzeScript)
                 . " " . escapeshellarg($uid)
                 . " " . escapeshellarg($targetPath)
                 . " > /dev/null 2>&1 &";
