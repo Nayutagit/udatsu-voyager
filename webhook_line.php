@@ -14,6 +14,7 @@ if (!$lineConfig || empty($lineConfig['channel_access_token'])) {
 $channelAccessToken = $lineConfig['channel_access_token'];
 
 $payload = file_get_contents('php://input');
+file_put_contents(__DIR__ . '/webhook_debug.txt', date('Y-m-d H:i:s') . "\n" . $payload . "\n\n", FILE_APPEND);
 $events = json_decode($payload, true);
 
 if (!isset($events['events'])) {
