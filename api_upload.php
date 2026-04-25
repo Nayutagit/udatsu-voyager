@@ -105,14 +105,19 @@ if ($userPlan !== 'admin') {
     file_put_contents($userFile, json_encode($data));
 }
 
-// Start analysis in background (same as analyze.php flow)
-// We call analyze.php via exec() since there's no browser session here
-$analyzeScript = __DIR__ . '/run_analysis.php';
-$cmd = "php " . escapeshellarg($analyzeScript)
-    . " " . escapeshellarg($uid)
-    . " " . escapeshellarg($targetPath)
-    . " > /dev/null 2>&1 &";
-exec($cmd);
+// Start analysis in background via internal HTTP POST
+$analyzeUrl = 'https://udatsu-voyager.com/run_analysis.php';
+$ch = curl_init($analyzeUrl);
+curl_setopt($ch, CURLOPT_POST, true);
+curl_setopt($ch, CURLOPT_POSTFIELDS, [
+    'secret' => 'voyager_internal_exec_1234',
+    'uid' => $uid,
+    'audioPath' => $targetPath
+]);
+curl_setopt($ch, CURLOPT_TIMEOUT, 1); // Disconnect immediately
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_exec($ch);
+curl_close($ch);
 
 echo json_encode([
     'status'  => 'ok',

@@ -71,14 +71,21 @@ foreach ($events['events'] as $event) {
             $targetPath = 'uploads/' . $filename;
             file_put_contents(__DIR__ . '/' . $targetPath, $audioData);
             
-            // Kick background analysis using XServer's PHP 8.1 CLI binary
-            $analyzeScript = __DIR__ . '/run_analysis.php';
-            $cmd = "/usr/bin/php8.1 " . escapeshellarg($analyzeScript)
-                . " " . escapeshellarg($uid)
-                . " " . escapeshellarg($targetPath)
-                . " > /dev/null 2>&1 &";
-            file_put_contents(__DIR__ . '/webhook_debug.txt', date('Y-m-d H:i:s') . " - Executing: $cmd\n", FILE_APPEND);
-            exec($cmd);
+            // Kick background analysis via internal HTTP POST (avoids CLI PHP version issues)
+            $analyzeUrl = 'https://udatsu-voyager.com/run_analysis.php';
+            $ch = curl_init($analyzeUrl);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, [
+                'secret' => 'voyager_internal_exec_1234',
+                'uid' => $uid,
+                'audioPath' => $targetPath
+            ]);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 1); // Disconnect immediately
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_exec($ch);
+            curl_close($ch);
+            
+            file_put_contents(__DIR__ . '/webhook_debug.txt', date('Y-m-d H:i:s') . " - HTTP Trigger sent to run_analysis.php for $targetPath\n", FILE_APPEND);
         } else {
             file_put_contents(__DIR__ . '/webhook_debug.txt', date('Y-m-d H:i:s') . " - Failed to download audio. Message ID: $messageId\n", FILE_APPEND);
         }

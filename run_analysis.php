@@ -5,12 +5,31 @@
  * Usage: php run_analysis.php <uid> <audioPath>
  */
 
-if (PHP_SAPI !== 'cli') {
-    exit('CLI only');
+if (PHP_SAPI === 'cli') {
+    $uid       = $argv[1] ?? null;
+    $audioPath = $argv[2] ?? null;
+} else {
+    $secret = $_POST['secret'] ?? '';
+    if ($secret !== 'voyager_internal_exec_1234') {
+        http_response_code(403);
+        exit('Unauthorized');
+    }
+    $uid       = $_POST['uid'] ?? null;
+    $audioPath = $_POST['audioPath'] ?? null;
+    
+    // Close connection to allow caller to finish immediately
+    header("Connection: close");
+    ob_start();
+    echo "Started";
+    $size = ob_get_length();
+    header("Content-Length: $size");
+    ob_end_flush();
+    @ob_flush();
+    flush();
+    if (function_exists('fastcgi_finish_request')) {
+        fastcgi_finish_request();
+    }
 }
-
-$uid       = $argv[1] ?? null;
-$audioPath = $argv[2] ?? null;
 
 if (!$uid || !$audioPath || !file_exists(__DIR__ . '/' . $audioPath)) {
     exit("Invalid arguments\n");
