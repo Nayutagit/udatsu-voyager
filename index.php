@@ -71,7 +71,11 @@ if ($userPlan !== 'guest') {
     </div>
 
     <div class="animate-fadeup delay-200" style="margin-top: 40px; font-size: 0.8rem; color: var(--text-muted);">
-      &copy; 2025 Nyct Studio. All Rights Reserved.
+      <div style="margin-bottom: 10px;">
+        <a href="terms.php" style="color: var(--text-muted); text-decoration: none; margin: 0 10px;">利用規約</a> | 
+        <a href="privacy.php" style="color: var(--text-muted); text-decoration: none; margin: 0 10px;">プライバシーポリシー</a>
+      </div>
+      &copy; 2026 Nyct Studio. All Rights Reserved.
     </div>
 
   </div>
