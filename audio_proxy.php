@@ -19,12 +19,8 @@ $storagePath = $_GET['path'] ?? '';
 if (empty($storagePath) || strpos($storagePath, "audio/{$uid}/") !== 0) {
     // Check if it's a local fallback path (uploads/)
     if (strpos($storagePath, 'uploads/') === 0 && file_exists(__DIR__ . '/' . $storagePath)) {
-        // Serve local file directly
-        $mime = mime_content_type(__DIR__ . '/' . $storagePath) ?: 'audio/mpeg';
-        header("Content-Type: {$mime}");
-        header("Content-Length: " . filesize(__DIR__ . '/' . $storagePath));
-        header("Accept-Ranges: bytes");
-        readfile(__DIR__ . '/' . $storagePath);
+        // Serve local file via redirect so the web server handles Accept-Ranges (needed for iOS Safari)
+        header("Location: /" . $storagePath, true, 302);
         exit();
     }
     http_response_code(403);
