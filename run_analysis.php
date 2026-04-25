@@ -65,7 +65,7 @@ $newPost = [
     'status'        => '解析中',
     'audio_file'    => '',
 ];
-$posts[] = $newPost;
+array_unshift($posts, $newPost);
 file_put_contents($userPostsFile, json_encode($posts, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 
 // Upload audio to Firebase Storage

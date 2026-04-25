@@ -56,7 +56,7 @@ foreach ($events['events'] as $event) {
         $originalFileName = $event['message']['fileName'] ?? 'voice_message.m4a';
         
         // Reply instantly
-        replyLineMessage($channelAccessToken, $replyToken, "🎙 音声を受信しました！\n解析を開始します。数分後にダッシュボードをご確認ください🚀");
+        replyLineMessage($channelAccessToken, $replyToken, "🎙 音声を受信しました！\nAIが文字起こしと記事化を行っています。\n\n数分後にこのLINEへ直接、清書された記事が届きますので、そのままお待ちください🚀");
         
         // Download audio/file data
         $audioData = downloadLineAudio($channelAccessToken, $messageId);
