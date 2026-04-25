@@ -129,7 +129,8 @@ try {
         $configFile = __DIR__ . '/config/line_config.php';
         $lineConfig = file_exists($configFile) ? require $configFile : null;
         if ($lineConfig && !empty($lineConfig['channel_access_token'])) {
-            $messageText = "✨ 解析が完了しました！\n\n【{$finalTitle}】\n\n" . mb_strimwidth($article, 0, 800, '...') . "\n\n▼ 続きや編集はダッシュボードから\nhttps://udatsu-voyager.com/mypage/dashboard.php";
+            $dashboardUrl = "https://udatsu-voyager.com/mypage/dashboard.php?openExternalBrowser=1";
+            $messageText = "✨ 解析が完了しました！\n\n【{$finalTitle}】\n\n" . mb_strimwidth($article, 0, 800, '...') . "\n\n▼ 続きや編集はダッシュボードから\n" . $dashboardUrl;
             
             $url = 'https://api.line.me/v2/bot/message/push';
             $postData = [
