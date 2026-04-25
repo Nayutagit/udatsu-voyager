@@ -228,27 +228,49 @@ class GeminiService {
 
         $headers = ["Content-Type: application/json"];
         
-        $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 120);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postData));
-        $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $curlError = curl_error($ch);
-        curl_close($ch);
+        $maxRetries = 3;
+        $attempt = 0;
         
-        if ($curlError) {
-            throw new Exception("通信エラーが発生しました: " . $curlError);
+        while ($attempt < $maxRetries) {
+            $ch = curl_init($url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 120);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postData));
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $curlError = curl_error($ch);
+            curl_close($ch);
+            
+            if ($curlError) {
+                throw new Exception("通信エラーが発生しました: " . $curlError);
+            }
+            
+            $data = json_decode($response, true);
+            
+            // 成功時
+            if ($httpCode >= 200 && $httpCode < 300 && isset($data['candidates'][0]['content']['parts'][0]['text'])) {
+                return $data['candidates'][0]['content']['parts'][0]['text'];
+            }
+            
+            // エラー時
+            if (isset($data['error'])) {
+                $errorMsg = $data['error']['message'] ?? 'Unknown API error';
+                if ($httpCode >= 500 || strpos(strtolower($errorMsg), 'demand') !== false || strpos(strtolower($errorMsg), 'quota') !== false) {
+                    $attempt++;
+                    if ($attempt < $maxRetries) {
+                        sleep(2 * $attempt); // Exponential backoff
+                        continue;
+                    }
+                    throw new Exception("AIサーバーが混雑しています（" . $errorMsg . "）。時間をおいて再度お試しください。");
+                }
+                throw new Exception("AI生成エラー [HTTP {$httpCode}]: " . $errorMsg);
+            }
+            
+            throw new Exception("予期せぬレスポンスが返されました。");
         }
         
-        $data = json_decode($response, true);
-        if ($httpCode >= 200 && $httpCode < 300 && isset($data['candidates'][0]['content']['parts'][0]['text'])) {
-            return $data['candidates'][0]['content']['parts'][0]['text'];
-        }
-        
-        $errorMsg = $data['error']['message'] ?? 'Unknown API error';
-        throw new Exception("AI生成エラー [HTTP {$httpCode}]: " . $errorMsg);
+        throw new Exception("サーバー混雑により生成を完了できませんでした。");
     }
 }
