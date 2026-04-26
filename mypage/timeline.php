@@ -112,6 +112,12 @@ usort($timelinePosts, function($a, $b) {
             border-left: 3px solid var(--primary-neon);
             white-space: pre-wrap;
         }
+        .post-summary {
+            font-size: 0.95rem;
+            color: #ccc;
+            line-height: 1.6;
+            margin-bottom: 5px;
+        }
         .audio-player-container {
             margin-top: 15px;
             background: rgba(0,0,0,0.4);
@@ -151,7 +157,8 @@ usort($timelinePosts, function($a, $b) {
             <a href="network.php" class="btn btn-primary" style="margin-top: 20px; display: inline-block;">ネットワークを開く</a>
         </div>
     <?php else: ?>
-        <?php foreach ($timelinePosts as $post): 
+        <?php $timelineIndex = 0; foreach ($timelinePosts as $post): 
+            $timelineIndex++;
             $authorImg = !empty($post['author_profile']['image']) ? '../uploads/' . $post['author_uid'] . '/' . $post['author_profile']['image'] : '../img/default-icon.png';
             $audioUrl = '';
             $audioSource = $post['audio_file'] ?? $post['audio'] ?? '';
@@ -179,7 +186,24 @@ usort($timelinePosts, function($a, $b) {
                     <i class="far fa-calendar-alt"></i> <?= htmlspecialchars($post['date']) ?>
                 </div>
 
-                <div class="post-content"><?= htmlspecialchars($post['text']) ?></div>
+                <?php 
+                    $fullText = $post['text'] ?? '';
+                    $cleanText = str_replace(["\r", "\n"], " ", $fullText);
+                    $snippet = mb_strimwidth($cleanText, 0, 100, '...');
+                ?>
+                <div class="post-summary" id="snippet-<?= $timelineIndex ?>">
+                    <?= htmlspecialchars($snippet) ?>
+                    <?php if (mb_strlen($cleanText) > 100): ?>
+                        <a href="javascript:void(0)" onclick="document.getElementById('snippet-<?= $timelineIndex ?>').style.display='none'; document.getElementById('full-<?= $timelineIndex ?>').style.display='block';" style="color: var(--primary-neon); text-decoration: none; font-size: 0.85rem; margin-left: 10px;">続きを読む <i class="fas fa-chevron-down"></i></a>
+                    <?php endif; ?>
+                </div>
+
+                <div class="post-content" id="full-<?= $timelineIndex ?>" style="display: none;">
+                    <?= htmlspecialchars($fullText) ?>
+                    <div style="text-align: right; margin-top: 10px;">
+                        <a href="javascript:void(0)" onclick="document.getElementById('full-<?= $timelineIndex ?>').style.display='none'; document.getElementById('snippet-<?= $timelineIndex ?>').style.display='block';" style="color: var(--text-muted); text-decoration: none; font-size: 0.85rem;">閉じる <i class="fas fa-chevron-up"></i></a>
+                    </div>
+                </div>
 
                 <?php if ($audioUrl): ?>
                 <div class="audio-player-container">
