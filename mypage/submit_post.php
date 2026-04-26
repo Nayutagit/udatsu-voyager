@@ -130,6 +130,56 @@ switch ($action) {
     $posts[$index]['deleted_at'] = date('Y-m-d');
     break;
 
+  case 'share':
+    $wasSharedBefore = !empty($posts[$index]['is_shared']);
+    $posts[$index]['is_shared'] = 1;
+    
+    if (!$wasSharedBefore) {
+        $title = $posts[$index]['title'] ?? '';
+        $myFollowingFile = $userDir . $uid . '_following.json';
+        $myFollowersFile = $userDir . $uid . '_followers.json';
+        $lineMapFile = $userDir . 'line_map.json';
+        
+        $myFollowing = file_exists($myFollowingFile) ? json_decode(file_get_contents($myFollowingFile), true) ?: [] : [];
+        $myFollowers = file_exists($myFollowersFile) ? json_decode(file_get_contents($myFollowersFile), true) ?: [] : [];
+        $mutualUids = array_intersect($myFollowing, $myFollowers);
+        
+        if (!empty($mutualUids)) {
+            $lineMap = file_exists($lineMapFile) ? json_decode(file_get_contents($lineMapFile), true) ?: [] : [];
+            $uidToLineId = array_flip($lineMap); // Map UID => LineUserId
+            
+            $profileFile = $userDir . $uid . '_profile.json';
+            $myProfile = file_exists($profileFile) ? json_decode(file_get_contents($profileFile), true) : [];
+            $myName = $myProfile['display_name'] ?? 'あなたと相互フォローのユーザー';
+            
+            $pushMessage = "📢 {$myName}さんが新しい音声をタイムラインに共有しました！\n\nタイトル：{$title}\n\n▼タイムラインを開いて確認する\nhttps://udatsu-voyager.com/mypage/timeline.php?openExternalBrowser=1";
+            
+            $lineConfig = file_exists(__DIR__ . '/../config/line_config.php') ? require __DIR__ . '/../config/line_config.php' : null;
+            if ($lineConfig && !empty($lineConfig['channel_access_token'])) {
+                $accessToken = $lineConfig['channel_access_token'];
+                foreach ($mutualUids as $mutualUid) {
+                    if (isset($uidToLineId[$mutualUid])) {
+                        $targetLineId = $uidToLineId[$mutualUid];
+                        $url = 'https://api.line.me/v2/bot/message/push';
+                        $postData = ['to' => $targetLineId, 'messages' => [['type' => 'text', 'text' => $pushMessage]]];
+                        $ch = curl_init($url);
+                        curl_setopt($ch, CURLOPT_POST, true);
+                        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postData));
+                        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json; charset=UTF-8', 'Authorization: Bearer ' . $accessToken]);
+                        curl_exec($ch);
+                        curl_close($ch);
+                    }
+                }
+            }
+        }
+    }
+    break;
+
+  case 'unshare':
+    $posts[$index]['is_shared'] = 0;
+    break;
+
   default:
     header("Location: dashboard.php");
     exit();

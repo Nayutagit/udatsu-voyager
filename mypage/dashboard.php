@@ -260,6 +260,9 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
                 <?php elseif (($post['status'] ?? '') === 'My Udastack追加済'): ?>
                   <span style="background: rgba(252, 200, 0, 0.1); color: var(--primary-neon); padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;"><i class="fas fa-check"></i> Stacked</span>
                 <?php endif; ?>
+                <?php if (!empty($post['is_shared'])): ?>
+                  <span style="background: rgba(168, 85, 247, 0.1); color: #a855f7; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;"><i class="fas fa-share-alt"></i> Shared</span>
+                <?php endif; ?>
               </div>
               <h3 class="post-title" style="min-height: 3em;">
                 <a href="view_post.php?index=<?= $i ?>"><?= htmlspecialchars(mb_strimwidth($post['title'], 0, 50, '...')) ?></a>
@@ -278,19 +281,40 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
               <?php endif; ?>
               
               <div style="display: flex; gap: 10px; margin-top: 20px;">
-                <a href="edit_post.php?index=<?= $i ?>" class="btn btn-secondary" style="padding: 5px 15px; font-size: 0.8rem; flex: 1;">
+                <a href="edit_post.php?index=<?= $i ?>" class="btn btn-secondary" style="padding: 5px 10px; font-size: 0.8rem; flex: 1;">
                   <i class="fas fa-edit"></i> Edit
                 </a>
+                
+                <!-- Stack Button -->
                 <?php if ($post['status'] === 'My Udastack追加済'): ?>
-                  <button class="btn btn-primary" style="padding: 5px 15px; font-size: 0.8rem; opacity: 0.7;" disabled>
+                  <button class="btn btn-primary" style="padding: 5px 10px; font-size: 0.8rem; opacity: 0.7; flex: 1;" disabled>
                     <i class="fas fa-check"></i> Stacked
                   </button>
                 <?php else: ?>
-                  <form method="POST" action="submit_post.php" style="flex: 1;">
+                  <form method="POST" action="submit_post.php" style="flex: 1; display: flex;">
                     <input type="hidden" name="index" value="<?= $i ?>">
                     <input type="hidden" name="action" value="stack">
-                    <button type="submit" class="btn btn-primary" style="padding: 5px 15px; font-size: 0.8rem; width: 100%;">
+                    <button type="submit" class="btn btn-primary" style="padding: 5px 10px; font-size: 0.8rem; width: 100%;">
                       <i class="fas fa-plus"></i> Stack
+                    </button>
+                  </form>
+                <?php endif; ?>
+                
+                <!-- Share Button -->
+                <?php if (!empty($post['is_shared'])): ?>
+                  <form id="unshareForm<?= $i ?>" method="POST" action="submit_post.php" style="flex: 1; display: flex;">
+                    <input type="hidden" name="index" value="<?= $i ?>">
+                    <input type="hidden" name="action" value="unshare">
+                    <button type="button" onclick="confirmUnshare(<?= $i ?>)" class="btn btn-secondary" style="padding: 5px 10px; font-size: 0.8rem; width: 100%; border-color: #a855f7; color: #a855f7;">
+                      <i class="fas fa-share-alt"></i> Shared
+                    </button>
+                  </form>
+                <?php else: ?>
+                  <form id="shareForm<?= $i ?>" method="POST" action="submit_post.php" style="flex: 1; display: flex;">
+                    <input type="hidden" name="index" value="<?= $i ?>">
+                    <input type="hidden" name="action" value="share">
+                    <button type="button" onclick="confirmShare(<?= $i ?>)" class="btn btn-secondary" style="padding: 5px 10px; font-size: 0.8rem; width: 100%;">
+                      <i class="fas fa-share-alt"></i> Share
                     </button>
                   </form>
                 <?php endif; ?>
@@ -348,6 +372,18 @@ function updateBrain() {
         btn.innerHTML = '<i class="fas fa-sync-alt"></i> 最新データで分析する';
         btn.disabled = false;
     });
+}
+
+function confirmShare(index) {
+  if (confirm("相互フォローのタイムラインにこの投稿の音声と文字起こしを共有します。\n\n※共有すると相手にLINE通知が届きます。よろしいですか？")) {
+    document.getElementById('shareForm' + index).submit();
+  }
+}
+
+function confirmUnshare(index) {
+  if (confirm("相互フォローのタイムラインからこの投稿を非表示にしますか？")) {
+    document.getElementById('unshareForm' + index).submit();
+  }
 }
 </script>
 </body>

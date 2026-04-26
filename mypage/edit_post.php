@@ -40,8 +40,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     move_uploaded_file($_FILES['thumbnail']['tmp_name'], $uploadDir . $thumbnailName);
   }
 
-  $isShared = isset($_POST['is_shared']) ? true : false;
-
   $posts[$index] = [
     'id' => $post['id'] ?? uniqid('job_'),
     'title' => $title,
@@ -51,63 +49,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     'date' => $date,
     'category' => $category,
     'audio_file' => $post['audio_file'] ?? '',
+    'audio' => $audioName ?: ($post['audio'] ?? ''),
     'thumbnail' => $thumbnailName,
     'status' => $post['status'] ?? '下書き',
-    'is_shared' => $isShared
+    'is_shared' => $post['is_shared'] ?? 0
   ];
 
   file_put_contents($postsFile, json_encode($posts, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
   
-  // --- LINE Push Notification to Mutual Followers ---
-  if ($isShared && !$wasSharedBefore) {
-      $myFollowingFile = $userDir . $uid . '_following.json';
-      $myFollowersFile = $userDir . $uid . '_followers.json';
-      $lineMapFile = $userDir . 'line_map.json';
-      
-      $myFollowing = file_exists($myFollowingFile) ? json_decode(file_get_contents($myFollowingFile), true) ?: [] : [];
-      $myFollowers = file_exists($myFollowersFile) ? json_decode(file_get_contents($myFollowersFile), true) ?: [] : [];
-      $mutualUids = array_intersect($myFollowing, $myFollowers);
-      
-      if (!empty($mutualUids)) {
-          $lineMap = file_exists($lineMapFile) ? json_decode(file_get_contents($lineMapFile), true) ?: [] : [];
-          $uidToLineId = array_flip($lineMap); // Map UID => LineUserId
-          
-          $profileFile = $userDir . $uid . '_profile.json';
-          $myProfile = file_exists($profileFile) ? json_decode(file_get_contents($profileFile), true) : [];
-          $myName = $myProfile['display_name'] ?? 'あなたと相互フォローのユーザー';
-          
-          $pushMessage = "📢 {$myName}さんが新しい音声をタイムラインに共有しました！\n\nタイトル：{$title}\n\n▼タイムラインを開いて確認する\nhttps://udatsu-voyager.com/mypage/timeline.php?openExternalBrowser=1";
-          
-          $lineConfig = file_exists(__DIR__ . '/../config/line_config.php') ? require __DIR__ . '/../config/line_config.php' : null;
-          if ($lineConfig && !empty($lineConfig['channel_access_token'])) {
-              $accessToken = $lineConfig['channel_access_token'];
-              
-              foreach ($mutualUids as $mutualUid) {
-                  if (isset($uidToLineId[$mutualUid])) {
-                      $targetLineId = $uidToLineId[$mutualUid];
-                      
-                      $url = 'https://api.line.me/v2/bot/message/push';
-                      $postData = [
-                          'to' => $targetLineId,
-                          'messages' => [['type' => 'text', 'text' => $pushMessage]]
-                      ];
-                      
-                      $ch = curl_init($url);
-                      curl_setopt($ch, CURLOPT_POST, true);
-                      curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                      curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postData));
-                      curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                          'Content-Type: application/json; charset=UTF-8',
-                          'Authorization: Bearer ' . $accessToken
-                      ]);
-                      curl_exec($ch);
-                      curl_close($ch);
-                  }
-              }
-          }
-      }
-  }
-  // ------------------------------------------------
+  // The is_shared status is no longer modified here.
+  // It is toggled via submit_post.php from the dashboard.
 
   header("Location: dashboard.php");
   exit();
@@ -363,14 +314,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <option value="フリートーク" <?php if($post['category'] === 'フリートーク') echo 'selected'; ?>>フリートーク</option>
       </select>
 
-      <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; background: rgba(0,255,204,0.1); padding: 15px; border-radius: 12px; margin-top: 30px;">
-        <input type="checkbox" name="is_shared" value="1" <?php echo !empty($post['is_shared']) ? 'checked' : ''; ?> style="width: 20px; height: 20px; accent-color: var(--primary-neon);">
-        <div>
-          <span style="color: var(--primary-neon); font-size: 1.1rem;"><i class="fas fa-users"></i> 相互フォローに共有する</span><br>
-          <span style="color: var(--text-muted); font-size: 0.8rem; font-weight: normal;">チェックを入れると、相互フォローしている相手のタイムラインにこの投稿と音声が表示されます。</span>
-        </div>
-      </label>
-
+      <!-- Sharing toggle has been moved to the dashboard -->
       <input type="submit" value="変更を保存">
     </form>
 
