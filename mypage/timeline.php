@@ -154,11 +154,12 @@ usort($timelinePosts, function($a, $b) {
         <?php foreach ($timelinePosts as $post): 
             $authorImg = !empty($post['author_profile']['image']) ? '../uploads/' . $post['author_uid'] . '/' . $post['author_profile']['image'] : '../img/default-icon.png';
             $audioUrl = '';
-            if (!empty($post['audio_file'])) {
-                if (strpos($post['audio_file'], 'audio/') === 0) {
-                    $audioUrl = "../audio_proxy.php?path=" . urlencode($post['audio_file']);
+            $audioSource = $post['audio_file'] ?? $post['audio'] ?? '';
+            if (!empty($audioSource)) {
+                if (strpos($audioSource, 'audio/') === 0 || strpos($audioSource, 'uploads/') === 0) {
+                    $audioUrl = "../audio_proxy.php?target_uid=" . urlencode($post['author_uid']) . "&path=" . urlencode($audioSource);
                 } else {
-                    $audioUrl = "../audio_proxy.php?path=" . urlencode("audio/{$post['author_uid']}/{$post['audio_file']}");
+                    $audioUrl = "../users/{$post['author_uid']}/posts/" . urlencode($audioSource);
                 }
             }
         ?>

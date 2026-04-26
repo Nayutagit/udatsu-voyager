@@ -20,9 +20,9 @@ $isOwner = (strpos($storagePath, "audio/{$uid}/") === 0) || (strpos($storagePath
 
 if (!$isOwner) {
     // If not owner, check if they are a mutual follower
-    // Extract the target uid from the path. Expected path: audio/{targetUid}/...
-    $targetUid = '';
-    if (preg_match('/^audio\/([^\/]+)\//', $storagePath, $matches)) {
+    // Extract the target uid from the path or GET param.
+    $targetUid = $_GET['target_uid'] ?? '';
+    if (!$targetUid && preg_match('/^audio\/([^\/]+)\//', $storagePath, $matches)) {
         $targetUid = $matches[1];
     }
     
