@@ -92,7 +92,7 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
     <div class="glass-card animate-fadeup" style="display: flex; align-items: center; gap: 30px; margin-bottom: 40px;">
       <div style="position: relative;">
         <img src="<?= htmlspecialchars($imagePath) ?>" alt="Profile" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary-neon); box-shadow: 0 0 15px rgba(252, 200, 0, 0.3);">
-        <a href="profile.php" style="position: absolute; bottom: 0; right: 0; background: var(--bg-dark); border: 1px solid var(--primary-neon); color: var(--primary-neon); width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem;">
+        <a href="edit_profile.php" style="position: absolute; bottom: 0; right: 0; background: var(--bg-dark); border: 1px solid var(--primary-neon); color: var(--primary-neon); width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem;">
           <i class="fas fa-pen"></i>
         </a>
       </div>

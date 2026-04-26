@@ -526,7 +526,7 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
       <?php else: ?>
         <p>プロフィールを設定してください。</p>
       <?php endif; ?>
-      <a href="profile.php" class="btn-primary">
+      <a href="edit_profile.php" class="btn-primary">
         <span>プロフィール編集</span>
       </a>
     </div>
