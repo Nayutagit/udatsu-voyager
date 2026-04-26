@@ -183,11 +183,11 @@ class GeminiService {
             // APIエラー（503 high demand等）の場合は再試行
             if (isset($data['error'])) {
                 $errorMsg = $data['error']['message'] ?? 'Unknown error';
-                // 400系なら再試行しても無駄なことが多いが、500/503は再試行する
-                if ($httpCode >= 500 || strpos(strtolower($errorMsg), 'demand') !== false || strpos(strtolower($errorMsg), 'quota') !== false) {
+                // 400系なら再試行しても無駄なことが多いが、429(Rate Limit)や500/503は再試行する
+                if ($httpCode == 429 || $httpCode >= 500 || strpos(strtolower($errorMsg), 'demand') !== false || strpos(strtolower($errorMsg), 'quota') !== false) {
                     $attempt++;
                     if ($attempt < $maxRetries) {
-                        sleep(2 * $attempt); // Exponential backoff (2s, 4s, 6s...)
+                        sleep(15 * $attempt); // 15s, 30s, 45s (Rate limits usually need 20s+)
                         continue;
                     }
                     return "AIサーバーが混雑しています（" . $errorMsg . "）。時間をおいて再度アップロードしてください。";
@@ -228,7 +228,7 @@ class GeminiService {
 
         $headers = ["Content-Type: application/json"];
         
-        $maxRetries = 3;
+        $maxRetries = 4;
         $attempt = 0;
         
         while ($attempt < $maxRetries) {
@@ -257,10 +257,10 @@ class GeminiService {
             // エラー時
             if (isset($data['error'])) {
                 $errorMsg = $data['error']['message'] ?? 'Unknown API error';
-                if ($httpCode >= 500 || strpos(strtolower($errorMsg), 'demand') !== false || strpos(strtolower($errorMsg), 'quota') !== false) {
+                if ($httpCode == 429 || $httpCode >= 500 || strpos(strtolower($errorMsg), 'demand') !== false || strpos(strtolower($errorMsg), 'quota') !== false) {
                     $attempt++;
                     if ($attempt < $maxRetries) {
-                        sleep(2 * $attempt); // Exponential backoff
+                        sleep(15 * $attempt); // 15s, 30s, 45s
                         continue;
                     }
                     throw new Exception("AIサーバーが混雑しています（" . $errorMsg . "）。時間をおいて再度お試しください。");
