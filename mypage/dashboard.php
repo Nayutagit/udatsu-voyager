@@ -273,7 +273,7 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
                   $af = $post['audio_file'];
                   // Firebase Storage path (audio/uid/...) => go through proxy
                   // Legacy local path (uploads/...) => also go through proxy which handles both
-                  $audioSrc = '../audio_proxy.php?path=' . urlencode($af);
+                  $audioSrc = '../audio_proxy.php?target_uid=' . urlencode($uid) . '&path=' . urlencode($af);
                 ?>
                 <div style="margin-top: 10px; margin-bottom: 10px;">
                   <audio controls style="width: 100%; height: 36px; border-radius: 18px;" src="<?= htmlspecialchars($audioSrc) ?>"></audio>

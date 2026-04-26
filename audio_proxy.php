@@ -15,16 +15,22 @@ if (empty($uid)) {
 
 $storagePath = $_GET['path'] ?? '';
 
-// Check if the file belongs to the user
-$isOwner = (strpos($storagePath, "audio/{$uid}/") === 0) || (strpos($storagePath, 'uploads/') === 0 && strpos($storagePath, $uid) !== false);
-
-if (!$isOwner) {
-    // If not owner, check if they are a mutual follower
-    // Extract the target uid from the path or GET param.
     $targetUid = $_GET['target_uid'] ?? '';
     if (!$targetUid && preg_match('/^audio\/([^\/]+)\//', $storagePath, $matches)) {
         $targetUid = $matches[1];
     }
+    
+    // Check if the file belongs to the user
+    $isOwner = false;
+    if (strpos($storagePath, "audio/{$uid}/") === 0) {
+        $isOwner = true;
+    } elseif (strpos($storagePath, 'uploads/') === 0) {
+        if (strpos($storagePath, $uid) !== false || $targetUid === $uid) {
+            $isOwner = true;
+        }
+    }
+    
+    if (!$isOwner) {
     
     $isMutual = false;
     if ($targetUid) {

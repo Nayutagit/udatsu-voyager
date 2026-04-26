@@ -140,16 +140,16 @@ switch ($action) {
         $myFollowersFile = $userDir . $uid . '_followers.json';
         $lineMapFile = $userDir . 'line_map.json';
         
-        $myFollowing = file_exists($myFollowingFile) ? json_decode(file_get_contents($myFollowingFile), true) ?: [] : [];
-        $myFollowers = file_exists($myFollowersFile) ? json_decode(file_get_contents($myFollowersFile), true) ?: [] : [];
+        $myFollowing = file_exists($myFollowingFile) ? (json_decode(file_get_contents($myFollowingFile), true) ?: []) : [];
+        $myFollowers = file_exists($myFollowersFile) ? (json_decode(file_get_contents($myFollowersFile), true) ?: []) : [];
         $mutualUids = array_intersect($myFollowing, $myFollowers);
         
         if (!empty($mutualUids)) {
-            $lineMap = file_exists($lineMapFile) ? json_decode(file_get_contents($lineMapFile), true) ?: [] : [];
+            $lineMap = file_exists($lineMapFile) ? (json_decode(file_get_contents($lineMapFile), true) ?: []) : [];
             $uidToLineId = array_flip($lineMap); // Map UID => LineUserId
             
             $profileFile = $userDir . $uid . '_profile.json';
-            $myProfile = file_exists($profileFile) ? json_decode(file_get_contents($profileFile), true) : [];
+            $myProfile = file_exists($profileFile) ? (json_decode(file_get_contents($profileFile), true) ?: []) : [];
             $myName = $myProfile['display_name'] ?? 'あなたと相互フォローのユーザー';
             
             $pushMessage = "📢 {$myName}さんが新しい音声をタイムラインに共有しました！\n\nタイトル：{$title}\n\n▼タイムラインを開いて確認する\nhttps://udatsu-voyager.com/mypage/timeline.php?openExternalBrowser=1";
