@@ -1,0 +1,199 @@
+<?php
+session_start();
+require_once __DIR__ . '/../core/bootstrap.php';
+
+if (empty($uid)) {
+    header("Location: ../index.php");
+    exit();
+}
+
+$userDir = __DIR__ . '/../users/';
+
+function getList($filePath) {
+    if (!file_exists($filePath)) return [];
+    $data = json_decode(file_get_contents($filePath), true);
+    return is_array($data) ? $data : [];
+}
+
+function getUserProfile($targetUid, $userDir) {
+    $profileFile = $userDir . $targetUid . '_profile.json';
+    $profile = ["display_name" => 'Unknown User', "title" => '', "bio" => '', "image" => ''];
+    if (file_exists($profileFile)) {
+        $profile = array_merge($profile, json_decode(file_get_contents($profileFile), true) ?: []);
+    }
+    return $profile;
+}
+
+$myFollowing = getList($userDir . $uid . '_following.json');
+$myFollowers = getList($userDir . $uid . '_followers.json');
+
+// Mutuals
+$mutualUids = array_intersect($myFollowing, $myFollowers);
+
+// Collect shared posts
+$timelinePosts = [];
+
+foreach ($mutualUids as $mutualUid) {
+    $postsFile = $userDir . $mutualUid . '_posts.json';
+    if (file_exists($postsFile)) {
+        $mutualPosts = json_decode(file_get_contents($postsFile), true) ?: [];
+        $profile = getUserProfile($mutualUid, $userDir);
+        
+        foreach ($mutualPosts as $post) {
+            if (!empty($post['is_shared'])) {
+                $post['author_uid'] = $mutualUid;
+                $post['author_profile'] = $profile;
+                $timelinePosts[] = $post;
+            }
+        }
+    }
+}
+
+// Sort by date descending
+usort($timelinePosts, function($a, $b) {
+    return strtotime($b['date']) - strtotime($a['date']);
+});
+
+?>
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>タイムライン | Udatsu</title>
+    <link rel="icon" type="image/png" href="../img/favicon.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .timeline-post {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
+        }
+        .timeline-post:hover {
+            border-color: rgba(0, 255, 204, 0.5);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+        }
+        .author-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 15px;
+        }
+        .author-info img {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--primary-neon);
+        }
+        .post-title {
+            font-size: 1.4rem;
+            color: var(--text-white);
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        .post-meta {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 15px;
+        }
+        .post-content {
+            font-size: 0.95rem;
+            line-height: 1.7;
+            color: #ddd;
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 3px solid var(--primary-neon);
+            white-space: pre-wrap;
+        }
+        .audio-player-container {
+            margin-top: 15px;
+            background: rgba(0,0,0,0.4);
+            padding: 10px;
+            border-radius: 50px;
+        }
+        .audio-player-container audio {
+            width: 100%;
+            height: 40px;
+            outline: none;
+        }
+    </style>
+</head>
+<body>
+
+<header class="header">
+    <div class="container header-inner">
+        <a href="dashboard.php" class="logo">
+            <i class="fas fa-arrow-left"></i>
+            <span style="margin-left: 10px;">Dashboard</span>
+        </a>
+    </div>
+</header>
+
+<div class="container" style="padding-top: 100px; padding-bottom: 60px; max-width: 800px;">
+    
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 40px;">
+        <h2 class="section-title" style="margin-bottom: 0;">⏳ タイムライン</h2>
+        <span class="text-muted" style="font-size: 0.9rem;">相互フォローの最新の投稿が表示されます</span>
+    </div>
+
+    <?php if (empty($timelinePosts)): ?>
+        <div class="glass-card" style="text-align: center; padding: 50px;">
+            <i class="fas fa-inbox" style="font-size: 3rem; color: var(--text-muted); margin-bottom: 20px;"></i>
+            <h3 style="color: var(--text-muted);">まだ投稿がありません</h3>
+            <p style="font-size: 0.9rem; color: var(--text-muted); margin-top: 10px;">ネットワークから友達を検索して相互フォローになりましょう！</p>
+            <a href="network.php" class="btn btn-primary" style="margin-top: 20px; display: inline-block;">ネットワークを開く</a>
+        </div>
+    <?php else: ?>
+        <?php foreach ($timelinePosts as $post): 
+            $authorImg = !empty($post['author_profile']['image']) ? '../uploads/' . $post['author_uid'] . '/' . $post['author_profile']['image'] : '../img/default-icon.png';
+            $audioUrl = '';
+            if (!empty($post['audio_file'])) {
+                if (strpos($post['audio_file'], 'audio/') === 0) {
+                    $audioUrl = "../audio_proxy.php?path=" . urlencode($post['audio_file']);
+                } else {
+                    $audioUrl = "../audio_proxy.php?path=" . urlencode("audio/{$post['author_uid']}/{$post['audio_file']}");
+                }
+            }
+        ?>
+            <div class="timeline-post animate-fadeup">
+                <div class="author-info">
+                    <img src="<?= htmlspecialchars($authorImg) ?>" alt="Author">
+                    <div>
+                        <div style="font-weight: bold; font-size: 1.1rem; color: var(--primary-neon);"><?= htmlspecialchars($post['author_profile']['display_name']) ?></div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted);"><?= htmlspecialchars($post['author_profile']['title']) ?></div>
+                    </div>
+                </div>
+                
+                <div class="post-title"><?= htmlspecialchars($post['title']) ?></div>
+                
+                <div class="post-meta">
+                    <span style="background: rgba(255,255,255,0.1); padding: 3px 8px; border-radius: 4px; margin-right: 10px;"><?= htmlspecialchars($post['category']) ?></span>
+                    <i class="far fa-calendar-alt"></i> <?= htmlspecialchars($post['date']) ?>
+                </div>
+
+                <div class="post-content"><?= htmlspecialchars($post['text']) ?></div>
+
+                <?php if ($audioUrl): ?>
+                <div class="audio-player-container">
+                    <audio controls controlsList="nodownload">
+                        <source src="<?= htmlspecialchars($audioUrl) ?>" type="audio/mp4">
+                        Your browser does not support the audio element.
+                    </audio>
+                </div>
+                <?php endif; ?>
+            </div>
+        <?php endforeach; ?>
+    <?php endif; ?>
+
+</div>
+
+</body>
+</html>

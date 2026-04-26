@@ -159,6 +159,17 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
         <h3 style="margin-bottom: 10px;">思考のチューニング</h3>
         <p class="text-muted">A/Bシナリオで自己哲学を調整</p>
       </a>
+      <a href="timeline.php" class="glass-card" style="text-align: center; display: block; text-decoration: none; border-color: #f59e0b;">
+        <i class="fas fa-hourglass-half" style="font-size: 3rem; margin-bottom: 20px; color: #f59e0b;"></i>
+        <h3 style="margin-bottom: 10px;">Timeline</h3>
+        <p class="text-muted">仲間の思考と音声を聴く</p>
+      </a>
+
+      <a href="network.php" class="glass-card" style="text-align: center; display: block; text-decoration: none; border-color: #3b82f6;">
+        <i class="fas fa-globe" style="font-size: 3rem; margin-bottom: 20px; color: #3b82f6;"></i>
+        <h3 style="margin-bottom: 10px;">Network</h3>
+        <p class="text-muted">仲間を探してフォローする</p>
+      </a>
     </div>
 
     <div style="text-align: right; margin-top: -40px; margin-bottom: 40px;">

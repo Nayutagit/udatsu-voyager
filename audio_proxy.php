@@ -15,16 +15,41 @@ if (empty($uid)) {
 
 $storagePath = $_GET['path'] ?? '';
 
-// Security: ensure the path belongs to this user
-if (empty($storagePath) || strpos($storagePath, "audio/{$uid}/") !== 0) {
-    // Check if it's a local fallback path (uploads/)
-    if (strpos($storagePath, 'uploads/') === 0 && file_exists(__DIR__ . '/' . $storagePath)) {
-        // Serve local file via redirect so the web server handles Accept-Ranges (needed for iOS Safari)
-        header("Location: /" . $storagePath, true, 302);
-        exit();
+// Check if the file belongs to the user
+$isOwner = (strpos($storagePath, "audio/{$uid}/") === 0) || (strpos($storagePath, 'uploads/') === 0 && strpos($storagePath, $uid) !== false);
+
+if (!$isOwner) {
+    // If not owner, check if they are a mutual follower
+    // Extract the target uid from the path. Expected path: audio/{targetUid}/...
+    $targetUid = '';
+    if (preg_match('/^audio\/([^\/]+)\//', $storagePath, $matches)) {
+        $targetUid = $matches[1];
     }
-    http_response_code(403);
-    exit('Forbidden: invalid audio path');
+    
+    $isMutual = false;
+    if ($targetUid) {
+        $userDir = __DIR__ . '/users/';
+        $myFollowingFile = $userDir . $uid . '_following.json';
+        $myFollowersFile = $userDir . $uid . '_followers.json';
+        
+        $myFollowing = file_exists($myFollowingFile) ? json_decode(file_get_contents($myFollowingFile), true) ?: [] : [];
+        $myFollowers = file_exists($myFollowersFile) ? json_decode(file_get_contents($myFollowersFile), true) ?: [] : [];
+        
+        if (in_array($targetUid, $myFollowing) && in_array($targetUid, $myFollowers)) {
+            $isMutual = true;
+        }
+    }
+    
+    if (!$isMutual) {
+        http_response_code(403);
+        exit('Forbidden: invalid audio path or no mutual follow relationship');
+    }
+}
+
+// Serve local fallback if needed
+if (strpos($storagePath, 'uploads/') === 0 && file_exists(__DIR__ . '/' . $storagePath)) {
+    header("Location: /" . $storagePath, true, 302);
+    exit();
 }
 
 try {
