@@ -9,15 +9,19 @@ if (empty($uid)) {
 $userDir = __DIR__ . '/../users/';
 $profileFile = $userDir . $uid . '_profile.json';
 
-$profile = ["display_name" => $userName ?? 'ゲストさん', "title" => '', "bio" => '', "image" => ''];
+$profile = ["display_name" => $userName ?? 'ゲストさん', "title" => '', "bio" => '', "image" => '', "network_id" => ''];
 if (file_exists($profileFile)) {
   $profile = array_merge($profile, json_decode(file_get_contents($profileFile), true) ?: []);
 }
+
+$error_message = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $displayName = htmlspecialchars($_POST['display_name'] ?? '', ENT_QUOTES, 'UTF-8');
   $title = htmlspecialchars($_POST['title'] ?? '', ENT_QUOTES, 'UTF-8');
   $bio = htmlspecialchars($_POST['bio'] ?? '', ENT_QUOTES, 'UTF-8');
+
+  $networkId = trim($_POST['network_id'] ?? '');
 
   // アイキャッチ（任意）
   $imageName = $profile['image'] ?? '';
@@ -30,14 +34,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     move_uploaded_file($_FILES['image']['tmp_name'], $uploadDir . $imageName);
   }
 
-  $profile['display_name'] = $displayName;
-  $profile['title'] = $title;
-  $profile['bio'] = $bio;
-  $profile['image'] = $imageName;
-
-  file_put_contents($profileFile, json_encode($profile, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+  // Network ID validation and mapping
+  $networkIdsFile = $userDir . 'network_ids.json';
+  $networkIds = file_exists($networkIdsFile) ? json_decode(file_get_contents($networkIdsFile), true) ?: [] : [];
   
-  header("Location: dashboard.php");
+  if ($networkId !== '') {
+    if (!preg_match('/^[a-zA-Z0-9_]{3,20}$/', $networkId)) {
+        $error_message = 'Network IDは半角英数字とアンダースコア(_)のみ、3〜20文字で入力してください。';
+    } else {
+        // Check if taken by someone else
+        if (isset($networkIds[$networkId]) && $networkIds[$networkId] !== $uid) {
+            $error_message = 'このNetwork IDは既に他のユーザーに使用されています。';
+        }
+    }
+  }
+
+  if (empty($error_message)) {
+      // Remove old mapping
+      foreach ($networkIds as $key => $mappedUid) {
+          if ($mappedUid === $uid) {
+              unset($networkIds[$key]);
+          }
+      }
+      
+      // Add new mapping if specified
+      if ($networkId !== '') {
+          $networkIds[$networkId] = $uid;
+          $profile['network_id'] = $networkId;
+      } else {
+          $profile['network_id'] = '';
+      }
+      
+      file_put_contents($networkIdsFile, json_encode($networkIds, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+
+      $profile['display_name'] = $displayName;
+      $profile['title'] = $title;
+      $profile['bio'] = $bio;
+      $profile['image'] = $imageName;
+
+      file_put_contents($profileFile, json_encode($profile, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+      
+      header("Location: dashboard.php");
+      exit();
+  }
   exit();
 }
 ?>
@@ -122,7 +161,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <h1 style="text-align: center; margin-bottom: 2rem;">プロフィール編集</h1>
 
+    <?php if ($error_message): ?>
+        <div style="background: rgba(244, 67, 54, 0.1); border: 1px solid #f44336; color: #f44336; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-weight: bold;">
+            <?php echo htmlspecialchars($error_message); ?>
+        </div>
+    <?php endif; ?>
+
     <form method="POST" enctype="multipart/form-data">
+      <label>Network ID (任意)</label>
+      <input type="text" name="network_id" value="<?php echo htmlspecialchars($profile['network_id'] ?? ''); ?>" placeholder="例: nayuta_123" pattern="^[a-zA-Z0-9_]{3,20}$" title="半角英数字とアンダースコアのみ、3〜20文字">
+      <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 5px;">友達があなたを検索するときに使う短いIDを設定できます。空欄の場合はシステムID（長めの英数字）が使用されます。</div>
+
       <label>表示名</label>
       <input type="text" name="display_name" value="<?php echo htmlspecialchars($profile['display_name']); ?>" required>
 

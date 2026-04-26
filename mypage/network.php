@@ -29,11 +29,32 @@ $myFollowers = getList($userDir . $uid . '_followers.json');
 // Mutuals
 $mutualUids = array_intersect($myFollowing, $myFollowers);
 
+// Get my custom network_id if set
+$myProfileFile = $userDir . $uid . '_profile.json';
+$myNetworkId = $uid;
+if (file_exists($myProfileFile)) {
+    $myProfileData = json_decode(file_get_contents($myProfileFile), true);
+    if (!empty($myProfileData['network_id'])) {
+        $myNetworkId = $myProfileData['network_id'];
+    }
+}
+
 // Search
 $searchResult = null;
 $searchError = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['search_uid'])) {
-    $targetUid = trim($_POST['search_uid']);
+    $searchInput = trim($_POST['search_uid']);
+    $targetUid = $searchInput;
+
+    // Check if search input matches a custom network_id
+    $networkIdsFile = $userDir . 'network_ids.json';
+    if (file_exists($networkIdsFile)) {
+        $networkIds = json_decode(file_get_contents($networkIdsFile), true) ?: [];
+        if (isset($networkIds[$searchInput])) {
+            $targetUid = $networkIds[$searchInput];
+        }
+    }
+
     if ($targetUid === $uid) {
         $searchError = "自分のIDは検索できません。";
     } elseif (!file_exists($userDir . $targetUid . '_profile.json')) {
@@ -90,7 +111,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['search_uid'])) {
     
     <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px;">
         <h2 class="section-title" style="margin-bottom: 0;">🌐 ネットワーク</h2>
-        <span class="text-muted" style="font-size: 0.9rem;">My ID: <strong style="color:var(--text-white); background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 4px; user-select: all;"><?= htmlspecialchars($uid) ?></strong></span>
+        <span class="text-muted" style="font-size: 0.9rem;">My ID: <strong style="color:var(--text-white); background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 4px; user-select: all;"><?= htmlspecialchars($myNetworkId) ?></strong></span>
     </div>
 
     <div class="glass-card" style="margin-bottom: 30px; padding: 20px;">
