@@ -48,6 +48,15 @@ function getPostStatusInfo($status) {
 }
 
 $visiblePosts = array_filter($posts, fn($p) => $p['status'] !== '削除済');
+uasort($visiblePosts, function($a, $b) {
+    $timeA = strtotime($a['date'] ?? '1970-01-01');
+    $timeB = strtotime($b['date'] ?? '1970-01-01');
+    if ($timeA === $timeB) {
+        // Fallback to ID which contains timestamp 'job_123456_789'
+        return strcmp($b['id'] ?? '', $a['id'] ?? ''); 
+    }
+    return $timeB <=> $timeA;
+});
 $postLimit = $plan_limits[$userPlan]['post_limit'] ?? 100;
 $remainingPosts = max(0, $postLimit - count($visiblePosts));
 $stackedCount = count(array_filter($posts, fn($p) => $p['status'] === 'My Udastack追加済'));

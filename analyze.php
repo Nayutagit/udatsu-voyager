@@ -91,7 +91,23 @@ try {
         $generatedTitle = mb_strimwidth(str_replace("\n", " ", $raw), 0, 15, '');
     }
 
-    $datePrefix = "VJ" . date('Ymd');
+    // 収録日の抽出
+    $datePrompt = "以下の文字起こしテキストから、収録された日付（〇月〇日など）が明確に読み取れる場合は、その日付を「YYYYMMDD」の8桁の数字（年は今年を想定）で出力してください。日付が全く言及されていない場合は「UNKNOWN」と出力してください。\n\n" . mb_strimwidth($raw, 0, 5000);
+    try {
+        $extractedDate = trim($gemini->generateText($datePrompt, false));
+    } catch (Exception $e) {
+        $extractedDate = 'UNKNOWN';
+    }
+    
+    if ($extractedDate !== 'UNKNOWN' && preg_match('/^\d{8}$/', $extractedDate)) {
+        $datePrefixStr = $extractedDate;
+        $postDateStr = substr($extractedDate, 0, 4) . '-' . substr($extractedDate, 4, 2) . '-' . substr($extractedDate, 6, 2);
+    } else {
+        $datePrefixStr = date('Ymd');
+        $postDateStr = date('Y-m-d');
+    }
+
+    $datePrefix = "VJ" . $datePrefixStr;
     $finalTitle  = $datePrefix . "_" . $generatedTitle;
 
     // ----------------------------------------------------------------
@@ -104,6 +120,7 @@ try {
             $p['text']          = $raw;
             $p['original_text'] = $raw;
             $p['content']       = '';
+            $p['date']          = $postDateStr;
             $p['status']        = '下書き';
             $p['category']      = 'Voice Memo';
             $p['audio_file']    = $storagePath; // Firebase Storage path or local fallback

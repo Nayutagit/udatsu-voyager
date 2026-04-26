@@ -88,7 +88,18 @@ try {
     $generatedTitle = trim($gemini->generateText($titlePrompt, false));
     $generatedTitle = str_replace(["\n", "\r", "\"", "'", "「", "」"], '', $generatedTitle);
 
-    $finalTitle = 'VJ' . date('Ymd') . '_' . $generatedTitle;
+    // 収録日の抽出
+    $datePrompt = "以下の文字起こしテキストから、収録された日付（〇月〇日など）が明確に読み取れる場合は、その日付を「YYYYMMDD」の8桁の数字（年は今年を想定）で出力してください。日付が全く言及されていない場合は「UNKNOWN」と出力してください。\n\n" . mb_strimwidth($raw, 0, 5000);
+    $extractedDate = trim($gemini->generateText($datePrompt, false));
+    if ($extractedDate !== 'UNKNOWN' && preg_match('/^\d{8}$/', $extractedDate)) {
+        $datePrefixStr = $extractedDate;
+        $postDateStr = substr($extractedDate, 0, 4) . '-' . substr($extractedDate, 4, 2) . '-' . substr($extractedDate, 6, 2);
+    } else {
+        $datePrefixStr = date('Ymd');
+        $postDateStr = date('Y-m-d');
+    }
+
+    $finalTitle = 'VJ' . $datePrefixStr . '_' . $generatedTitle;
 
     // 記事化（サマリー/清書）の生成
     $articlePrompt = "以下の音声の文字起こしを元に、読みやすく整理された記事（ブログやジャーナル形式）を作成してください。見出しや箇条書きを適宜用いて、元の音声の意図や思考のプロセスが伝わるように構成してください。\n\n" . mb_strimwidth($raw, 0, 8000);
@@ -101,6 +112,7 @@ try {
             $p['text']          = $article; // 保存先を記事に
             $p['original_text'] = $raw;
             $p['content']       = '';
+            $p['date']          = $postDateStr;
 
             $p['status']        = '下書き';
             $p['audio_file']    = $storagePath;
