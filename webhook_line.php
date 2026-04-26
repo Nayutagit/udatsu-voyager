@@ -26,11 +26,13 @@ $lineMapFile = __DIR__ . '/users/line_map.json';
 $lineMap = file_exists($lineMapFile) ? json_decode(file_get_contents($lineMapFile), true) : [];
 
 foreach ($events['events'] as $event) {
-    if ($event['type'] !== 'message') continue;
+    if ($event['type'] !== 'message' && $event['type'] !== 'follow') {
+        continue;
+    }
     
-    $replyToken = $event['replyToken'];
+    $replyToken = $event['replyToken'] ?? '';
     $lineUserId = $event['source']['userId'];
-    $messageType = $event['message']['type'];
+    $messageType = $event['message']['type'] ?? '';
     
     // Check if user is linked
     $uid = $lineMap[$lineUserId] ?? null;
@@ -45,7 +47,17 @@ foreach ($events['events'] as $event) {
         
         $linkUrl = "https://udatsu-voyager.com/mypage/line_link.php?token={$linkToken}";
         
-        replyLineMessage($channelAccessToken, $replyToken, "初めまして！Udatsu Voyagerにようこそ。\n\n以下のURLを開いて、あなたのアカウントと連携してください。\n(有効期限: 1時間)\n{$linkUrl}");
+        $msgText = "初めまして！Udatsu Voyagerにようこそ。\n\n音声を自動解析するには、まずお持ちのアカウントとの連携が必要です。\n以下のURLを開いて連携を完了させてください。\n(有効期限: 1時間)\n{$linkUrl}";
+        if ($event['type'] === 'message' && ($messageType === 'audio' || $messageType === 'file')) {
+            $msgText = "⚠️ まだアカウントが連携されていません！\n\n今お送りいただいた音声は保存されていません。以下のURLから連携を完了させた後、もう一度音声を送信してください。\n\n{$linkUrl}";
+        }
+        
+        replyLineMessage($channelAccessToken, $replyToken, $msgText);
+        continue;
+    }
+
+    if ($event['type'] === 'follow') {
+        replyLineMessage($channelAccessToken, $replyToken, "連携済みです！🎉\nボイスメッセージを吹き込むか、音声ファイル（m4a等）をここに直接送ると、自動でVoyagerに記録・解析されます。");
         continue;
     }
 
