@@ -9,7 +9,7 @@ $isLinked = in_array($uid, $map);
 
 // In a real environment, you'd provide the LINE Official Account ID or URL here
 $lineBotId = '@811smhsc';
-$lineAddUrl = 'https://line.me/R/ti/p/@811smhsc';
+$lineAddUrl = 'https://lin.ee/7HjLgwN';
 ?>
 <!DOCTYPE html>
 <html lang="ja">
