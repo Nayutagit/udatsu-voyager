@@ -8,8 +8,8 @@ $map = file_exists($mapFile) ? json_decode(file_get_contents($mapFile), true) : 
 $isLinked = in_array($uid, $map);
 
 // In a real environment, you'd provide the LINE Official Account ID or URL here
-$lineBotId = '@YOUR_LINE_BOT_ID';
-$lineAddUrl = 'https://lin.ee/xxxxxx'; // Fill this in later
+$lineBotId = '@811smhsc';
+$lineAddUrl = 'https://line.me/R/ti/p/@811smhsc';
 ?>
 <!DOCTYPE html>
 <html lang="ja">
@@ -71,7 +71,7 @@ $lineAddUrl = 'https://lin.ee/xxxxxx'; // Fill this in later
         以下のフローに従ってアカウントを紐付けてください。
       </p>
       <!-- To be active once the developer sets up the LINE bot -->
-      <a href="javascript:alert('【開発者へ】\nLINE BotのURL (LIN.EE) をダミーテキストと差し替えてください。')" class="btn btn-primary" style="background:#06C755; border:none; display:inline-block; text-decoration:none;"><i class="fas fa-plus"></i> 公式LINEを友だち追加</a>
+      <a href="<?php echo htmlspecialchars($lineAddUrl); ?>" target="_blank" class="btn btn-primary" style="background:#06C755; border:none; display:inline-block; text-decoration:none;"><i class="fas fa-plus"></i> 公式LINEを友だち追加</a>
     </div>
   <?php endif; ?>
 
