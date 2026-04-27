@@ -37,7 +37,7 @@
   <a href="edit_profile.php" class="sidebar-link"><i class="fas fa-pen"></i> プロフィール編集</a>
   <a href="membership.php" class="sidebar-link"><i class="fas fa-crown"></i> プラン変更</a>
   
-  <div style="margin-top: auto; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+  <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
     <a href="javascript:void(0)" class="sidebar-link" id="themeToggle">
       <i class="fas fa-adjust"></i> 表示モード切替
     </a>

@@ -206,7 +206,7 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
                 </div>
               <?php endif; ?>
               
-              <div style="display: flex; gap: 10px; margin-top: 20px;">
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px;">
                 <a href="edit_post.php?index=<?= $i ?>" class="btn btn-secondary" style="padding: 5px 10px; font-size: 0.8rem; flex: 1;">
                   <i class="fas fa-edit"></i> Edit
                 </a>
