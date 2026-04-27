@@ -210,6 +210,13 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
                 <a href="edit_post.php?index=<?= $i ?>" class="btn btn-secondary" style="padding: 5px 10px; font-size: 0.8rem; flex: 1;">
                   <i class="fas fa-edit"></i> Edit
                 </a>
+                <form method="POST" action="submit_post.php" style="flex: 1; display: flex;" onsubmit="return confirm('本当にこの投稿を削除しますか？');">
+                  <input type="hidden" name="index" value="<?= $i ?>">
+                  <input type="hidden" name="action" value="delete">
+                  <button type="submit" class="btn btn-secondary" style="padding: 5px 10px; font-size: 0.8rem; width: 100%; color: var(--warning-red); border-color: var(--warning-red);">
+                    <i class="fas fa-trash"></i> Delete
+                  </button>
+                </form>
                 
                 <!-- Actions -->
                 <?php if (($post['status'] ?? '') === 'エラー'): ?>

@@ -386,8 +386,7 @@ h6 {
     }
 
     .header-inner {
-        flex-direction: column;
-        gap: 15px;
+        padding: 0 10px;
     }
 
     .btn {

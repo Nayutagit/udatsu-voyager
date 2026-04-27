@@ -3,17 +3,19 @@
 // Requires variables: $userName, $userPlan, $imagePath (optional)
 ?>
 <header class="header">
-  <div class="container header-inner" style="display: flex; justify-content: space-between; align-items: center;">
-    <a href="mypage.php" class="logo">
-      <img src="../img/udatsu-logo.png" alt="Udatsu Logo">
-      <span>Udatsu</span>
-    </a>
-    
-    <button class="hamburger" id="menuToggle" aria-label="Toggle menu">
+  <div class="container header-inner" style="display: flex; flex-direction: row; justify-content: space-between; align-items: center; width: 100%;">
+    <button class="hamburger" id="menuToggle" aria-label="Toggle menu" style="padding-left: 0; width: 40px;">
       <span></span>
       <span></span>
       <span></span>
     </button>
+    
+    <a href="mypage.php" class="logo" style="margin: 0 auto;">
+      <img src="../img/udatsu-logo.png" alt="Udatsu Logo">
+      <span>Udatsu</span>
+    </a>
+    
+    <div style="width: 40px;"></div> <!-- Placeholder for centering -->
   </div>
 </header>
 
