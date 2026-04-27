@@ -1,7 +1,7 @@
 <?php
 session_start();
 $name = isset($_SESSION['user_name']) ? $_SESSION['user_name'] : 'ゲストさん';
-$redirectLink = isset($_SESSION['uid']) ? '/mypage/dashboard.php' : '/index.php';
+$redirectLink = isset($_SESSION['uid']) ? '/mypage/mypage.php' : '/index.php';
 ?>
 <!DOCTYPE html>
 <html lang="ja">

@@ -102,7 +102,7 @@
         fill.style.width = '100%';
         status.textContent = "バックグラウンド移行完了";
         setTimeout(() => {
-            window.location.href = "mypage/dashboard.php?upload_success=1";
+            window.location.href = "mypage/mypage.php?upload_success=1";
         }, 800);
     }, 1000);
   });

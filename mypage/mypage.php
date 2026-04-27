@@ -74,49 +74,21 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
 </head>
 <body>
 
-  <!-- Header -->
-  <header class="header">
-    <div class="container header-inner">
-      <a href="../index.php" class="logo">
-        <img src="../img/udatsu-logo.png" alt="Udatsu Logo">
-        <span>Voyager</span>
-      </a>
-      <div class="nav-user">
-        <div class="user-badge">
-          <i class="fas fa-user-circle"></i> <?= htmlspecialchars($userName) ?>
-        </div>
-        <div class="user-badge">
-          Plan: <strong><?= htmlspecialchars($userPlan) ?></strong>
-        </div>
-        <a href="../voyager_upload.php" class="btn btn-primary" style="padding: 8px 20px; font-size: 0.9rem;">
-          <i class="fas fa-upload"></i> Upload
-        </a>
-      </div>
-    </div>
-  </header>
+  <?php include __DIR__ . '/header.php'; ?>
 
-  <div class="container" style="padding-top: 120px; padding-bottom: 60px;">
+  <div class="container" style="padding-top: 100px; padding-bottom: 60px;">
 
-    <!-- Profile Section -->
-    <div class="glass-card animate-fadeup" style="display: flex; align-items: center; gap: 30px; margin-bottom: 40px;">
+    <!-- Profile Section (Compact) -->
+    <div class="glass-card animate-fadeup" style="display: flex; align-items: center; gap: 20px; margin-bottom: 30px; padding: 15px 25px;">
       <div style="position: relative;">
-        <img src="<?= htmlspecialchars($imagePath) ?>" alt="Profile" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary-neon); box-shadow: 0 0 15px rgba(252, 200, 0, 0.3);">
-        <a href="edit_profile.php" style="position: absolute; bottom: 0; right: 0; background: var(--bg-dark); border: 1px solid var(--primary-neon); color: var(--primary-neon); width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem;">
-          <i class="fas fa-pen"></i>
-        </a>
+        <img src="<?= htmlspecialchars($imagePath) ?>" alt="Profile" style="width: 70px; height: 70px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary-neon); box-shadow: 0 0 10px rgba(252, 200, 0, 0.2);">
       </div>
       <div style="flex: 1;">
-        <h2 style="font-size: 1.8rem; margin-bottom: 5px;"><?= htmlspecialchars($displayName) ?></h2>
-        <p class="text-muted" style="margin-bottom: 10px;"><?= !empty($title) ? htmlspecialchars($title) : 'No Title' ?></p>
-        <div style="display: flex; gap: 15px;">
-          <div class="user-badge"><i class="fas fa-layer-group"></i> Stacked: <strong><?= $stackedCount ?> / <?= $stackLimit ?></strong></div>
-          <div class="user-badge"><i class="fas fa-pen-nib"></i> Posts: <strong><?= count($visiblePosts) ?></strong></div>
+        <h2 style="font-size: 1.3rem; margin-bottom: 5px;"><?= htmlspecialchars($displayName) ?></h2>
+        <div style="font-size: 0.85rem; color: var(--text-muted); display: flex; gap: 15px;">
+          <span><i class="fas fa-layer-group"></i> Stacked: <strong><?= $stackedCount ?></strong></span>
+          <span><i class="fas fa-pen-nib"></i> Posts: <strong><?= count($visiblePosts) ?></strong></span>
         </div>
-      </div>
-      <div>
-        <a href="membership.php" class="btn btn-secondary">
-          <i class="fas fa-crown"></i> Upgrade Plan
-        </a>
       </div>
     </div>
 
@@ -142,103 +114,48 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
   </style>
   <?php endif; ?>
 
-    <!-- Main Actions -->
-    <div class="dashboard-grid animate-fadeup delay-100" style="margin-bottom: 60px;">
-      <a href="my_udastack.php" class="glass-card" style="text-align: center; display: block; text-decoration: none; border-color: var(--accent-teal);">
-        <i class="fas fa-layer-group text-teal" style="font-size: 3rem; margin-bottom: 20px;"></i>
-        <h3 style="margin-bottom: 10px;">My Udastack</h3>
-        <p class="text-muted">蓄積された思考資産を確認</p>
+    <!-- Main Actions (SNS Style) -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px;" class="animate-fadeup delay-100">
+      <a href="../voyager_upload.php" class="btn btn-primary" style="padding: 15px; text-align: center; border-radius: 12px; display: flex; flex-direction: column; gap: 5px;">
+        <i class="fas fa-microphone-alt" style="font-size: 1.5rem;"></i>
+        <span style="font-size: 0.9rem;">Record Voice</span>
       </a>
-      
-      <a href="../voyager_upload.php" class="glass-card" style="text-align: center; display: block; text-decoration: none; border-color: var(--primary-neon);">
-        <i class="fas fa-microphone-alt text-neon" style="font-size: 3rem; margin-bottom: 20px;"></i>
-        <h3 style="margin-bottom: 10px;">Record Journal</h3>
-        <p class="text-muted">声で新しい思考を記録する</p>
-      </a>
-
-      <a href="line_setup.php" class="glass-card" style="text-align: center; display: block; text-decoration: none; border-color: #06C755;">
-        <i class="fab fa-line" style="font-size: 3rem; margin-bottom: 20px; color: #06C755;"></i>
-        <h3 style="margin-bottom: 10px;">LINE Upload</h3>
-        <p class="text-muted">LINEで音声を送るだけで自動解析</p>
-      </a>
-
-      <a href="thought_quiz.php" class="glass-card" style="text-align: center; display: block; text-decoration: none; border-color: #a855f7; position: relative; overflow: hidden;">
-        <div style="position:absolute; top:10px; right:12px; background: rgba(168,85,247,0.2); color:#a855f7; font-size:0.7rem; font-weight:700; padding:2px 8px; border-radius:99px;"><?= $quizCount > 0 ? $quizCount . '回目' : 'NEW' ?></div>
-        <i class="fas fa-sliders-h" style="font-size: 3rem; margin-bottom: 20px; color: #a855f7;"></i>
-        <h3 style="margin-bottom: 10px;">思考のチューニング</h3>
-        <p class="text-muted">A/Bシナリオで自己哲学を調整</p>
-      </a>
-      <a href="timeline.php" class="glass-card" style="text-align: center; display: block; text-decoration: none; border-color: #f59e0b;">
-        <i class="fas fa-hourglass-half" style="font-size: 3rem; margin-bottom: 20px; color: #f59e0b;"></i>
-        <h3 style="margin-bottom: 10px;">Timeline</h3>
-        <p class="text-muted">仲間の思考と音声を聴く</p>
-      </a>
-
-      <a href="network.php" class="glass-card" style="text-align: center; display: block; text-decoration: none; border-color: #3b82f6;">
-        <i class="fas fa-globe" style="font-size: 3rem; margin-bottom: 20px; color: #3b82f6;"></i>
-        <h3 style="margin-bottom: 10px;">Network</h3>
-        <p class="text-muted">仲間を探してフォローする</p>
+      <a href="timeline.php" class="btn btn-secondary" style="padding: 15px; text-align: center; border-radius: 12px; display: flex; flex-direction: column; gap: 5px; border-color: #f59e0b; color: #f59e0b;">
+        <i class="fas fa-hourglass-half" style="font-size: 1.5rem;"></i>
+        <span style="font-size: 0.9rem;">Timeline</span>
       </a>
     </div>
 
-    <div style="text-align: right; margin-top: -40px; margin-bottom: 40px;">
-      <a href="javascript:void(0)" onclick="checkPostLimit()" style="color: var(--text-muted); font-size: 0.9rem; text-decoration: none; transition: 0.3s;" onmouseover="this.style.color='var(--text-white)'" onmouseout="this.style.color='var(--text-muted)'">
-        <i class="fas fa-keyboard"></i> 手入力で記録を作成する
-      </a>
+    <!-- Secondary Links -->
+    <div style="display: flex; gap: 10px; margin-bottom: 40px; flex-wrap: wrap; justify-content: center;" class="animate-fadeup delay-100">
+      <a href="line_setup.php" class="user-badge" style="text-decoration: none; border-color: #06C755; color: #06C755; background: rgba(6, 199, 85, 0.1);"><i class="fab fa-line"></i> LINEアップロード</a>
+      <a href="my_udastack.php" class="user-badge" style="text-decoration: none; border-color: var(--accent-teal); color: var(--accent-teal); background: rgba(0, 164, 216, 0.1);"><i class="fas fa-layer-group"></i> My Udastack</a>
+      <a href="thought_quiz.php" class="user-badge" style="text-decoration: none; border-color: #a855f7; color: #a855f7; background: rgba(168, 85, 247, 0.1);"><i class="fas fa-sliders-h"></i> 思考チューニング</a>
+      <a href="javascript:void(0)" onclick="checkPostLimit()" class="user-badge" style="text-decoration: none; border-color: var(--text-muted); color: var(--text-gray);"><i class="fas fa-keyboard"></i> 手入力作成</a>
     </div>
 
     <!-- Thought Core -->
-    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px;" class="animate-fadeup delay-100">
-      <h2 class="section-title" style="font-size: 1.8rem; margin-bottom: 0;">🧠 Thought Core</h2>
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 15px;" class="animate-fadeup delay-100">
+      <h2 class="section-title" style="font-size: 1.4rem; margin-bottom: 0;"><i class="fas fa-brain" style="color: var(--primary-neon);"></i> Thought Core</h2>
       <button onclick="updateBrain()" class="btn btn-secondary" style="padding: 5px 15px; font-size: 0.8rem; height: fit-content;" id="updateBrainBtn">
-        <i class="fas fa-sync-alt"></i> 最新データで分析する
+        <i class="fas fa-sync-alt"></i> 分析を更新
       </button>
     </div>
 
-    <div class="glass-card animate-fadeup delay-100" style="margin-bottom: 30px; padding: 20px;">
+    <div class="glass-card animate-fadeup delay-100" style="margin-bottom: 40px; padding: 20px;">
       <?php if (empty($thoughtDict)): ?>
-        <p class="text-muted" style="text-align: center; margin: 20px 0;">まだ脳内分析データがありません。「最新データで分析する」ボタンを押すとAIがあなたの傾向を分析します。</p>
+        <p class="text-muted" style="text-align: center; margin: 20px 0;">まだ脳内分析データがありません。「分析を更新」ボタンを押すとAIがあなたの傾向を分析します。</p>
       <?php else: ?>
-        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px;">
         <?php foreach ($thoughtDict as $keyword => $description): ?>
           <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 15px;">
-            <h4 style="color: var(--primary-neon); margin-bottom: 10px; font-size: 1.1rem;">#<?= htmlspecialchars($keyword) ?></h4>
-            <p style="color: var(--text-white); font-size: 0.9rem; line-height: 1.5; margin: 0;"><?= htmlspecialchars($description) ?></p>
+            <h4 style="color: var(--primary-neon); margin-bottom: 5px; font-size: 1rem;">#<?= htmlspecialchars($keyword) ?></h4>
+            <p style="color: var(--text-white); font-size: 0.85rem; line-height: 1.5; margin: 0;"><?= htmlspecialchars($description) ?></p>
           </div>
         <?php endforeach; ?>
         </div>
       <?php endif; ?>
     </div>
-
-    <!-- Thought DNA Profile -->
-    <?php if ($thoughtProfile && !empty($thoughtProfile['markdown'])): ?>
-    <div class="glass-card animate-fadeup" style="margin-bottom: 60px; padding: 20px; border-color: rgba(168,85,247,0.3);">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-        <h3 style="margin:0; color:#a855f7;"><i class="fas fa-sliders-h"></i> 思考プロファイル
-          <span style="font-size:0.75rem; background:rgba(168,85,247,0.15); padding:2px 8px; border-radius:99px; margin-left:8px;"><?= $quizCount ?>回のチューニングに基づく</span>
-        </h3>
-        <a href="thought_quiz.php" class="btn btn-secondary" style="padding:5px 14px; font-size:0.8rem;">
-          <i class="fas fa-plus"></i> セッションを開始
-        </a>
-      </div>
-      <div style="font-size:0.88rem; color:var(--text-muted); max-height:300px; overflow:hidden; position:relative;">
-        <div id="profilePreview" style="line-height:1.7;"><?= nl2br(htmlspecialchars(mb_strimwidth($thoughtProfile['markdown'], 0, 600, '...'))) ?></div>
-        <div style="position:absolute; bottom:0; left:0; right:0; height:80px; background:linear-gradient(transparent, var(--bg-card));"></div>
-      </div>
-      <a href="thought_quiz.php" style="display:block; text-align:center; margin-top:1rem; color:#a855f7; font-size:0.9rem; text-decoration:none;">
-        全文を読み・更にチューニングする →
-      </a>
-    </div>
-    <?php else: ?>
-    <div class="glass-card animate-fadeup" style="margin-bottom: 60px; padding: 2rem; text-align:center; border-color: rgba(168,85,247,0.2);">
-      <i class="fas fa-sliders-h" style="font-size:2.5rem; color:#a855f7; margin-bottom:1rem;"></i>
-      <h3 style="margin-bottom:0.5rem;">思考をチューニングする</h3>
-      <p class="text-muted" style="margin-bottom:1.5rem; font-size:0.9rem;">10個のA/Bシナリオに答えるたびに、あなたの思考プロファイルが精緻化されていきます。</p>
-      <a href="thought_quiz.php" class="btn btn-primary" style="display:inline-block; text-decoration:none;">
-        <i class="fas fa-play"></i> セッションを始める
-      </a>
-    </div>
-    <?php endif; ?>
 
     <!-- Recent Posts -->
     <h2 class="section-title animate-fadeup delay-200" style="font-size: 1.8rem; margin-bottom: 30px;">Recent Posts</h2>
@@ -294,11 +211,22 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
                   <i class="fas fa-edit"></i> Edit
                 </a>
                 
-                <!-- Stack Button -->
-                <?php if ($post['status'] === 'My Udastack追加済'): ?>
-                  <button class="btn btn-primary" style="padding: 5px 10px; font-size: 0.8rem; opacity: 0.7; flex: 1;" disabled>
-                    <i class="fas fa-check"></i> Stacked
-                  </button>
+                <!-- Actions -->
+                <?php if (($post['status'] ?? '') === 'エラー'): ?>
+                  <form method="POST" action="retry_analysis.php" style="flex: 1; display: flex;">
+                    <input type="hidden" name="index" value="<?= $i ?>">
+                    <button type="submit" class="btn btn-primary" style="padding: 5px 10px; font-size: 0.8rem; width: 100%; background: var(--warning-red); color: white;">
+                      <i class="fas fa-redo"></i> 再試行
+                    </button>
+                  </form>
+                <?php elseif ($post['status'] === 'My Udastack追加済'): ?>
+                  <form method="POST" action="submit_post.php" style="flex: 1; display: flex;">
+                    <input type="hidden" name="index" value="<?= $i ?>">
+                    <input type="hidden" name="action" value="unstack">
+                    <button type="submit" class="btn btn-primary" style="padding: 5px 10px; font-size: 0.8rem; flex: 1; border-color: var(--primary-neon); background: rgba(252, 200, 0, 0.1); color: var(--primary-neon);">
+                      <i class="fas fa-check"></i> Stacked
+                    </button>
+                  </form>
                 <?php else: ?>
                   <form method="POST" action="submit_post.php" style="flex: 1; display: flex;">
                     <input type="hidden" name="index" value="<?= $i ?>">

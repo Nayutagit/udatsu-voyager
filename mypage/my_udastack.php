@@ -350,8 +350,19 @@ $summaryText = count($allSummaries) > 0 ? implode(" / ", array_slice($allSummari
 </head>
 <body>
 
-<div class="container">
+<?php include __DIR__ . '/header.php'; ?>
+
+<div class="container" style="padding-top: 100px;">
   <h1>📦 My Udastack</h1>
+
+  <div style="background: rgba(0, 164, 216, 0.1); border-left: 4px solid var(--accent-teal); padding: 1.5rem; border-radius: 4px; margin-bottom: 2rem; color: var(--text-white);">
+    <p style="margin: 0; line-height: 1.6; font-size: 1.05rem;">
+      <strong>My Udastackとは：</strong><br>
+      「この考えは自分の中で大事だな」と思ったものをStack（お気に入り登録）して、いつでも引き出せるようにする機能です。<br>
+      「あーなんかこのVJはそこまで良いこと言ってないなー」と思ったら、Stack解除すればOK！<br>
+      マイページの投稿一覧から「Stack」ボタンを押すことで、ここ（My Udastack）にどんどん保存されていきます。
+    </p>
+  </div>
 
   <div class="summary-box">
     <h2>🧭 思考資産まとめ</h2>
@@ -425,7 +436,7 @@ $summaryText = count($allSummaries) > 0 ? implode(" / ", array_slice($allSummari
     <h3>まだ積み上げた投稿がありません</h3>
     <div style="background: none; border: none; padding: 2rem;">
       <p style="color: var(--text-muted); margin-bottom: 2rem;">ダッシュボードから投稿をMy Udastackに積み上げてみましょう！</p>
-      <a href="dashboard.php" style="
+      <a href="mypage.php" style="
         background: var(--primary-neon);
         color: #000;
         padding: 1rem 2rem;
@@ -441,7 +452,7 @@ $summaryText = count($allSummaries) > 0 ? implode(" / ", array_slice($allSummari
   <?php endif; ?>
 
   <footer>
-    <a href="dashboard.php">← マイページトップに戻る</a>
+    <a href="mypage.php">← マイページトップに戻る</a>
   </footer>
 </div>
 

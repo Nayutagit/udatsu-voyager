@@ -345,7 +345,7 @@ $plan_label = match ($plan) {
     </div>
 
     <div style="text-align: center;">
-      <a href="dashboard.php" class="back-link">← マイページに戻る</a>
+      <a href="mypage.php" class="back-link">← マイページに戻る</a>
     </div>
   </div>
 

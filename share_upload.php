@@ -28,7 +28,7 @@ $uploadCount = $data[$today] ?? 0;
 $limitReached = ($userPlan !== 'admin') && ($uploadCount >= $uploadLimit);
 
 if ($limitReached) {
-    header('Location: mypage/dashboard.php?error=limit');
+    header('Location: mypage/mypage.php?error=limit');
     exit();
 }
 

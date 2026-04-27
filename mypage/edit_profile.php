@@ -74,7 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
       file_put_contents($profileFile, json_encode($profile, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
       
-      header("Location: dashboard.php");
+      header("Location: mypage.php");
       exit();
   }
   exit();
@@ -156,7 +156,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body>
   <div class="container" style="padding-top: 50px; padding-bottom: 50px;">
     <header>
-      <a href="dashboard.php" style="color: var(--text-white); text-decoration: none; font-size: 1.2rem; font-weight: bold;">← Dashboard</a>
+      <a href="mypage.php" style="color: var(--text-white); text-decoration: none; font-size: 1.2rem; font-weight: bold;">← Dashboard</a>
     </header>
 
     <h1 style="text-align: center; margin-bottom: 2rem;">プロフィール編集</h1>

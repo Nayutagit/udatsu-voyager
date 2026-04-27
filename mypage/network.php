@@ -100,7 +100,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['search_uid'])) {
 
 <header class="header">
     <div class="container header-inner">
-        <a href="dashboard.php" class="logo">
+        <a href="mypage.php" class="logo">
             <i class="fas fa-arrow-left"></i>
             <span style="margin-left: 10px;">Dashboard</span>
         </a>

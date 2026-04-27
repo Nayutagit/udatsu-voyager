@@ -1,9 +1,8 @@
 <?php
-session_start();
-header('Content-Type: application/json');
-
 require_once __DIR__ . '/../core/bootstrap.php';
 require_once __DIR__ . '/../core/GeminiService.php';
+
+header('Content-Type: application/json');
 
 if (empty($uid)) {
     echo json_encode(["status" => "error", "message" => "認証されていません"]);

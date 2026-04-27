@@ -46,6 +46,18 @@ $_SESSION['uid']        = $uid;
 $_SESSION['user_name']  = $name;
 $_SESSION['user_plan']  = $plan;
 
+// 🔹 永続ログイン(30日間)用のCookie設定
+$secret = 'udatsu_secret_2026_voyager';
+$hash = hash_hmac('sha256', $uid . $name . $plan, $secret);
+$cookiePayload = base64_encode(json_encode(['uid' => $uid, 'name' => $name, 'plan' => $plan, 'hash' => $hash]));
+
+// Secure属性などはbootstrapの条件と同じように
+$isLocal = ($_SERVER['HTTP_HOST'] === '127.0.0.1:8000' || $_SERVER['HTTP_HOST'] === 'localhost:8000');
+$cookieDomain = $isLocal ? '' : '.udatsu-voyager.com';
+$cookieSecure = $isLocal ? false : true;
+
+setcookie('udatsu_auth', $cookiePayload, time() + (86400 * 30), "/", $cookieDomain, $cookieSecure, true);
+
 // ✅ 成功レスポンス
 echo json_encode(['status' => 'ok']);
 exit;

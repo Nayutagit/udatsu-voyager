@@ -31,6 +31,23 @@ if (session_status() === PHP_SESSION_NONE) {
     }
 }
 
+// 🔹 永続的ログイン(Cookie)の復元
+if (empty($_SESSION['uid']) && !empty($_COOKIE['udatsu_auth'])) {
+    $cookieData = json_decode(base64_decode($_COOKIE['udatsu_auth']), true);
+    if (is_array($cookieData) && isset($cookieData['uid'], $cookieData['name'], $cookieData['plan'], $cookieData['hash'])) {
+        $secret = 'udatsu_secret_2026_voyager';
+        $expectedHash = hash_hmac('sha256', $cookieData['uid'] . $cookieData['name'] . $cookieData['plan'], $secret);
+        if (hash_equals($expectedHash, $cookieData['hash'])) {
+            $_SESSION['uid']       = $cookieData['uid'];
+            $_SESSION['user_name'] = $cookieData['name'];
+            $_SESSION['user_plan'] = $cookieData['plan'];
+        } else {
+            // 不正なCookieの場合は削除
+            setcookie('udatsu_auth', '', time() - 3600, "/");
+        }
+    }
+}
+
 /* ───────────────
    設定ファイル / ライブラリ
 ──────────────── */

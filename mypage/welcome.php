@@ -1,7 +1,7 @@
 <?php
 session_start();
 if (isset($_SESSION['uid'])) {
-  header("Location: dashboard.php");
+  header("Location: mypage.php");
   exit();
 }
 ?>
@@ -121,7 +121,7 @@ if (isset($_SESSION['uid'])) {
           body: JSON.stringify({ uid, email, name, plan })
         });
 
-        window.location.href = "dashboard.php";
+        window.location.href = "mypage.php";
       } catch (error) {
         alert("ログイン失敗：" + error.message);
       }

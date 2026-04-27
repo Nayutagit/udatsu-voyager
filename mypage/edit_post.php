@@ -60,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   // The is_shared status is no longer modified here.
   // It is toggled via submit_post.php from the dashboard.
 
-  header("Location: dashboard.php");
+  header("Location: mypage.php");
   exit();
 }
 ?>
@@ -281,10 +281,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body>
   <div class="container">
     <header>
-      <a href="dashboard.php">
+      <a href="mypage.php">
         <img src="../img/udatsu-logo.png" alt="Udatsuロゴ" class="logo">
       </a>
-      <a href="dashboard.php">Udatsuマイページ</a>
+      <a href="mypage.php">Udatsuマイページ</a>
     </header>
 
     <h1>投稿を編集する</h1>
@@ -319,7 +319,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </form>
 
     <div class="back-button">
-      <a href="dashboard.php">← マイページに戻る</a>
+      <a href="mypage.php">← マイページに戻る</a>
     </div>
   </div>
 </body>

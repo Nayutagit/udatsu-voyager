@@ -189,7 +189,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$limitReached) {
         <div class="user-badge">
           Plan: <strong><?= htmlspecialchars($userPlan) ?></strong>
         </div>
-        <a href="mypage/dashboard.php" class="btn btn-secondary" style="padding: 8px 20px; font-size: 0.9rem;">
+        <a href="mypage/mypage.php" class="btn btn-secondary" style="padding: 8px 20px; font-size: 0.9rem;">
           <i class="fas fa-columns"></i> Dashboard
         </a>
       </div>

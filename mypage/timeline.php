@@ -133,19 +133,12 @@ usort($timelinePosts, function($a, $b) {
 </head>
 <body>
 
-<header class="header">
-    <div class="container header-inner">
-        <a href="dashboard.php" class="logo">
-            <i class="fas fa-arrow-left"></i>
-            <span style="margin-left: 10px;">Dashboard</span>
-        </a>
-    </div>
-</header>
+<?php include __DIR__ . '/header.php'; ?>
 
 <div class="container" style="padding-top: 100px; padding-bottom: 60px; max-width: 800px;">
     
     <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 40px;">
-        <h2 class="section-title" style="margin-bottom: 0;">⏳ タイムライン</h2>
+        <h2 class="section-title" style="margin-bottom: 0;"><i class="fas fa-hourglass-half" style="color: var(--primary-neon);"></i> タイムライン</h2>
         <span class="text-muted" style="font-size: 0.9rem;">相互フォローの最新の投稿が表示されます</span>
     </div>
 

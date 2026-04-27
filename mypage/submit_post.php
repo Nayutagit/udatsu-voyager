@@ -18,7 +18,7 @@ $index  = $_POST['index'] ?? null;
 $action = $_POST['action'] ?? '';
 
 if (!is_numeric($index)) {
-  header("Location: dashboard.php");
+  header("Location: mypage.php");
   exit();
 }
 
@@ -27,7 +27,7 @@ $posts = file_exists($postsFile)
   : [];
 
 if (!isset($posts[$index])) {
-  header("Location: dashboard.php");
+  header("Location: mypage.php");
   exit();
 }
 
@@ -181,7 +181,7 @@ switch ($action) {
     break;
 
   default:
-    header("Location: dashboard.php");
+    header("Location: mypage.php");
     exit();
 }
 
@@ -192,5 +192,5 @@ if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQ
   exit();
 }
 
-header("Location: dashboard.php");
+header("Location: mypage.php");
 exit();

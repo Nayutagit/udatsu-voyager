@@ -217,10 +217,10 @@ $thumbnail = $post['thumbnail'] ?? '';
 <body>
   <div class="container">
     <header>
-      <a href="dashboard.php">
+      <a href="mypage.php">
         <img src="../img/udatsu-logo.png" alt="Udatsuロゴ" class="logo">
       </a>
-      <a href="dashboard.php">Udatsuマイページ</a>
+      <a href="mypage.php">Udatsuマイページ</a>
     </header>
     
     <div class="post-container">
@@ -242,7 +242,7 @@ $thumbnail = $post['thumbnail'] ?? '';
     </div>
     
     <div class="back-button">
-      <a href="dashboard.php">← マイページに戻る</a>
+      <a href="mypage.php">← マイページに戻る</a>
     </div>
   </div>
 </body>

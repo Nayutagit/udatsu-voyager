@@ -8,7 +8,7 @@ $uid = $_SESSION['uid'] ?? '';
 $name = $_SESSION['user_name'] ?? 'ユーザー';
 $displayName = $name ?: 'ユーザー';
 
-$redirectMypage = 'https://udatsu-voyager.com/mypage/dashboard.php';
+$redirectMypage = 'https://udatsu-voyager.com/mypage/mypage.php';
 ?>
 <!DOCTYPE html>
 <html lang="ja">

@@ -115,7 +115,7 @@ if (empty($uid)) {
           Udatsu VoyagerとLINEの紐付けが完了しました。<br>
           この画面を閉じてLINEに戻り、ボイスメッセージや音声ファイルを送ってみてください。<br>自動で解析が始まります🚀
         </p>
-        <a href="dashboard.php" class="btn btn-secondary"><i class="fas fa-home"></i> ダッシュボードへ</a>
+        <a href="mypage.php" class="btn btn-secondary"><i class="fas fa-home"></i> ダッシュボードへ</a>
       </div>
     <?php endif; ?>
 

@@ -94,6 +94,6 @@ $lineAddUrl = 'https://lin.ee/7HjLgwN';
   </div>
 
 </div>
-<footer><a href="dashboard.php"><i class="fas fa-chevron-left"></i> ダッシュボードに戻る</a></footer>
+<footer><a href="mypage.php"><i class="fas fa-chevron-left"></i> ダッシュボードに戻る</a></footer>
 </body>
 </html>

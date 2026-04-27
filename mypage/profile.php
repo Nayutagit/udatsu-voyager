@@ -502,7 +502,7 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
     <a href="https://udatsuageteko.com">
       <img src="../img/udatsu-logo.png" alt="Udatsuロゴ" class="logo">
     </a>
-    <a href="dashboard.php">Udatsuマイページ</a>
+    <a href="mypage.php">Udatsuマイページ</a>
   </header>
 
   <div class="plan-section">
@@ -599,7 +599,7 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
   </div>
 
   <div class="navigation">
-    <a href="dashboard.php" class="nav-btn">ダッシュボードへ戻る</a>
+    <a href="mypage.php" class="nav-btn">ダッシュボードへ戻る</a>
     <a href="../logout.php" class="nav-btn" style="border-color: #ff5252; color: #ff5252;">ログアウト</a>
   </div>
 </div>

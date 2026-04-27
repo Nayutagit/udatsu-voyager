@@ -141,7 +141,7 @@ try {
         $configFile = __DIR__ . '/config/line_config.php';
         $lineConfig = file_exists($configFile) ? require $configFile : null;
         if ($lineConfig && !empty($lineConfig['channel_access_token'])) {
-            $dashboardUrl = "https://udatsu-voyager.com/mypage/dashboard.php?openExternalBrowser=1";
+            $dashboardUrl = "https://udatsu-voyager.com/mypage/mypage.php?openExternalBrowser=1";
             $fullMessage = "✨ 解析が完了しました！\n\n【{$finalTitle}】\n\n" . $article . "\n\n▼ 続きや編集はダッシュボードから\n" . $dashboardUrl;
             
             // LINE allows max 5000 chars per message object, up to 5 objects per push request

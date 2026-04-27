@@ -2,7 +2,7 @@
 require_once __DIR__ . '/core/bootstrap.php';
 
 if ($userPlan !== 'guest') {
-  header("Location: voyager_upload.php");
+  header("Location: mypage/mypage.php");
   exit();
 }
 ?>

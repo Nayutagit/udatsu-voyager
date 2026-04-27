@@ -38,7 +38,7 @@ $isRealSubmission = $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['title
 
 if ($isRealSubmission) {
   if ($count >= $limit) {
-    echo "<script>alert('このプランでは今月の投稿保存上限に達しています。上位プランをご検討ください。'); window.location.href = 'dashboard.php';</script>";
+    echo "<script>alert('このプランでは今月の投稿保存上限に達しています。上位プランをご検討ください。'); window.location.href = 'mypage.php';</script>";
     exit();
   }
 
@@ -75,7 +75,7 @@ if ($isRealSubmission) {
 
   $posts[] = $newPost;
   file_put_contents($postsFile, json_encode($posts, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
-  header("Location: dashboard.php");
+  header("Location: mypage.php");
   exit();
 }
 ?>
@@ -373,10 +373,10 @@ if ($isRealSubmission) {
 <body>
 <div class="container">
   <header>
-    <a href="dashboard.php">
+    <a href="mypage.php">
       <img src="../img/udatsu-logo.png" class="logo" alt="Udatsuロゴ">
     </a>
-    <a href="dashboard.php">Udatsuマイページ</a>
+    <a href="mypage.php">Udatsuマイページ</a>
   </header>
 
   <h1>新規投稿作成</h1>
@@ -431,12 +431,12 @@ if ($isRealSubmission) {
 
     <div class="action-buttons">
       <input type="submit" value="保存">
-      <button type="button" class="cancel-btn" onclick="window.location.href='dashboard.php'">キャンセル</button>
+      <button type="button" class="cancel-btn" onclick="window.location.href='mypage.php'">キャンセル</button>
     </div>
   </form>
 
   <div class="back-button">
-    <a href="dashboard.php">← マイページに戻る</a>
+    <a href="mypage.php">← マイページに戻る</a>
   </div>
 </div>
 
