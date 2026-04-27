@@ -43,8 +43,16 @@ set_time_limit(1800);
 
 $logFile = __DIR__ . '/log/run_analysis_log.txt';
 if (!file_exists(__DIR__ . '/log')) mkdir(__DIR__ . '/log', 0755, true);
-file_put_contents($logFile, date('Y-m-d H:i:s') . " - START uid: $uid, audio: $audioPath\n", FILE_APPEND);
 
+$lockFile = __DIR__ . '/log/analysis.lock';
+$lockFp = fopen($lockFile, 'c');
+if (!$lockFp) {
+    file_put_contents($logFile, date('Y-m-d H:i:s') . " - ERROR: Could not open lock file\n", FILE_APPEND);
+    exit("Lock error\n");
+}
+file_put_contents($logFile, date('Y-m-d H:i:s') . " - Waiting for lock... uid: $uid\n", FILE_APPEND);
+flock($lockFp, LOCK_EX); // Block until previous analysis finishes
+file_put_contents($logFile, date('Y-m-d H:i:s') . " - Acquired lock, START uid: $uid, audio: $audioPath\n", FILE_APPEND);
 $userDir       = __DIR__ . '/users/';
 $userPostsFile = $userDir . $uid . '_posts.json';
 $mimeType      = mime_content_type(__DIR__ . '/' . $audioPath);
@@ -84,13 +92,25 @@ try {
     $raw    = $gemini->transcribe(__DIR__ . '/' . $audioPath, $mimeType);
     file_put_contents($logFile, date('Y-m-d H:i:s') . " - Transcribed length: " . mb_strlen($raw) . "\n", FILE_APPEND);
 
-    $titlePrompt    = "以下の文字起こしテキストの内容を端的に表す、15文字以下のキャッチーなタイトルを作成してください。結果の文字列のみを出力してください。\n\n" . mb_strimwidth($raw, 0, 5000);
-    $generatedTitle = trim($gemini->generateText($titlePrompt, false));
-    $generatedTitle = str_replace(["\n", "\r", "\"", "'", "「", "」"], '', $generatedTitle);
+    $combinedPrompt = "以下の音声の文字起こしを元に、以下の3つの情報をJSON形式で出力してください。\n" .
+        "1. title: 文字起こし内容を端的に表す15文字以下のキャッチーなタイトル\n" .
+        "2. date: 音声内で言及された収録日（〇月〇日など）があれば「YYYYMMDD」の8桁の数字（年は今年を想定）。言及がなければ「UNKNOWN」\n" .
+        "3. article: 読みやすく整理された記事（ブログやジャーナル形式）。見出しや箇条書きを適宜用いて、元の音声の意図や思考プロセスが伝わるように構成すること。\n\n" .
+        "出力は必ずJSONオブジェクトのみにしてください。\n\n" .
+        "文字起こし:\n" . mb_strimwidth($raw, 0, 8000);
 
-    // 収録日の抽出
-    $datePrompt = "以下の文字起こしテキストから、収録された日付（〇月〇日など）が明確に読み取れる場合は、その日付を「YYYYMMDD」の8桁の数字（年は今年を想定）で出力してください。日付が全く言及されていない場合は「UNKNOWN」と出力してください。\n\n" . mb_strimwidth($raw, 0, 5000);
-    $extractedDate = trim($gemini->generateText($datePrompt, false));
+    $jsonResult = trim($gemini->generateText($combinedPrompt, false));
+    
+    // Clean up potential markdown formatting
+    $jsonResult = preg_replace('/^```(?:json)?\s*/i', '', $jsonResult);
+    $jsonResult = preg_replace('/\s*```$/i', '', $jsonResult);
+    
+    $data = json_decode($jsonResult, true);
+    
+    $generatedTitle = $data['title'] ?? '新規投稿';
+    $generatedTitle = str_replace(["\n", "\r", "\"", "'", "「", "」"], '', $generatedTitle);
+    
+    $extractedDate = $data['date'] ?? 'UNKNOWN';
     if ($extractedDate !== 'UNKNOWN' && preg_match('/^\d{8}$/', $extractedDate)) {
         $datePrefixStr = $extractedDate;
         $postDateStr = substr($extractedDate, 0, 4) . '-' . substr($extractedDate, 4, 2) . '-' . substr($extractedDate, 6, 2);
@@ -98,12 +118,9 @@ try {
         $datePrefixStr = date('Ymd');
         $postDateStr = date('Y-m-d');
     }
-
+    
     $finalTitle = 'VJ' . $datePrefixStr . '_' . $generatedTitle;
-
-    // 記事化（サマリー/清書）の生成
-    $articlePrompt = "以下の音声の文字起こしを元に、読みやすく整理された記事（ブログやジャーナル形式）を作成してください。見出しや箇条書きを適宜用いて、元の音声の意図や思考のプロセスが伝わるように構成してください。\n\n" . mb_strimwidth($raw, 0, 8000);
-    $article = trim($gemini->generateText($articlePrompt, false));
+    $article = $data['article'] ?? $raw;
 
     $posts = json_decode(file_get_contents($userPostsFile), true);
     foreach ($posts as &$p) {
@@ -191,6 +208,10 @@ try {
         file_put_contents($logFile, date('Y-m-d H:i:s') . " - LINE user ID not found for uid: $uid\n", FILE_APPEND);
     }
 
+    if (isset($lockFp)) {
+        flock($lockFp, LOCK_UN);
+        fclose($lockFp);
+    }
 } catch (Exception $e) {
     file_put_contents($logFile, date('Y-m-d H:i:s') . " - ERROR: " . $e->getMessage() . "\n", FILE_APPEND);
     $posts = json_decode(file_get_contents($userPostsFile), true);
@@ -198,10 +219,16 @@ try {
         if (($p['id'] ?? '') === $jobId) {
             $p['title']  = '❌ 解析エラー';
             $p['text']   = 'エラー: ' . $e->getMessage();
-            $p['status'] = '下書き';
+            $p['status'] = 'エラー';
             break;
         }
     }
     unset($p);
     file_put_contents($userPostsFile, json_encode($posts, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+    
+    if (isset($lockFp)) {
+        flock($lockFp, LOCK_UN);
+        fclose($lockFp);
+    }
 }
+
