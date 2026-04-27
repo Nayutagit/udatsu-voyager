@@ -47,7 +47,7 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Udatsuマイページ</title>
   <link rel="icon" type="image/png" href="../img/favicon.png">
-  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/style.css?v=<?= time() ?>">
   <style>
     /* Page specific styles */
     .container {

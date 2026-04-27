@@ -12,11 +12,20 @@ if (!is_numeric($index)) {
     exit();
 }
 
+$targetUid = $uid;
+if ($userPlan === 'admin' && !empty($_POST['target_uid'])) {
+    $targetUid = $_POST['target_uid'];
+}
+
 $userDir = __DIR__ . '/../users/';
-$postsFile = $userDir . $uid . '_posts.json';
+$postsFile = $userDir . $targetUid . '_posts.json';
 
 $posts = file_exists($postsFile) ? json_decode(file_get_contents($postsFile), true) : [];
-if (!isset($posts[$index]) || $posts[$index]['status'] !== 'エラー') {
+if (!isset($posts[$index])) {
+    header("Location: mypage.php");
+    exit();
+}
+if ($posts[$index]['status'] !== 'エラー' && strpos($posts[$index]['title'], '解析エラー') === false && $userPlan !== 'admin') {
     header("Location: mypage.php");
     exit();
 }
@@ -26,11 +35,12 @@ $posts[$index]['status'] = '解析中';
 file_put_contents($postsFile, json_encode($posts, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 
 // Re-run analysis
-$audioPath = $posts[$index]['audio_file'] ?? '';
+$audioPath = $posts[$index]['audio_file'] ?? $posts[$index]['audio'] ?? '';
 if (!empty($audioPath)) {
-    $command = "php " . escapeshellarg(__DIR__ . '/../run_analysis.php') . " " . escapeshellarg($uid) . " " . escapeshellarg($audioPath) . " > /dev/null 2>&1 &";
+    $command = "php " . escapeshellarg(__DIR__ . '/../run_analysis.php') . " " . escapeshellarg($targetUid) . " " . escapeshellarg($audioPath) . " > /dev/null 2>&1 &";
     exec($command);
 }
 
-header("Location: mypage.php");
+$referer = $_SERVER['HTTP_REFERER'] ?? 'mypage.php';
+header("Location: " . $referer);
 exit();

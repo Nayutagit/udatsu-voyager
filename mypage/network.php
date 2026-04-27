@@ -76,7 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['search_uid'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ネットワーク | Udatsu</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/style.css?v=<?= time() ?>">
     <style>
         .user-card {
             background: rgba(255, 255, 255, 0.05);
@@ -109,8 +109,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['search_uid'])) {
 
 <div class="container" style="padding-top: 100px; padding-bottom: 60px;">
     
-    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px;">
-        <h2 class="section-title" style="margin-bottom: 0;">🌐 ネットワーク</h2>
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 20px;">
+        <h2 class="section-title" style="margin-bottom: 0; flex-shrink: 0;"><i class="fas fa-globe" style="color: var(--primary-neon);"></i> ネットワーク</h2>
         <span class="text-muted" style="font-size: 0.9rem;">My ID: <strong style="color:var(--text-white); background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 4px; user-select: all;"><?= htmlspecialchars($myNetworkId) ?></strong></span>
     </div>
 

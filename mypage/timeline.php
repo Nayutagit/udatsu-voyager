@@ -38,10 +38,11 @@ foreach ($mutualUids as $mutualUid) {
         $mutualPosts = json_decode(file_get_contents($postsFile), true) ?: [];
         $profile = getUserProfile($mutualUid, $userDir);
         
-        foreach ($mutualPosts as $post) {
+        foreach ($mutualPosts as $idx => $post) {
             if (!empty($post['is_shared'])) {
                 $post['author_uid'] = $mutualUid;
                 $post['author_profile'] = $profile;
+                $post['original_index'] = $idx;
                 $timelinePosts[] = $post;
             }
         }
@@ -62,7 +63,7 @@ usort($timelinePosts, function($a, $b) {
     <title>タイムライン | Udatsu</title>
     <link rel="icon" type="image/png" href="../img/favicon.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/style.css?v=<?= time() ?>">
     <style>
         .timeline-post {
             background: rgba(255, 255, 255, 0.05);
@@ -137,8 +138,8 @@ usort($timelinePosts, function($a, $b) {
 
 <div class="container" style="padding-top: 100px; padding-bottom: 60px; max-width: 800px;">
     
-    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 40px;">
-        <h2 class="section-title" style="margin-bottom: 0;"><i class="fas fa-hourglass-half" style="color: var(--primary-neon);"></i> タイムライン</h2>
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 40px;">
+        <h2 class="section-title" style="margin-bottom: 0; flex-shrink: 0;"><i class="fas fa-hourglass-half" style="color: var(--primary-neon);"></i> タイムライン</h2>
         <span class="text-muted" style="font-size: 0.9rem;">相互フォローの最新の投稿が表示されます</span>
     </div>
 
@@ -204,6 +205,18 @@ usort($timelinePosts, function($a, $b) {
                         <source src="<?= htmlspecialchars($audioUrl) ?>" type="audio/mp4">
                         Your browser does not support the audio element.
                     </audio>
+                </div>
+                <?php endif; ?>
+
+                <?php if ((($post['status'] ?? '') === 'エラー' || strpos($post['title'], '解析エラー') !== false) && $userPlan === 'admin'): ?>
+                <div style="margin-top: 15px; text-align: right;">
+                    <form method="POST" action="retry_analysis.php" style="display: inline;">
+                        <input type="hidden" name="index" value="<?= $post['original_index'] ?>">
+                        <input type="hidden" name="target_uid" value="<?= htmlspecialchars($post['author_uid']) ?>">
+                        <button type="submit" class="btn btn-primary" style="padding: 5px 15px; font-size: 0.85rem; background: var(--warning-red); color: white; border-color: var(--warning-red);">
+                            <i class="fas fa-sync-alt"></i> 管理者として再試行
+                        </button>
+                    </form>
                 </div>
                 <?php endif; ?>
             </div>

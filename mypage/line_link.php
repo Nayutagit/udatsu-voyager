@@ -40,7 +40,7 @@ if (empty($uid)) {
   <title>LINE連携 | Udatsu Voyager</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/style.css?v=<?= time() ?>">
 </head>
 <body style="min-height: 100vh; display:flex; align-items:center; justify-content:center; background: var(--bg-dark);">
   <div class="container" style="max-width: 400px; text-align: center;">

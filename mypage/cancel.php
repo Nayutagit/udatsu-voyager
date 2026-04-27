@@ -10,7 +10,7 @@ $redirectLink = isset($_SESSION['uid']) ? '/mypage/mypage.php' : '/index.php';
   <title>決済に失敗しました | Udatsu Voyager</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" type="image/png" href="../img/favicon.png">
-  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/style.css?v=<?= time() ?>">
   <style>
     body {
       display: flex;

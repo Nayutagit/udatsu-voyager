@@ -42,7 +42,7 @@ unset($_SESSION['pending_plan']);
   <title>プラン変更完了 | Udatsu Voyager</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" type="image/png" href="../img/favicon.png">
-  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/style.css?v=<?= time() ?>">
   <style>
     body {
       display: flex;

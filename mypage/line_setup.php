@@ -17,7 +17,7 @@ $lineAddUrl = 'https://lin.ee/7HjLgwN';
   <meta charset="UTF-8">
   <title>LINE Upload | Udatsu Voyager</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/style.css?v=<?= time() ?>">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     body { min-height: 100vh; display: flex; flex-direction: column; background: var(--bg-dark); }
