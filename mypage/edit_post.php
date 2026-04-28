@@ -51,7 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     'audio_file' => $post['audio_file'] ?? '',
     'audio' => $audioName ?: ($post['audio'] ?? ''),
     'thumbnail' => $thumbnailName,
-    'status' => $post['status'] ?? '下書き',
+    'status' => $post['status'] ?? 'Inbox',
     'is_shared' => $post['is_shared'] ?? 0
   ];
 

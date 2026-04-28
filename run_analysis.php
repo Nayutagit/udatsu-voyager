@@ -131,7 +131,7 @@ try {
             $p['content']       = '';
             $p['date']          = $postDateStr;
 
-            $p['status']        = '下書き';
+            $p['status']        = 'Inbox';
             $p['audio_file']    = $storagePath;
             break;
         }

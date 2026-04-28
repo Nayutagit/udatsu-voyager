@@ -21,7 +21,7 @@ $count = 0;
 foreach ($posts as $p) {
   if (
     isset($p['status'], $p['date']) &&
-    in_array($p['status'], ['下書き', '申請中', '公開済'], true) &&
+    in_array($p['status'], ['Inbox', '申請中', '公開済'], true) &&
     strpos($p['date'], $currentMonth) === 0
   ) {
     $count++;
@@ -47,7 +47,7 @@ if ($isRealSubmission) {
   $rawText   = htmlspecialchars($_POST['raw_text'] ?? '', ENT_QUOTES, 'UTF-8');
   $date      = $_POST['date'] ?? date('Y-m-d');
   $category  = htmlspecialchars($_POST['category'] ?? '', ENT_QUOTES, 'UTF-8');
-  $status    = '下書き';
+  $status    = 'Inbox';
 
   $audioName = '';
   if (!empty($_FILES['audio']['tmp_name'])) {

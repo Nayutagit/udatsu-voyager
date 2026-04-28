@@ -26,7 +26,7 @@ $jobId = 'job_' . time() . '_' . rand(1000, 9999);
 $newPost = [
     'id'            => $jobId,
     'title'         => '🎙 ' . date('H:i') . 'の音声を解析中...',
-    'text'          => "AIが文字起こしならびに文脈をインデックスしています。\nバックグラウンドで処理中のため、完了までしばらくお待ちください。\n（60分の音声の場合、数分〜10分程度かかることがあります）\n\n完了すると自動的に下書きに変わります。",
+    'text'          => "AIが文字起こしならびに文脈をインデックスしています。\nバックグラウンドで処理中のため、完了までしばらくお待ちください。\n（60分の音声の場合、数分〜10分程度かかることがあります）\n\n完了すると自動的に Inbox に入ります。",
     'original_text' => '',
     'content'       => '',
     'date'          => date('Y-m-d'),
@@ -130,7 +130,7 @@ try {
             $p['original_text'] = $raw;
             $p['content']       = '';
             $p['date']          = $postDateStr;
-            $p['status']        = '下書き';
+            $p['status']        = 'Inbox';
             $p['category']      = 'ボイスジャーナル';
             $p['audio_file']    = $storagePath; // Firebase Storage path or local fallback
             break;
@@ -150,7 +150,7 @@ try {
         if (($p['id'] ?? '') === $jobId) {
             $p['title']      = '❌ 解析エラー';
             $p['text']       = 'エラーが発生しました：' . $e->getMessage();
-            $p['status']     = '下書き';
+            $p['status']     = 'Inbox';
             $p['audio_file'] = $storagePath;
             break;
         }

@@ -53,7 +53,7 @@ foreach ($postFiles as $fn) {
       'index' => $idx,
       'name' => $displayName,
       'title' => $p['title'] ?? '（無題）',
-      'status' => $p['status'] ?? '下書き',
+      'status' => $p['status'] ?? 'Inbox',
       'created' => $p['created'] ?? $p['date'] ?? '',
       'approved_at' => $p['approved_at'] ?? '',
       'restored_at' => $p['restored_at'] ?? ''

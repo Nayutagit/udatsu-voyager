@@ -20,7 +20,7 @@ $limit = $planLimits[$plan]['post_limit'] ?? 0;
 $currentMonth = date('Y-m');
 
 $validPosts = array_filter($posts, function ($post) use ($currentMonth) {
-  $countableStatuses = ['下書き', '申請中', '公開済', 'My Udastack追加済'];
+  $countableStatuses = ['Inbox', '申請中', '公開済', 'My Udastack追加済'];
   return in_array($post['status'] ?? '', $countableStatuses, true)
       && (!empty($post['date']) && strpos($post['date'], $currentMonth) === 0);
 });

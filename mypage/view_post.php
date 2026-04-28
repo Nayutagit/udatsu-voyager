@@ -193,23 +193,42 @@ $thumbnail = $post['thumbnail'] ?? '';
     }
     @media (max-width: 768px) {
       body {
-        padding: 1rem;
+        padding: 0; /* Remove body padding on mobile to maximize width */
+      }
+      .container {
+        padding-top: 80px !important;
+        padding-left: 10px !important;
+        padding-right: 10px !important;
       }
       .post-container {
-        padding: 2rem;
+        padding: 1.5rem 1rem; /* Reduce internal padding on mobile */
+        border-radius: 0; /* Optional: edge-to-edge feel */
+        border-left: none;
+        border-right: none;
       }
       header {
-        padding: 1.5rem;
-        flex-direction: column;
-        text-align: center;
-        gap: 1rem;
+        padding: 1rem;
+        flex-direction: row;
+        justify-content: space-between;
+        text-align: left;
+      }
+      header img.logo {
+        height: 36px;
       }
       .post-title {
-        font-size: 1.6rem;
+        font-size: 1.4rem;
       }
       .post-text {
-        padding: 1.5rem;
-        font-size: 1rem;
+        padding: 0;
+        background: none;
+        border: none;
+        font-size: 1.1rem;
+        color: #eee;
+        line-height: 1.9;
+      }
+      .summary-box {
+        padding: 1.2rem !important;
+        margin-bottom: 2rem !important;
       }
     }
   </style>

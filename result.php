@@ -191,7 +191,7 @@ $redirectMypage = 'https://udatsu-voyager.com/mypage/mypage.php';
           <p class="text-muted" style="font-size: 0.75rem; margin-bottom: 5px;">ここで誤字を修正したり、追記できます。</p>
           <textarea id="raw-text-area" style="width: 100%; height: 200px; background: rgba(0,0,0,0.5); border: 1px solid var(--accent-teal); color: var(--text-white); padding: 10px; font-family: var(--font-main); font-size: 0.9rem; border-radius: 4px; resize: vertical; margin-bottom: 10px;"><?= htmlspecialchars($raw) ?></textarea>
           <button class="btn btn-secondary" style="width: 100%; font-size: 0.8rem; padding: 5px;" onclick="copyRawText()">
-            <i class="fas fa-copy"></i> 下書きコピー
+            <i class="fas fa-copy"></i> 原文をコピー
           </button>
         </div>
 

@@ -89,7 +89,7 @@ $email = $profile['email'] ?? '（アドレス未設定）';
       <tr>
         <td><?= $i ?></td>
         <td><?= htmlspecialchars($p['title'] ?? '（無題）') ?></td>
-        <td><?= htmlspecialchars($p['status'] ?? '下書き') ?></td>
+        <td><?= htmlspecialchars($p['status'] ?? 'Inbox') ?></td>
         <td><?= htmlspecialchars($p['created'] ?? $p['date'] ?? '不明') ?></td>
         <td>
           <a class="link-btn" href="admin_post_detail.php?uid=<?= urlencode($uid) ?>&index=<?= $i ?>">📖 詳細</a>

@@ -27,8 +27,8 @@ if (!isset($posts[$index])) {
   exit();
 }
 
-// ステータスを下書きに変更
-$posts[$index]['status'] = '下書き';
+// ステータスをInboxに変更
+$posts[$index]['status'] = 'Inbox';
 
 // 保存
 file_put_contents($postsFile, json_encode($posts, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
