@@ -176,7 +176,6 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
             <div class="post-content">
               <div class="post-meta" style="margin-bottom: 10px; display: flex; align-items: center; gap: 10px;">
                 <span><i class="far fa-calendar-alt"></i> <?= htmlspecialchars($post['date']) ?></span>
-                <span class="text-teal" style="background: rgba(0, 164, 216, 0.1); padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;"><?= htmlspecialchars($post['category'] ?? 'Uncategorized') ?></span>
                 <?php if (($post['status'] ?? '') === '解析中'): ?>
                   <span style="background: rgba(0, 255, 204, 0.2); color: var(--primary-neon); padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;"><i class="fas fa-spinner fa-spin"></i> 解析中...</span>
                 <?php elseif (($post['status'] ?? '') === 'エラー'): ?>

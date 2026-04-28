@@ -225,7 +225,7 @@ $thumbnail = $post['thumbnail'] ?? '';
     
     <div class="post-container">
       <div class="post-title"><?php echo htmlspecialchars($title); ?></div>
-      <div class="post-meta"><?php echo htmlspecialchars($date); ?> ／ <?php echo htmlspecialchars($category); ?></div>
+      <div class="post-meta"><?php echo htmlspecialchars($date); ?></div>
       
       <?php if ($thumbnail): ?>
         <img class="thumbnail" src="../users/<?php echo $uid; ?>/posts/<?php echo $thumbnail; ?>" alt="アイキャッチ画像">

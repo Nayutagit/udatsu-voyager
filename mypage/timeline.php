@@ -176,7 +176,6 @@ usort($timelinePosts, function($a, $b) {
                 <div class="post-title"><?= htmlspecialchars($post['title']) ?></div>
                 
                 <div class="post-meta">
-                    <span style="background: rgba(255,255,255,0.1); padding: 3px 8px; border-radius: 4px; margin-right: 10px;"><?= htmlspecialchars($post['category']) ?></span>
                     <i class="far fa-calendar-alt"></i> <?= htmlspecialchars($post['date']) ?>
                 </div>
 
