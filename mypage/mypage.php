@@ -190,9 +190,15 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
                   <span style="background: rgba(168, 85, 247, 0.1); color: #a855f7; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;"><i class="fas fa-share-alt"></i> Shared</span>
                 <?php endif; ?>
               </div>
-              <h3 class="post-title" style="min-height: 3em;">
+              <h3 class="post-title" style="min-height: auto; margin-bottom: 10px;">
                 <a href="view_post.php?index=<?= $i ?>"><?= htmlspecialchars(mb_strimwidth($post['title'], 0, 50, '...')) ?></a>
               </h3>
+              
+              <?php if (!empty($post['summary'])): ?>
+                <div class="post-summary" style="margin: 10px 0; font-size: 0.85rem; color: var(--text-white); line-height: 1.6; background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; border-left: 3px solid var(--primary-neon);">
+                  <?= nl2br(htmlspecialchars($post['summary'])) ?>
+                </div>
+              <?php endif; ?>
               
               <?php if (!empty($post['audio_file'])): ?>
                 <?php 

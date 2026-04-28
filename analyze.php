@@ -91,6 +91,14 @@ try {
         $generatedTitle = mb_strimwidth(str_replace("\n", " ", $raw), 0, 15, '');
     }
 
+    // 要約の自動生成
+    $summaryPrompt = "以下の文字起こしテキストの要点を、3つの短い箇条書き（-）で簡潔に要約してください。余計な前置きは不要です。：\n\n" . mb_strimwidth($raw, 0, 5000);
+    try {
+        $generatedSummary = trim($gemini->generateText($summaryPrompt, false));
+    } catch (Exception $e) {
+        $generatedSummary = '';
+    }
+
     // 収録日の抽出
     $datePrompt = "以下の文字起こしテキストから、収録された日付（〇月〇日など）が明確に読み取れる場合は、その日付を「YYYYMMDD」の8桁の数字（年は今年を想定）で出力してください。日付が全く言及されていない場合は「UNKNOWN」と出力してください。\n\n" . mb_strimwidth($raw, 0, 5000);
     try {
@@ -118,11 +126,12 @@ try {
         if (($p['id'] ?? '') === $jobId) {
             $p['title']         = $finalTitle;
             $p['text']          = $raw;
+            $p['summary']       = $generatedSummary;
             $p['original_text'] = $raw;
             $p['content']       = '';
             $p['date']          = $postDateStr;
             $p['status']        = '下書き';
-            $p['category']      = 'Voice Memo';
+            $p['category']      = 'ボイスジャーナル';
             $p['audio_file']    = $storagePath; // Firebase Storage path or local fallback
             break;
         }

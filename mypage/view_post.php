@@ -238,6 +238,17 @@ $thumbnail = $post['thumbnail'] ?? '';
         </audio>
       <?php endif; ?>
       
+      <?php if (!empty($post['summary'])): ?>
+        <div class="summary-box" style="margin-bottom: 2.5rem; background: rgba(252, 200, 0, 0.08); border: 1px solid rgba(252, 200, 0, 0.3); padding: 2rem; border-radius: 16px; box-shadow: 0 0 20px rgba(252, 200, 0, 0.1);">
+          <h3 style="color: var(--primary-neon); margin-bottom: 1.2rem; font-size: 1.2rem; display: flex; align-items: center; gap: 10px;">
+            <i class="fas fa-magic"></i> AI要約
+          </h3>
+          <div style="color: var(--text-white); font-size: 1.05rem; line-height: 1.8; letter-spacing: 0.02em;">
+            <?= nl2br(htmlspecialchars($post['summary'])) ?>
+          </div>
+        </div>
+      <?php endif; ?>
+      
       <div class="post-text"><?php echo nl2br(htmlspecialchars($text)); ?></div>
     </div>
     
