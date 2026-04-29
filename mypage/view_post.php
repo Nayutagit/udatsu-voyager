@@ -151,29 +151,32 @@ $thumbnail = $post['thumbnail'] ?? '';
       border-radius: 12px;
       border: 1px solid rgba(255, 255, 255, 0.1);
     }
-    /* Markdown Styling */
-    .post-text h1, .post-text h2, .post-text h3 {
+    /* Markdown Styling (Apply to both text and summary) */
+    .markdown-body h1, .markdown-body h2, .markdown-body h3 {
       color: var(--text-white);
-      margin-top: 2rem;
+      margin-top: 1.5rem;
       margin-bottom: 1rem;
       border-bottom: 1px solid rgba(255, 255, 255, 0.1);
       padding-bottom: 0.5rem;
     }
-    .post-text h1 { font-size: 1.8rem; }
-    .post-text h2 { font-size: 1.5rem; }
-    .post-text h3 { font-size: 1.2rem; }
-    .post-text p { margin-bottom: 1.2rem; }
-    .post-text strong { color: var(--primary-neon); font-weight: 700; }
-    .post-text ul, .post-text ol { margin-bottom: 1.2rem; padding-left: 1.5rem; }
-    .post-text li { margin-bottom: 0.5rem; }
-    .post-text blockquote {
+    .markdown-body h1 { font-size: 1.6rem; }
+    .markdown-body h2 { font-size: 1.4rem; }
+    .markdown-body h3 { font-size: 1.2rem; }
+    .markdown-body p { margin-bottom: 1rem; line-height: 1.8; }
+    .markdown-body strong { color: var(--primary-neon); font-weight: 700; }
+    .markdown-body ul, .markdown-body ol { margin-bottom: 1rem; padding-left: 1.5rem; }
+    .markdown-body li { margin-bottom: 0.4rem; }
+    .markdown-body blockquote {
       border-left: 4px solid var(--primary-neon);
       padding-left: 1rem;
-      margin-left: 0;
+      margin: 1.5rem 0;
       color: var(--text-white);
       font-style: italic;
+      background: rgba(255, 255, 255, 0.03);
+      padding: 1rem;
+      border-radius: 0 8px 8px 0;
     }
-    .post-text code {
+    .markdown-body code {
       background: rgba(255, 255, 255, 0.1);
       padding: 0.2rem 0.4rem;
       border-radius: 4px;
@@ -274,7 +277,7 @@ $thumbnail = $post['thumbnail'] ?? '';
     
     <div class="post-container">
       <div style="display: flex; justify-content: flex-end; gap: 15px; margin-bottom: 25px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px;">
-        <button onclick="copyContent()" class="btn-small" style="background: rgba(0, 255, 204, 0.05); color: var(--primary-neon); border: 1px solid rgba(0, 255, 204, 0.4); border-radius: 8px; padding: 8px 16px; cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: 0.3s; display: flex; align-items: center; gap: 8px;">
+        <button onclick="copyContent(this)" class="btn-small" style="background: rgba(0, 255, 204, 0.05); color: var(--primary-neon); border: 1px solid rgba(0, 255, 204, 0.4); border-radius: 8px; padding: 8px 16px; cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: 0.3s; display: flex; align-items: center; gap: 8px;">
           <i class="far fa-copy"></i> 本文をコピー
         </button>
         <a href="edit_post.php?index=<?= $index ?>" class="btn-small" style="background: rgba(255, 255, 255, 0.05); color: #fff; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 8px; padding: 8px 16px; text-decoration: none; font-size: 0.9rem; font-weight: 600; transition: 0.3s; display: flex; align-items: center; gap: 8px;">
@@ -296,17 +299,17 @@ $thumbnail = $post['thumbnail'] ?? '';
       <?php endif; ?>
       
       <?php if (!empty($post['summary'])): ?>
-        <div class="summary-box" style="margin-bottom: 2.5rem; background: rgba(252, 200, 0, 0.08); border: 1px solid rgba(252, 200, 0, 0.3); padding: 2rem; border-radius: 16px; box-shadow: 0 0 20px rgba(252, 200, 0, 0.1);">
-          <h3 style="color: var(--primary-neon); margin-bottom: 1.2rem; font-size: 1.2rem; display: flex; align-items: center; gap: 10px;">
+        <div class="summary-box" style="margin-bottom: 2.5rem; background: rgba(252, 200, 0, 0.05); border: 1px solid rgba(252, 200, 0, 0.2); padding: 1.5rem; border-radius: 16px;">
+          <h3 style="color: var(--primary-neon); margin-bottom: 1rem; font-size: 1.1rem; display: flex; align-items: center; gap: 8px; border: none; padding: 0;">
             <i class="fas fa-magic"></i> AI要約
           </h3>
-          <div id="summary-content" style="color: var(--text-white); font-size: 1.05rem; line-height: 1.8; letter-spacing: 0.02em;">
+          <div id="summary-content" class="markdown-body" style="color: var(--text-white); font-size: 1rem; line-height: 1.7;">
             <?php echo $post['summary']; ?>
           </div>
         </div>
       <?php endif; ?>
       
-      <div id="post-text-content" class="post-text"><?php echo $text; ?></div>
+      <div id="post-text-content" class="post-text markdown-body"><?php echo $text; ?></div>
     </div>
     
     <div class="back-button">
@@ -318,30 +321,45 @@ $thumbnail = $post['thumbnail'] ?? '';
     // Render Markdown
     const postTextElement = document.getElementById('post-text-content');
     if (postTextElement) {
-      postTextElement.innerHTML = marked.parse(postTextElement.textContent);
+      postTextElement.innerHTML = marked.parse(postTextElement.textContent.trim());
     }
     const summaryElement = document.getElementById('summary-content');
     if (summaryElement) {
-      summaryElement.innerHTML = marked.parse(summaryElement.textContent);
+      summaryElement.innerHTML = marked.parse(summaryElement.textContent.trim());
     }
 
-    function copyContent() {
+    async function copyContent(btn) {
       const title = "<?php echo addslashes($title); ?>";
       const text = document.getElementById('post-text-content').innerText;
       const combined = title + "\n\n" + text;
 
-      navigator.clipboard.writeText(combined).then(() => {
-        const btn = event.currentTarget;
+      try {
+        await navigator.clipboard.writeText(combined);
         const originalText = btn.innerHTML;
-        btn.innerHTML = '<i class="fas fa-check"></i> コピー完了！';
-        btn.style.borderColor = '#fff';
+        btn.innerHTML = '<i class="fas fa-check"></i> コピー完了';
+        btn.style.background = 'var(--primary-neon)';
+        btn.style.color = '#000';
         setTimeout(() => {
           btn.innerHTML = originalText;
-          btn.style.borderColor = 'var(--primary-neon)';
+          btn.style.background = 'rgba(255, 255, 255, 0.05)';
+          btn.style.color = '#fff';
         }, 2000);
-      }).catch(err => {
-        alert("コピーに失敗しました: " + err);
-      });
+      } catch (err) {
+        // Fallback for some browsers
+        const textArea = document.createElement("textarea");
+        textArea.value = combined;
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+          document.execCommand('copy');
+          const originalText = btn.innerHTML;
+          btn.innerHTML = '<i class="fas fa-check"></i> コピー完了';
+          setTimeout(() => { btn.innerHTML = originalText; }, 2000);
+        } catch (e) {
+          alert("コピーに失敗しました");
+        }
+        document.body.removeChild(textArea);
+      }
     }
   </script>
 </body>
