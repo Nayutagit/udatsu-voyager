@@ -95,7 +95,10 @@ if ($isTextOnlyRetry) {
     // Transcribe
     try {
         $gemini = new GeminiService();
-        file_put_contents($logFile, date('Y-m-d H:i:s') . " - Transcribing...\n", FILE_APPEND);
+        $ext = strtolower(pathinfo($audioPath, PATHINFO_EXTENSION));
+        $mimeMap = ['m4a'=>'audio/mp4','mp4'=>'audio/mp4','mp3'=>'audio/mpeg','wav'=>'audio/wav','ogg'=>'audio/ogg','webm'=>'audio/webm'];
+        $mimeType = $mimeMap[$ext] ?? 'audio/mp4';
+        file_put_contents($logFile, date('Y-m-d H:i:s') . " - Transcribing: $audioPath ($mimeType)\n", FILE_APPEND);
         $raw    = $gemini->transcribe(__DIR__ . '/' . $audioPath, $mimeType);
         file_put_contents($logFile, date('Y-m-d H:i:s') . " - Transcribed length: " . mb_strlen($raw) . "\n", FILE_APPEND);
     } catch (Exception $e) {
