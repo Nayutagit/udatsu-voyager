@@ -235,13 +235,11 @@ try {
     $posts = json_decode(file_get_contents($userPostsFile), true);
     foreach ($posts as &$p) {
         if (($p['id'] ?? '') === $jobId) {
-            $p['title']  = '❌ 解析エラー';
-            $p['text']   = 'エラー: ' . $e->getMessage();
-            $p['status'] = 'エラー';
+            $p['title']  = '（解析中...）';
+            $p['status'] = '解析中'; // Keep as processing so cron retries
             break;
         }
     }
-    unset($p);
     file_put_contents($userPostsFile, json_encode($posts, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
     
     if (isset($lockFp)) {

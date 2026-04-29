@@ -153,9 +153,9 @@ try {
     $posts = json_decode(file_get_contents($userPostsFile), true);
     foreach ($posts as &$p) {
         if (($p['id'] ?? '') === $jobId) {
-            $p['title']      = '❌ 解析エラー';
-            $p['text']       = 'エラーが発生しました：' . $e->getMessage();
-            $p['status']     = 'エラー';
+            $p['title']      = '（解析中...）';
+            $p['text']       = '処理中に問題が発生しました。';
+            $p['status']     = '解析中';
             $p['audio_file'] = $storagePath;
             break;
         }

@@ -179,7 +179,7 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
                 <?php if (($post['status'] ?? '') === '解析中'): ?>
                   <span style="background: rgba(0, 255, 204, 0.2); color: var(--primary-neon); padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;"><i class="fas fa-spinner fa-spin"></i> 解析中...</span>
                 <?php elseif (($post['status'] ?? '') === 'エラー'): ?>
-                  <span style="background: rgba(255, 68, 68, 0.1); color: var(--warning-red); padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;"><i class="fas fa-exclamation-triangle"></i> 解析エラー</span>
+                  <span style="background: rgba(0, 255, 204, 0.2); color: var(--primary-neon); padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;"><i class="fas fa-spinner fa-spin"></i> 解析中...</span>
                 <?php elseif (($post['status'] ?? '') === 'My Udastack追加済'): ?>
                   <span style="background: rgba(252, 200, 0, 0.1); color: var(--primary-neon); padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;"><i class="fas fa-check"></i> Stacked</span>
                 <?php endif; ?>
