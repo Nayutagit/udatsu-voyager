@@ -39,7 +39,9 @@ foreach ($mutualUids as $mutualUid) {
         $profile = getUserProfile($mutualUid, $userDir);
         
         foreach ($mutualPosts as $idx => $post) {
-            if (!empty($post['is_shared'])) {
+            $status = $post['status'] ?? '';
+            // 削除済、解析中、エラーの投稿はタイムラインに表示しない
+            if (!empty($post['is_shared']) && !in_array($status, ['削除済', '解析中', 'エラー'])) {
                 $post['author_uid'] = $mutualUid;
                 $post['author_profile'] = $profile;
                 $post['original_index'] = $idx;

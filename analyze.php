@@ -150,7 +150,7 @@ try {
         if (($p['id'] ?? '') === $jobId) {
             $p['title']      = '❌ 解析エラー';
             $p['text']       = 'エラーが発生しました：' . $e->getMessage();
-            $p['status']     = 'Inbox';
+            $p['status']     = 'エラー';
             $p['audio_file'] = $storagePath;
             break;
         }

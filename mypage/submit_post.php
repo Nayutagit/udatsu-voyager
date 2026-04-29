@@ -127,6 +127,7 @@ switch ($action) {
 
   case 'delete':
     $posts[$index]['status'] = '削除済';
+    $posts[$index]['is_shared'] = 0; // 削除時は共有もオフにする
     $posts[$index]['deleted_at'] = date('Y-m-d');
     break;
 
