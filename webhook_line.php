@@ -3,18 +3,20 @@
  * Udatsu Voyager - LINE Webhook
  * LINE アカウントからのメッセージを受信し、音声だった場合は自動解析に回す
  */
+file_put_contents(__DIR__ . '/webhook_debug.txt', date('Y-m-d H:i:s') . " - Webhook started\n", FILE_APPEND);
+$payload = file_get_contents('php://input');
+file_put_contents(__DIR__ . '/webhook_debug.txt', "Payload: " . $payload . "\n", FILE_APPEND);
+
 $configFile = __DIR__ . '/config/line_config.php';
 $lineConfig = file_exists($configFile) ? require $configFile : null;
 
 if (!$lineConfig || empty($lineConfig['channel_access_token'])) {
+    file_put_contents(__DIR__ . '/webhook_debug.txt', "ERROR: LINE Configuration is missing or token is empty.\n", FILE_APPEND);
     http_response_code(500);
     exit('LINE Configuration is missing.');
 }
 
 $channelAccessToken = $lineConfig['channel_access_token'];
-
-$payload = file_get_contents('php://input');
-file_put_contents(__DIR__ . '/webhook_debug.txt', date('Y-m-d H:i:s') . "\n" . $payload . "\n\n", FILE_APPEND);
 $events = json_decode($payload, true);
 
 if (!isset($events['events'])) {
@@ -129,18 +131,25 @@ function replyLineMessage($accessToken, $replyToken, $text) {
     curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postData));
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // Important for server environments
     curl_setopt($ch, CURLOPT_HTTPHEADER, [
         'Content-Type: application/json; charset=UTF-8',
         'Authorization: Bearer ' . $accessToken
     ]);
-    curl_exec($ch);
+    $result = curl_exec($ch);
+    $error = curl_error($ch);
     curl_close($ch);
+    
+    if ($error) {
+        file_put_contents(__DIR__ . '/webhook_debug.txt', date('Y-m-d H:i:s') . " - replyLineMessage error: $error\n", FILE_APPEND);
+    }
 }
 
 function downloadLineAudio($accessToken, $messageId) {
     $url = "https://api-data.line.me/v2/bot/message/{$messageId}/content";
     $ch = curl_init($url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // Important
     curl_setopt($ch, CURLOPT_HTTPHEADER, [
         'Authorization: Bearer ' . $accessToken
     ]);
