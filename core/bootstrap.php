@@ -19,6 +19,9 @@ if ($cookieDomain) {
 }
 ini_set('session.use_cookies',    '1');
 ini_set('session.use_only_cookies','1');
+// 🔹 30日間のセッション寿命を設定
+ini_set('session.gc_maxlifetime', 2592000);
+ini_set('session.cookie_lifetime', 2592000);
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
