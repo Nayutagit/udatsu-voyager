@@ -172,9 +172,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       background: rgba(255, 255, 255, 0.15);
     }
     textarea {
-      height: 150px;
+      height: 600px;
       resize: vertical;
-      line-height: 1.6;
+      line-height: 1.8;
+      padding: 1.5rem;
     }
     select {
       cursor: pointer;
