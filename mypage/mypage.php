@@ -322,16 +322,36 @@ function updateBrain() {
 }
 
 function confirmShare(index) {
-  if (confirm("相互フォローのタイムラインにこの投稿の音声と文字起こしを共有します。\n\n※共有すると相手にLINE通知が届きます。よろしいですか？")) {
-    document.getElementById('shareForm' + index).submit();
-  }
+  if (!confirm("タイムラインにこの投稿を共有しますか？")) return;
+  const form = document.getElementById('shareForm' + index);
+  fetch(form.action, { method: 'POST', body: new FormData(form) })
+    .then(() => {
+      const btn = document.querySelector('[onclick="confirmShare(' + index + ')"]');
+      if (btn) { btn.textContent = '✅ 共有済'; btn.disabled = true; }
+    }).catch(() => form.submit());
 }
 
 function confirmUnshare(index) {
-  if (confirm("相互フォローのタイムラインからこの投稿を非表示にしますか？")) {
-    document.getElementById('unshareForm' + index).submit();
-  }
+  if (!confirm("タイムラインからこの投稿を非表示にしますか？")) return;
+  const form = document.getElementById('unshareForm' + index);
+  fetch(form.action, { method: 'POST', body: new FormData(form) })
+    .then(() => {
+      const btn = document.querySelector('[onclick="confirmUnshare(' + index + ')"]');
+      if (btn) { btn.textContent = '非公開'; btn.disabled = true; }
+    }).catch(() => form.submit());
 }
+
+// Auto-poll: 解析中の投稿があれば5秒ごとに確認
+(function() {
+  const hasProcessing = <?php echo (isset($posts) && count(array_filter($posts, fn($p) => ($p['status'] ?? '') === '解析中')) > 0) ? 'true' : 'false'; ?>;
+  if (!hasProcessing) return;
+  let poll = setInterval(function() {
+    fetch('poll_status.php')
+      .then(r => r.json())
+      .then(d => { if (!d.has_processing) { clearInterval(poll); location.reload(); } })
+      .catch(() => {});
+  }, 5000);
+})();
 </script>
 </body>
 </html>

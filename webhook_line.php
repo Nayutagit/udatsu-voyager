@@ -75,38 +75,67 @@ foreach ($events['events'] as $event) {
         // Download audio/file data
         $audioData = downloadLineAudio($channelAccessToken, $messageId);
         if ($audioData) {
-            file_put_contents(__DIR__ . '/webhook_debug.txt', date('Y-m-d H:i:s') . " - Audio downloaded successfully. Size: " . strlen($audioData) . "\n", FILE_APPEND);
+            file_put_contents(__DIR__ . '/webhook_debug.txt', date('Y-m-d H:i:s') . " - Audio downloaded. Size: " . strlen($audioData) . "\n", FILE_APPEND);
             $uploadDir = __DIR__ . '/uploads/';
             if (!file_exists($uploadDir)) mkdir($uploadDir, 0755, true);
-            
-            // Use safe filename based on original extension
-            $extension = pathinfo($originalFileName, PATHINFO_EXTENSION) ?: 'm4a';
-            $filename = 'line_' . $messageId . '_' . time() . '.' . $extension;
-            $targetPath = 'uploads/' . $filename;
-            file_put_contents(__DIR__ . '/' . $targetPath, $audioData);
-            
-            // Kick background analysis via CLI (much more reliable than curl for loopback)
-            $phpPath = '/usr/bin/php'; // Standard path on most servers including XServer
-            $scriptPath = __DIR__ . '/run_analysis.php';
-            $logPath = __DIR__ . '/debug_run.log';
+
+            $extension    = pathinfo($originalFileName, PATHINFO_EXTENSION) ?: 'm4a';
+            $filename     = 'line_' . $messageId . '_' . time() . '.' . $extension;
+            $targetPath   = 'uploads/' . $filename;
             $originalTitle = pathinfo($originalFileName, PATHINFO_FILENAME);
-            
-            // Build command: php script.php uid audioPath jobId originalTitle > /dev/null 2>&1 &
-            $cmd = sprintf(
-                '%s %s %s %s %s %s > /dev/null 2>&1 &',
-                $phpPath,
-                escapeshellarg($scriptPath),
-                escapeshellarg($uid),
-                escapeshellarg($targetPath),
-                '""', // No jobId
-                escapeshellarg($originalTitle)
+            file_put_contents(__DIR__ . '/' . $targetPath, $audioData);
+
+            // ① まず「解析中」投稿レコードをマイページに即作成
+            $jobId        = uniqid('job_');
+            $postsFile    = __DIR__ . '/users/' . $uid . '_posts.json';
+            $posts        = file_exists($postsFile) ? json_decode(file_get_contents($postsFile), true) : [];
+            if (!is_array($posts)) $posts = [];
+            array_unshift($posts, [
+                'id'         => $jobId,
+                'title'      => $originalTitle ?: '音声メモ',
+                'text'       => '',
+                'summary'    => '',
+                'date'       => date('Y-m-d'),
+                'category'   => 'ボイスジャーナル',
+                'audio_file' => $targetPath,
+                'audio'      => '',
+                'thumbnail'  => '',
+                'status'     => '解析中',
+                'is_shared'  => 0,
+            ]);
+            file_put_contents($postsFile, json_encode($posts, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+            file_put_contents(__DIR__ . '/webhook_debug.txt', date('Y-m-d H:i:s') . " - Pending post created: $jobId\n", FILE_APPEND);
+
+            // ② バックグラウンドで解析を起動（shell_exec → fallback: curl）
+            $phpPath   = '/usr/bin/php';
+            $scriptPath = __DIR__ . '/run_analysis.php';
+            $cmd = sprintf('%s %s %s %s %s %s > /dev/null 2>&1 &',
+                $phpPath, escapeshellarg($scriptPath),
+                escapeshellarg($uid), escapeshellarg($targetPath),
+                escapeshellarg($jobId), escapeshellarg($originalTitle)
             );
             shell_exec($cmd);
 
-            // Log for debugging
-            file_put_contents(__DIR__ . '/debug_webhook.log', "[" . date('Y-m-d H:i:s') . "] Triggered analysis for $uid: $cmd\n", FILE_APPEND);
-            
-            file_put_contents(__DIR__ . '/webhook_debug.txt', date('Y-m-d H:i:s') . " - CLI Trigger sent to run_analysis.php for $targetPath\n", FILE_APPEND);
+            // Fallback: HTTP kick if shell_exec is disabled
+            $kickUrl = 'https://udatsu-voyager.com/run_analysis.php';
+            $kch = curl_init($kickUrl);
+            curl_setopt_array($kch, [
+                CURLOPT_POST           => true,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_TIMEOUT        => 3,
+                CURLOPT_SSL_VERIFYPEER => false,
+                CURLOPT_POSTFIELDS     => http_build_query([
+                    'secret'        => 'voyager_internal_exec_1234',
+                    'uid'           => $uid,
+                    'audioPath'     => $targetPath,
+                    'jobId'         => $jobId,
+                    'originalTitle' => $originalTitle,
+                ]),
+            ]);
+            curl_exec($kch);
+            curl_close($kch);
+
+            file_put_contents(__DIR__ . '/webhook_debug.txt', date('Y-m-d H:i:s') . " - Analysis kicked for $targetPath\n", FILE_APPEND);
         } else {
             file_put_contents(__DIR__ . '/webhook_debug.txt', date('Y-m-d H:i:s') . " - Failed to download audio. Message ID: $messageId\n", FILE_APPEND);
         }

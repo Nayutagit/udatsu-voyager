@@ -36,39 +36,35 @@ foreach ($postFiles as $file) {
         // 1. Explicit errors
         if ($status === 'エラー') {
             $shouldRetry = true;
-        } 
+        }
         // 2. Summary failures
         elseif (strpos($text, '(要約解析失敗)') !== false) {
             $shouldRetry = true;
         }
-        // 3. Stale "Processing" (more than 30 mins)
+        // 3. Stale "Processing" (more than 5 mins)
         elseif ($status === '解析中') {
-            if (preg_match('/job_(\d+)/', $jobId, $matches)) {
-                $jobTime = (int)$matches[1];
-                if (time() - $jobTime > 1800) { // 30 mins
-                    $shouldRetry = true;
-                }
+            // uniqid() uses hex microseconds; check file mtime instead
+            $postsMtime = filemtime($file);
+            if (time() - $postsMtime > 300) { // 5 minutes
+                $shouldRetry = true;
             }
         }
 
         if ($shouldRetry) {
-            if (!empty($localPath) && file_exists($root . '/' . $localPath)) {
+            // audio_file or local_path
+            $audioPath = $post['audio_file'] ?? $post['local_path'] ?? '';
+            if (!empty($audioPath) && file_exists($root . '/' . $audioPath)) {
                 file_put_contents($logFile, date('Y-m-d H:i:s') . " - Retrying with AUDIO: uid=$uid, jobId=$jobId\n", FILE_APPEND);
-                $phpPath = PHP_BINARY ?: 'php';
-                $cmd = "{$phpPath} \"{$root}/run_analysis.php\" \"{$uid}\" \"{$localPath}\" \"{$jobId}\" > /dev/null 2>&1 &";
+                $phpPath = PHP_BINARY ?: '/usr/bin/php';
+                $cmd = "{$phpPath} \"{$root}/run_analysis.php\" \"{$uid}\" \"{$audioPath}\" \"{$jobId}\" > /dev/null 2>&1 &";
                 exec($cmd);
-                $posts[$idx]['status'] = 'リトライ中(音声)...';
+                $posts[$idx]['status'] = 'リトライ中...';
                 $updated = true;
             } elseif (!empty($post['original_text']) || !empty($post['text'])) {
-                // Audio missing but we have text? Let's retry just the summarization/refinement
-                file_put_contents($logFile, date('Y-m-d H:i:s') . " - Retrying with TEXT ONLY: uid=$uid, jobId=$jobId\n", FILE_APPEND);
-                
-                // We'll call run_analysis.php but we need it to support a 'text_only' flag or similar
-                // Actually, let's just implement a small logic here or tell run_analysis to skip transcription
-                $phpPath = PHP_BINARY ?: 'php';
+                file_put_contents($logFile, date('Y-m-d H:i:s') . " - Retrying TEXT ONLY: uid=$uid, jobId=$jobId\n", FILE_APPEND);
+                $phpPath = PHP_BINARY ?: '/usr/bin/php';
                 $cmd = "{$phpPath} \"{$root}/run_analysis.php\" \"{$uid}\" \"TEXT_ONLY\" \"{$jobId}\" > /dev/null 2>&1 &";
                 exec($cmd);
-                
                 $posts[$idx]['status'] = 'リトライ中(要約のみ)...';
                 $updated = true;
             }
