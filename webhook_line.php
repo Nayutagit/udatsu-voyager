@@ -83,23 +83,28 @@ foreach ($events['events'] as $event) {
             $targetPath = 'uploads/' . $filename;
             file_put_contents(__DIR__ . '/' . $targetPath, $audioData);
             
-            // Kick background analysis via internal HTTP POST (avoids CLI PHP version issues)
+            // Kick background analysis via CLI (much more reliable than curl for loopback)
+            $phpPath = '/usr/bin/php'; // Standard path on most servers including XServer
+            $scriptPath = __DIR__ . '/run_analysis.php';
+            $logPath = __DIR__ . '/debug_run.log';
             $originalTitle = pathinfo($originalFileName, PATHINFO_FILENAME);
-            $analyzeUrl = 'https://udatsu-voyager.com/run_analysis.php';
-            $ch = curl_init($analyzeUrl);
-            curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, [
-                'secret' => 'voyager_internal_exec_1234',
-                'uid' => $uid,
-                'audioPath' => $targetPath,
-                'originalTitle' => $originalTitle
-            ]);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 1); // Disconnect immediately
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_exec($ch);
-            curl_close($ch);
             
-            file_put_contents(__DIR__ . '/webhook_debug.txt', date('Y-m-d H:i:s') . " - HTTP Trigger sent to run_analysis.php for $targetPath\n", FILE_APPEND);
+            // Build command: php script.php uid audioPath jobId originalTitle > /dev/null 2>&1 &
+            $cmd = sprintf(
+                '%s %s %s %s %s %s > /dev/null 2>&1 &',
+                $phpPath,
+                escapeshellarg($scriptPath),
+                escapeshellarg($uid),
+                escapeshellarg($targetPath),
+                '""', // No jobId
+                escapeshellarg($originalTitle)
+            );
+            shell_exec($cmd);
+
+            // Log for debugging
+            file_put_contents(__DIR__ . '/debug_webhook.log', "[" . date('Y-m-d H:i:s') . "] Triggered analysis for $uid: $cmd\n", FILE_APPEND);
+            
+            file_put_contents(__DIR__ . '/webhook_debug.txt', date('Y-m-d H:i:s') . " - CLI Trigger sent to run_analysis.php for $targetPath\n", FILE_APPEND);
         } else {
             file_put_contents(__DIR__ . '/webhook_debug.txt', date('Y-m-d H:i:s') . " - Failed to download audio. Message ID: $messageId\n", FILE_APPEND);
         }

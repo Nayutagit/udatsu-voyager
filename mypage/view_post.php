@@ -273,6 +273,14 @@ $thumbnail = $post['thumbnail'] ?? '';
     </header>
     
     <div class="post-container">
+      <div style="display: flex; justify-content: flex-end; gap: 15px; margin-bottom: 25px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px;">
+        <button onclick="copyContent()" class="btn-small" style="background: rgba(0, 255, 204, 0.05); color: var(--primary-neon); border: 1px solid rgba(0, 255, 204, 0.4); border-radius: 8px; padding: 8px 16px; cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: 0.3s; display: flex; align-items: center; gap: 8px;">
+          <i class="far fa-copy"></i> 本文をコピー
+        </button>
+        <a href="edit_post.php?index=<?= $index ?>" class="btn-small" style="background: rgba(255, 255, 255, 0.05); color: #fff; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 8px; padding: 8px 16px; text-decoration: none; font-size: 0.9rem; font-weight: 600; transition: 0.3s; display: flex; align-items: center; gap: 8px;">
+          <i class="far fa-edit"></i> 編集する
+        </a>
+      </div>
       <div class="post-title"><?php echo htmlspecialchars($title); ?></div>
       <div class="post-meta"><?php echo htmlspecialchars($date); ?></div>
       
@@ -315,6 +323,25 @@ $thumbnail = $post['thumbnail'] ?? '';
     const summaryElement = document.getElementById('summary-content');
     if (summaryElement) {
       summaryElement.innerHTML = marked.parse(summaryElement.textContent);
+    }
+
+    function copyContent() {
+      const title = "<?php echo addslashes($title); ?>";
+      const text = document.getElementById('post-text-content').innerText;
+      const combined = title + "\n\n" + text;
+
+      navigator.clipboard.writeText(combined).then(() => {
+        const btn = event.currentTarget;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check"></i> コピー完了！';
+        btn.style.borderColor = '#fff';
+        setTimeout(() => {
+          btn.innerHTML = originalText;
+          btn.style.borderColor = 'var(--primary-neon)';
+        }, 2000);
+      }).catch(err => {
+        alert("コピーに失敗しました: " + err);
+      });
     }
   </script>
 </body>
