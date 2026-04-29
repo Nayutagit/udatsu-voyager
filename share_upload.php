@@ -36,7 +36,7 @@ $fileKey = $_FILES['audioFile'] ?? null;
 
 if (!$fileKey || !is_uploaded_file($fileKey['tmp_name'])) {
     // No file received => just go to upload page
-    header('Location: voyager_upload.php');
+    header('Location: mypage/mypage.php');
     exit();
 }
 
@@ -63,7 +63,7 @@ $allowedTypes = [
 ];
 
 if (!in_array($mimeType, $allowedTypes, true)) {
-    header('Location: voyager_upload.php?error=format');
+    header('Location: mypage/mypage.php?error=format');
     exit();
 }
 
@@ -83,5 +83,5 @@ if (move_uploaded_file($fileKey['tmp_name'], $targetPath)) {
     exit();
 }
 
-header('Location: voyager_upload.php?error=save');
+header('Location: mypage/mypage.php?error=save');
 exit();

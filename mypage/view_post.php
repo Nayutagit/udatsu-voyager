@@ -144,13 +144,40 @@ $thumbnail = $post['thumbnail'] ?? '';
     }
     .post-text {
       font-size: 1.1rem;
-      white-space: pre-wrap;
       line-height: 1.8;
       color: var(--text-muted);
       background: rgba(255, 255, 255, 0.05);
-      padding: 2rem;
+      padding: 2.5rem;
       border-radius: 12px;
       border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    /* Markdown Styling */
+    .post-text h1, .post-text h2, .post-text h3 {
+      color: var(--text-white);
+      margin-top: 2rem;
+      margin-bottom: 1rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding-bottom: 0.5rem;
+    }
+    .post-text h1 { font-size: 1.8rem; }
+    .post-text h2 { font-size: 1.5rem; }
+    .post-text h3 { font-size: 1.2rem; }
+    .post-text p { margin-bottom: 1.2rem; }
+    .post-text strong { color: var(--primary-neon); font-weight: 700; }
+    .post-text ul, .post-text ol { margin-bottom: 1.2rem; padding-left: 1.5rem; }
+    .post-text li { margin-bottom: 0.5rem; }
+    .post-text blockquote {
+      border-left: 4px solid var(--primary-neon);
+      padding-left: 1rem;
+      margin-left: 0;
+      color: var(--text-white);
+      font-style: italic;
+    }
+    .post-text code {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 0.2rem 0.4rem;
+      border-radius: 4px;
+      font-family: monospace;
     }
     .back-button {
       text-align: center;
@@ -219,19 +246,22 @@ $thumbnail = $post['thumbnail'] ?? '';
         font-size: 1.4rem;
       }
       .post-text {
-        padding: 0;
-        background: none;
+        padding: 1.5rem 1rem;
+        background: rgba(255, 255, 255, 0.03);
         border: none;
         font-size: 1.1rem;
         color: #eee;
         line-height: 1.9;
       }
+      .post-text h1 { font-size: 1.5rem; }
+      .post-text h2 { font-size: 1.3rem; }
       .summary-box {
         padding: 1.2rem !important;
         margin-bottom: 2rem !important;
       }
     }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
   <div class="container">
@@ -262,18 +292,30 @@ $thumbnail = $post['thumbnail'] ?? '';
           <h3 style="color: var(--primary-neon); margin-bottom: 1.2rem; font-size: 1.2rem; display: flex; align-items: center; gap: 10px;">
             <i class="fas fa-magic"></i> AI要約
           </h3>
-          <div style="color: var(--text-white); font-size: 1.05rem; line-height: 1.8; letter-spacing: 0.02em;">
-            <?= nl2br(htmlspecialchars($post['summary'])) ?>
+          <div id="summary-content" style="color: var(--text-white); font-size: 1.05rem; line-height: 1.8; letter-spacing: 0.02em;">
+            <?php echo $post['summary']; ?>
           </div>
         </div>
       <?php endif; ?>
       
-      <div class="post-text"><?php echo nl2br(htmlspecialchars($text)); ?></div>
+      <div id="post-text-content" class="post-text"><?php echo $text; ?></div>
     </div>
     
     <div class="back-button">
       <a href="mypage.php">← マイページに戻る</a>
     </div>
   </div>
+
+  <script>
+    // Render Markdown
+    const postTextElement = document.getElementById('post-text-content');
+    if (postTextElement) {
+      postTextElement.innerHTML = marked.parse(postTextElement.textContent);
+    }
+    const summaryElement = document.getElementById('summary-content');
+    if (summaryElement) {
+      summaryElement.innerHTML = marked.parse(summaryElement.textContent);
+    }
+  </script>
 </body>
 </html>

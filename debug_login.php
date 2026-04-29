@@ -8,6 +8,6 @@ $_SESSION['user_plan'] = 'standard';
 $_SESSION['email'] = 'preview@example.com';
 
 // Redirect to the upload page
-header("Location: voyager_upload.php");
+header('Location: mypage/mypage.php');
 exit();
 ?>
