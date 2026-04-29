@@ -210,15 +210,17 @@ try {
             $ch = curl_init($url);
             curl_setopt($ch, CURLOPT_POST, true);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // Required for XServer environment
             curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postData));
             curl_setopt($ch, CURLOPT_HTTPHEADER, [
                 'Content-Type: application/json; charset=UTF-8',
                 'Authorization: Bearer ' . $lineConfig['channel_access_token']
             ]);
-            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
             $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE); // Must be AFTER curl_exec
+            $curlError = curl_error($ch);
             curl_close($ch);
-            file_put_contents($logFile, date('Y-m-d H:i:s') . " - Push sent. HTTP: $httpCode. Response: $response\n", FILE_APPEND);
+            file_put_contents($logFile, date('Y-m-d H:i:s') . " - Push sent. HTTP: $httpCode. Error: $curlError. Response: $response\n", FILE_APPEND);
         } else {
             file_put_contents($logFile, date('Y-m-d H:i:s') . " - Missing channel access token\n", FILE_APPEND);
         }
