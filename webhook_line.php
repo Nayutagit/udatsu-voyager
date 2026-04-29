@@ -106,23 +106,15 @@ foreach ($events['events'] as $event) {
             file_put_contents($postsFile, json_encode($posts, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
             file_put_contents(__DIR__ . '/webhook_debug.txt', date('Y-m-d H:i:s') . " - Pending post created: $jobId\n", FILE_APPEND);
 
-            // ② バックグラウンドで解析を起動（shell_exec → fallback: curl）
-            $phpPath   = '/usr/bin/php';
-            $scriptPath = __DIR__ . '/run_analysis.php';
-            $cmd = sprintf('%s %s %s %s %s %s > /dev/null 2>&1 &',
-                $phpPath, escapeshellarg($scriptPath),
-                escapeshellarg($uid), escapeshellarg($targetPath),
-                escapeshellarg($jobId), escapeshellarg($originalTitle)
-            );
-            shell_exec($cmd);
-
-            // Fallback: HTTP kick if shell_exec is disabled
+            // ② 解析をバックグラウンドで起動（Fire-and-forget curl）
+            // タイムアウトを極小にして即座に切断→サーバー側は処理を継続する
             $kickUrl = 'https://udatsu-voyager.com/run_analysis.php';
             $kch = curl_init($kickUrl);
             curl_setopt_array($kch, [
                 CURLOPT_POST           => true,
                 CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_TIMEOUT        => 3,
+                CURLOPT_NOSIGNAL       => true,
+                CURLOPT_TIMEOUT_MS     => 500,   // 0.5秒で接続を切る（サーバー側は継続）
                 CURLOPT_SSL_VERIFYPEER => false,
                 CURLOPT_POSTFIELDS     => http_build_query([
                     'secret'        => 'voyager_internal_exec_1234',
@@ -132,10 +124,10 @@ foreach ($events['events'] as $event) {
                     'originalTitle' => $originalTitle,
                 ]),
             ]);
-            curl_exec($kch);
+            curl_exec($kch); // intentionally ignore timeout error
             curl_close($kch);
 
-            file_put_contents(__DIR__ . '/webhook_debug.txt', date('Y-m-d H:i:s') . " - Analysis kicked for $targetPath\n", FILE_APPEND);
+            file_put_contents(__DIR__ . '/webhook_debug.txt', date('Y-m-d H:i:s') . " - Fire-and-forget kick sent for $targetPath\n", FILE_APPEND);
         } else {
             file_put_contents(__DIR__ . '/webhook_debug.txt', date('Y-m-d H:i:s') . " - Failed to download audio. Message ID: $messageId\n", FILE_APPEND);
         }

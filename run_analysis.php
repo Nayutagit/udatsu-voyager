@@ -20,11 +20,26 @@ if (PHP_SAPI === 'cli') {
     $audioPath     = $_POST['audioPath'] ?? null;
     $jobId         = $_POST['jobId'] ?? null; // Optional jobId to retry
     $originalTitle = $_POST['originalTitle'] ?? null;
-    
-    // Close connection to allow caller to finish immediately
-    ...
+
+    // Close connection immediately so webhook can return 200 to LINE
+    // while we continue processing in the background
+    ignore_user_abort(true);
+    set_time_limit(300);
+    ob_start();
+    echo 'OK';
+    $size = ob_get_length();
+    header('Content-Length: ' . $size);
+    header('Connection: close');
+    ob_end_flush();
+    flush();
 }
-...
+
+// Load dependencies (after connection is closed)
+require_once __DIR__ . '/core/bootstrap.php';
+$userDir = __DIR__ . '/users/';
+$logFile = __DIR__ . '/log/analysis_log.txt';
+if (!file_exists(__DIR__ . '/log')) mkdir(__DIR__ . '/log', 0755, true);
+
 // Create "解析中" placeholder post ONLY if we don't have a jobId to retry
 $userPostsFile = $userDir . $uid . '_posts.json';
 $posts = file_exists($userPostsFile) ? json_decode(file_get_contents($userPostsFile), true) : [];
