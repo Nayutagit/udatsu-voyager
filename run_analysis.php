@@ -34,11 +34,22 @@ if (PHP_SAPI === 'cli') {
     flush();
 }
 
+// === EARLY LOG (before bootstrap, to detect crash location) ===
+$earlyLog = __DIR__ . '/log/analysis_log.txt';
+@mkdir(__DIR__ . '/log', 0755, true);
+file_put_contents($earlyLog, date('Y-m-d H:i:s') . " - run_analysis.php started. SAPI=" . PHP_SAPI . " uid=$uid audioPath=$audioPath jobId=$jobId\n", FILE_APPEND);
+
+try {
+    require_once __DIR__ . '/core/bootstrap.php';
+    file_put_contents($earlyLog, date('Y-m-d H:i:s') . " - bootstrap loaded OK\n", FILE_APPEND);
+} catch (Throwable $e) {
+    file_put_contents($earlyLog, date('Y-m-d H:i:s') . " - BOOTSTRAP FAILED: " . $e->getMessage() . "\n", FILE_APPEND);
+    exit(1);
+}
+
 // Load dependencies (after connection is closed)
-require_once __DIR__ . '/core/bootstrap.php';
 $userDir = __DIR__ . '/users/';
-$logFile = __DIR__ . '/log/analysis_log.txt';
-if (!file_exists(__DIR__ . '/log')) mkdir(__DIR__ . '/log', 0755, true);
+$logFile = $earlyLog;
 
 // Create "解析中" placeholder post ONLY if we don't have a jobId to retry
 $userPostsFile = $userDir . $uid . '_posts.json';

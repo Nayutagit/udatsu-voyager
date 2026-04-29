@@ -33,21 +33,18 @@ foreach ($postFiles as $file) {
 
         $shouldRetry = false;
 
-        // 1. Explicit errors
-        if ($status === 'エラー') {
-            $shouldRetry = true;
-        }
-        // 2. Summary failures
-        elseif (strpos($text, '(要約解析失敗)') !== false) {
-            $shouldRetry = true;
-        }
-        // 3. Stale "Processing" (more than 5 mins)
-        elseif ($status === '解析中') {
-            // uniqid() uses hex microseconds; check file mtime instead
+        // 止まっているステータスをすべてリトライ対象にする
+        $retryStatuses = ['エラー', '解析中', 'リトライ中...', 'リトライ中(要約のみ)...', 'リトライ中(音声)...'];
+        if (in_array($status, $retryStatuses)) {
             $postsMtime = filemtime($file);
-            if (time() - $postsMtime > 300) { // 5 minutes
+            if (time() - $postsMtime > 300) { // 5分以上更新がなければスタックとみなす
                 $shouldRetry = true;
             }
+        }
+
+        // 要約失敗のテキストが含まれる場合もリトライ
+        if (strpos($text, '(要約解析失敗)') !== false) {
+            $shouldRetry = true;
         }
 
         if ($shouldRetry) {
