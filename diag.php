@@ -1,6 +1,5 @@
 <?php
-// Simple diagnostic page - DELETE AFTER USE
-if ($_GET['key'] ?? '' !== 'udatsu2026diag') { http_response_code(403); exit('Forbidden'); }
+if (($_GET['key'] ?? '') !== 'udatsu2026diag') { http_response_code(403); exit('Forbidden'); }
 
 echo "<pre>";
 
