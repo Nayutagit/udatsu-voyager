@@ -6,94 +6,99 @@
  */
 
 if (PHP_SAPI === 'cli') {
-    $uid       = $argv[1] ?? null;
-    $audioPath = $argv[2] ?? null;
+    $uid           = $argv[1] ?? null;
+    $audioPath     = $argv[2] ?? null;
+    $jobId         = $argv[3] ?? null; // Optional jobId to retry
+    $originalTitle = $argv[4] ?? null; // Optional original filename
 } else {
     $secret = $_POST['secret'] ?? '';
     if ($secret !== 'voyager_internal_exec_1234') {
         http_response_code(403);
         exit('Unauthorized');
     }
-    $uid       = $_POST['uid'] ?? null;
-    $audioPath = $_POST['audioPath'] ?? null;
+    $uid           = $_POST['uid'] ?? null;
+    $audioPath     = $_POST['audioPath'] ?? null;
+    $jobId         = $_POST['jobId'] ?? null; // Optional jobId to retry
+    $originalTitle = $_POST['originalTitle'] ?? null;
     
     // Close connection to allow caller to finish immediately
-    header("Connection: close");
-    ob_start();
-    echo "Started";
-    $size = ob_get_length();
-    header("Content-Length: $size");
-    ob_end_flush();
-    @ob_flush();
-    flush();
-    if (function_exists('fastcgi_finish_request')) {
-        fastcgi_finish_request();
+    ...
+}
+...
+// Create "解析中" placeholder post ONLY if we don't have a jobId to retry
+$userPostsFile = $userDir . $uid . '_posts.json';
+$posts = file_exists($userPostsFile) ? json_decode(file_get_contents($userPostsFile), true) : [];
+if (!is_array($posts)) $posts = [];
+
+$isTextOnlyRetry = ($audioPath === 'TEXT_ONLY');
+$existingText = '';
+$existingAudioFile = '';
+
+if (empty($jobId)) {
+    $jobId = 'job_' . time() . '_' . rand(1000, 9999);
+    $newPost = [
+        'id'            => $jobId,
+        'title'         => '🎙 ' . date('H:i') . 'の音声を解析中...',
+        'text'          => "Shortcutから受信した音声を解析しています。\n数分後にマイページをリロードしてください。",
+        'original_text' => '',
+        'content'       => '',
+        'date'          => date('Y-m-d'),
+        'category'      => 'ボイスジャーナル',
+        'status'        => '解析中',
+        'audio_file'    => '',
+        'local_path'    => $audioPath, // Store for retry
+    ];
+    array_unshift($posts, $newPost);
+    file_put_contents($userPostsFile, json_encode($posts, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+} else {
+    // If retrying, update status to '解析中' for the existing job
+    foreach ($posts as &$p) {
+        if (($p['id'] ?? '') === $jobId) {
+            $p['status'] = '解析中';
+            $existingText = !empty($p['original_text']) ? $p['original_text'] : ($p['text'] ?? '');
+            $existingAudioFile = $p['audio_file'] ?? '';
+            break;
+        }
+    }
+    file_put_contents($userPostsFile, json_encode($posts, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+}
+
+// Upload/Transcribe logic
+if ($isTextOnlyRetry) {
+    $raw = $existingText;
+    $storagePath = $existingAudioFile;
+} else {
+    // Upload audio to Firebase Storage
+    $storagePath = $audioPath;
+    try {
+        $firebase    = new FirebaseService();
+        $storagePath = $firebase->uploadAudio(__DIR__ . '/' . $audioPath, $uid);
+    } catch (Exception $e) {
+        // Firebase upload failed – keep local path
+    }
+
+    // Transcribe
+    try {
+        $gemini = new GeminiService();
+        file_put_contents($logFile, date('Y-m-d H:i:s') . " - Transcribing...\n", FILE_APPEND);
+        $raw    = $gemini->transcribe(__DIR__ . '/' . $audioPath, $mimeType);
+        file_put_contents($logFile, date('Y-m-d H:i:s') . " - Transcribed length: " . mb_strlen($raw) . "\n", FILE_APPEND);
+    } catch (Exception $e) {
+        throw new Exception("文字起こしに失敗しました: " . $e->getMessage());
     }
 }
 
-if (!$uid || !$audioPath || !file_exists(__DIR__ . '/' . $audioPath)) {
-    exit("Invalid arguments\n");
-}
-
-require_once __DIR__ . '/core/GeminiService.php';
-require_once __DIR__ . '/core/FirebaseService.php';
-
-ignore_user_abort(true);
-set_time_limit(1800);
-
-$logFile = __DIR__ . '/log/run_analysis_log.txt';
-if (!file_exists(__DIR__ . '/log')) mkdir(__DIR__ . '/log', 0755, true);
-
-$lockFile = __DIR__ . '/log/analysis.lock';
-$lockFp = fopen($lockFile, 'c');
-if (!$lockFp) {
-    file_put_contents($logFile, date('Y-m-d H:i:s') . " - ERROR: Could not open lock file\n", FILE_APPEND);
-    exit("Lock error\n");
-}
-file_put_contents($logFile, date('Y-m-d H:i:s') . " - Waiting for lock... uid: $uid\n", FILE_APPEND);
-flock($lockFp, LOCK_EX); // Block until previous analysis finishes
-file_put_contents($logFile, date('Y-m-d H:i:s') . " - Acquired lock, START uid: $uid, audio: $audioPath\n", FILE_APPEND);
-$userDir       = __DIR__ . '/users/';
-$userPostsFile = $userDir . $uid . '_posts.json';
-$mimeType      = mime_content_type(__DIR__ . '/' . $audioPath);
-
-// Create "解析中" placeholder post
-$posts   = file_exists($userPostsFile) ? json_decode(file_get_contents($userPostsFile), true) : [];
-if (!is_array($posts)) $posts = [];
-
-$jobId = 'job_' . time() . '_' . rand(1000, 9999);
-$newPost = [
-    'id'            => $jobId,
-    'title'         => '🎙 ' . date('H:i') . 'の音声を解析中...',
-    'text'          => "Shortcutから受信した音声を解析しています。\n数分後にダッシュボードをリロードしてください。",
-    'original_text' => '',
-    'content'       => '',
-    'date'          => date('Y-m-d'),
-    'category'      => 'Voice Memo',
-    'status'        => '解析中',
-    'audio_file'    => '',
-];
-array_unshift($posts, $newPost);
-file_put_contents($userPostsFile, json_encode($posts, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-
-// Upload audio to Firebase Storage
-$storagePath = $audioPath;
-try {
-    $firebase    = new FirebaseService();
-    $storagePath = $firebase->uploadAudio(__DIR__ . '/' . $audioPath, $uid);
-} catch (Exception $e) {
-    // Firebase upload failed – keep local path
-}
-
-// Transcribe
+// Analysis
 try {
     $gemini = new GeminiService();
-    file_put_contents($logFile, date('Y-m-d H:i:s') . " - Transcribing...\n", FILE_APPEND);
-    $raw    = $gemini->transcribe(__DIR__ . '/' . $audioPath, $mimeType);
-    file_put_contents($logFile, date('Y-m-d H:i:s') . " - Transcribed length: " . mb_strlen($raw) . "\n", FILE_APPEND);
+
+    $titleContext = "";
+    if (!empty($originalTitle) && strpos($originalTitle, 'voice_message') === false) {
+        $titleContext = "なお、この音声の元のファイル名は「{$originalTitle}」です。この名前が内容を表している場合は参考にし、より適切なタイトルを生成してください。";
+    }
 
     $combinedPrompt = "以下の音声の文字起こしを元に、以下の3つの情報をJSON形式で出力してください。\n" .
-        "1. title: 文字起こし内容を端的に表す15文字以下のキャッチーなタイトル\n" .
+        "1. title: 文字起こし内容を端的に表す15文字以下のキャッチーなタイトル。{$titleContext}\n" .
         "2. date: 音声内で言及された収録日（〇月〇日など）があれば「YYYYMMDD」の8桁の数字（年は今年を想定）。言及がなければ「UNKNOWN」\n" .
         "3. article: 読みやすく整理された記事（ブログやジャーナル形式）。見出しや箇条書きを適宜用いて、元の音声の意図や思考プロセスが伝わるように構成すること。\n\n" .
         "出力は必ずJSONオブジェクトのみにしてください。\n\n" .
@@ -106,6 +111,13 @@ try {
     $jsonResult = preg_replace('/\s*```$/i', '', $jsonResult);
     
     $data = json_decode($jsonResult, true);
+    
+    // If json_decode fails, try harder to find JSON within the text
+    if ($data === null) {
+        if (preg_match('/\{.*\}/s', $jsonResult, $matches)) {
+            $data = json_decode($matches[0], true);
+        }
+    }
     
     $generatedTitle = $data['title'] ?? '新規投稿';
     $generatedTitle = str_replace(["\n", "\r", "\"", "'", "「", "」"], '', $generatedTitle);
@@ -120,19 +132,25 @@ try {
     }
     
     $finalTitle = 'VJ' . $datePrefixStr . '_' . $generatedTitle;
-    $article = $data['article'] ?? $raw;
+    
+    // Fallback logic for article: if AI fails to generate properly, use the raw transcript
+    $article = $data['article'] ?? '';
+    if (empty($article) || $article === '(要約解析失敗)') {
+        $article = $raw;
+    }
 
     $posts = json_decode(file_get_contents($userPostsFile), true);
     foreach ($posts as &$p) {
         if (($p['id'] ?? '') === $jobId) {
             $p['title']         = $finalTitle;
-            $p['text']          = $article; // 保存先を記事に
+            $p['text']          = $article;
             $p['original_text'] = $raw;
             $p['content']       = '';
             $p['date']          = $postDateStr;
 
             $p['status']        = 'Inbox';
             $p['audio_file']    = $storagePath;
+            unset($p['local_path']); // Success! No need for local path anymore
             break;
         }
     }

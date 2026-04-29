@@ -136,7 +136,7 @@ if (empty($uid)) { header('Location: ../index.php'); exit(); }
         <i class="fas fa-redo"></i> さらに調整する
       </button>
       <a href="mypage.php" class="btn btn-primary">
-        <i class="fas fa-home"></i> ダッシュボードへ
+        <i class="fas fa-home"></i> マイページへ
       </a>
     </div>
   </div>
@@ -148,12 +148,12 @@ if (empty($uid)) { header('Location: ../index.php'); exit(); }
     <p class="state-sub" id="errorMsg"></p>
     <div class="action-row">
       <button onclick="startNew()" class="btn btn-secondary"><i class="fas fa-redo"></i> 再試行</button>
-      <a href="mypage.php" class="btn btn-primary"><i class="fas fa-home"></i> ダッシュボードへ</a>
+      <a href="mypage.php" class="btn btn-primary"><i class="fas fa-home"></i> マイページへ</a>
     </div>
   </div>
 
 </div>
-<footer><a href="mypage.php"><i class="fas fa-chevron-left"></i> ダッシュボードに戻る</a></footer>
+<footer><a href="mypage.php"><i class="fas fa-chevron-left"></i> マイページに戻る</a></footer>
 
 <script>
 let questions = [];

@@ -572,6 +572,7 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
                 <span class="status <?= $statusInfo['class'] ?>"><?= $statusInfo['label'] ?></span>
               <?php endif; ?>
             </div>
+            <i class="fas fa-info-circle"></i> 解析をマイページの裏側に移行しています...
             <div class="post-title"><?= htmlspecialchars($post['title']) ?></div>
             <div class="action-buttons">
               <a href="view_post.php?index=<?= $i ?>" class="btn-small">詳細を見る</a>
@@ -599,7 +600,7 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
   </div>
 
   <div class="navigation">
-    <a href="mypage.php" class="nav-btn">ダッシュボードへ戻る</a>
+    <a href="mypage.php" class="btn btn-secondary"><i class="fas fa-home"></i> マイページへ</a>
     <a href="../logout.php" class="nav-btn" style="border-color: #ff5252; color: #ff5252;">ログアウト</a>
   </div>
 </div>
@@ -666,7 +667,7 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
     const currentStack = <?= $stackedCount ?>;
     const limit = <?= $stackLimit ?>;
     if (currentStack >= limit) {
-      alert(`My Udastackの上限（${limit}件）に達しています。\nプランをアップグレードしてください。`);
+      'message' => '音声を受信しました。バックグラウンドで解析を開始しています。数分後にマイページをご確認ください 🎙',
       return;
     }
     if (!confirm('この投稿をMy Udastackに追加しますか？\n（AIが要約とキーワード抽出を行います）')) return;

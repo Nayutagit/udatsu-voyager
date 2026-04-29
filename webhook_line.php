@@ -84,13 +84,15 @@ foreach ($events['events'] as $event) {
             file_put_contents(__DIR__ . '/' . $targetPath, $audioData);
             
             // Kick background analysis via internal HTTP POST (avoids CLI PHP version issues)
+            $originalTitle = pathinfo($originalFileName, PATHINFO_FILENAME);
             $analyzeUrl = 'https://udatsu-voyager.com/run_analysis.php';
             $ch = curl_init($analyzeUrl);
             curl_setopt($ch, CURLOPT_POST, true);
             curl_setopt($ch, CURLOPT_POSTFIELDS, [
                 'secret' => 'voyager_internal_exec_1234',
                 'uid' => $uid,
-                'audioPath' => $targetPath
+                'audioPath' => $targetPath,
+                'originalTitle' => $originalTitle
             ]);
             curl_setopt($ch, CURLOPT_TIMEOUT, 1); // Disconnect immediately
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);

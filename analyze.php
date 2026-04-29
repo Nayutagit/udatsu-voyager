@@ -82,31 +82,32 @@ try {
     $gemini = new GeminiService();
     $raw = $gemini->transcribe($audioPath, $mimeType);
 
-    // タイトルの自動生成
-    $titlePrompt = "以下の文字起こしテキストの内容を端的に表す、15文字以下のシンプルでキャッチーなタイトルを作成してください。結果の文字列のみを出力してください。\n\n" . mb_strimwidth($raw, 0, 5000);
-    try {
-        $generatedTitle = $gemini->generateText($titlePrompt, false);
-        $generatedTitle = str_replace(["\n", "\r", "\"", "'", "「", "」"], "", trim($generatedTitle));
-    } catch (Exception $e) {
-        $generatedTitle = mb_strimwidth(str_replace("\n", " ", $raw), 0, 15, '');
-    }
+    $combinedPrompt = "以下の音声の文字起こしを元に、以下の3つの情報をJSON形式で出力してください。\n" .
+        "1. title: 文字起こし内容を端的に表す15文字以下のキャッチーなタイトル\n" .
+        "2. date: 音声内で言及された収録日（〇月〇日など）があれば「YYYYMMDD」の8桁の数字（年は今年を想定）。言及がなければ「UNKNOWN」\n" .
+        "3. article: 読みやすく整理された記事（ブログやジャーナル形式）。見出しや箇条書きを適宜用いて、元の音声の意図や思考プロセスが伝わるように構成すること。\n\n" .
+        "出力は必ずJSONオブジェクトのみにしてください。\n\n" .
+        "文字起こし:\n" . mb_strimwidth($raw, 0, 8000);
 
-    // 要約の自動生成
-    $summaryPrompt = "以下の文字起こしテキストの要点を、3つの短い箇条書き（-）で簡潔に要約してください。余計な前置きは不要です。：\n\n" . mb_strimwidth($raw, 0, 5000);
-    try {
-        $generatedSummary = trim($gemini->generateText($summaryPrompt, false));
-    } catch (Exception $e) {
-        $generatedSummary = '';
-    }
-
-    // 収録日の抽出
-    $datePrompt = "以下の文字起こしテキストから、収録された日付（〇月〇日など）が明確に読み取れる場合は、その日付を「YYYYMMDD」の8桁の数字（年は今年を想定）で出力してください。日付が全く言及されていない場合は「UNKNOWN」と出力してください。\n\n" . mb_strimwidth($raw, 0, 5000);
-    try {
-        $extractedDate = trim($gemini->generateText($datePrompt, false));
-    } catch (Exception $e) {
-        $extractedDate = 'UNKNOWN';
+    $jsonResult = trim($gemini->generateText($combinedPrompt, false));
+    
+    // Clean up potential markdown formatting
+    $jsonResult = preg_replace('/^```(?:json)?\s*/i', '', $jsonResult);
+    $jsonResult = preg_replace('/\s*```$/i', '', $jsonResult);
+    
+    $data = json_decode($jsonResult, true);
+    
+    // If json_decode fails, try harder to find JSON within the text
+    if ($data === null) {
+        if (preg_match('/\{.*\}/s', $jsonResult, $matches)) {
+            $data = json_decode($matches[0], true);
+        }
     }
     
+    $generatedTitle = $data['title'] ?? '新規投稿';
+    $generatedTitle = str_replace(["\n", "\r", "\"", "'", "「", "」"], '', $generatedTitle);
+    
+    $extractedDate = $data['date'] ?? 'UNKNOWN';
     if ($extractedDate !== 'UNKNOWN' && preg_match('/^\d{8}$/', $extractedDate)) {
         $datePrefixStr = $extractedDate;
         $postDateStr = substr($extractedDate, 0, 4) . '-' . substr($extractedDate, 4, 2) . '-' . substr($extractedDate, 6, 2);
@@ -114,9 +115,14 @@ try {
         $datePrefixStr = date('Ymd');
         $postDateStr = date('Y-m-d');
     }
-
-    $datePrefix = "VJ" . $datePrefixStr;
-    $finalTitle  = $datePrefix . "_" . $generatedTitle;
+    
+    $finalTitle = 'VJ' . $datePrefixStr . '_' . $generatedTitle;
+    
+    // Fallback logic for article
+    $article = $data['article'] ?? '';
+    if (empty($article) || $article === '(要約解析失敗)') {
+        $article = $raw;
+    }
 
     // ----------------------------------------------------------------
     // STEP 3: 解析成功 → JSONを更新、ローカル音声を削除
@@ -125,8 +131,7 @@ try {
     foreach ($posts as &$p) {
         if (($p['id'] ?? '') === $jobId) {
             $p['title']         = $finalTitle;
-            $p['text']          = $raw;
-            $p['summary']       = $generatedSummary;
+            $p['text']          = $article;
             $p['original_text'] = $raw;
             $p['content']       = '';
             $p['date']          = $postDateStr;
