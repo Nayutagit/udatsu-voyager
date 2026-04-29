@@ -146,7 +146,7 @@ $redirectMypage = 'https://udatsu-voyager.com/mypage/mypage.php';
       <div class="nav-user">
         <span class="text-muted" style="font-size: 0.9rem; margin-right: 10px;">ID: <?= htmlspecialchars($uid) ?></span>
         <a href="<?= $redirectMypage ?>" class="btn btn-secondary" style="padding: 5px 15px; font-size: 0.8rem;">
-          <i class="fas fa-columns"></i> Dashboard
+          <i class="fas fa-columns"></i> マイページ
         </a>
       </div>
     </div>

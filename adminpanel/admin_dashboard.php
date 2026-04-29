@@ -96,7 +96,7 @@ foreach ($postFiles as $fn) {
   </style>
 </head>
 <body>
-  <h1>📋 Udatsu 投稿管理ダッシュボード</h1>
+  <h1>📋 Udatsu 投稿管理マイページ</h1>
 
   <h2>📝 掲載リクエスト一覧（申請中）</h2>
   <table>

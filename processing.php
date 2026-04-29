@@ -97,7 +97,7 @@
     // Fire the async task and DO NOT wait for it to finish!
     fetch('analyze.php').catch(e => console.error(e));
 
-    // Wait just a tiny bit for the UI effect, then redirect to Dashboard
+    // Wait just a tiny bit for the UI effect, then redirect to My Page
     setTimeout(() => {
         fill.style.width = '100%';
         status.textContent = "バックグラウンド移行完了";

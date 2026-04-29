@@ -152,7 +152,7 @@ if ($userPlan !== 'guest') {
 
         // 少し待ってからリダイレクト
         setTimeout(() => {
-          location.href = "voyager_upload.php";
+          location.href = "mypage/mypage.php";
         }, 500);
 
       } catch (error) {

@@ -190,7 +190,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$limitReached) {
           Plan: <strong><?= htmlspecialchars($userPlan) ?></strong>
         </div>
         <a href="mypage/mypage.php" class="btn btn-secondary" style="padding: 8px 20px; font-size: 0.9rem;">
-          <i class="fas fa-columns"></i> Dashboard
+          <i class="fas fa-columns"></i> マイページ
         </a>
       </div>
     </div>
