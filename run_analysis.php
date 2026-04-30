@@ -54,7 +54,31 @@ try {
     require_once __DIR__ . '/core/FirebaseService.php';
     file_put_contents($earlyLog, date('Y-m-d H:i:s') . " - Dependencies loaded OK\n", FILE_APPEND);
 } catch (Throwable $e) {
-    file_put_contents($earlyLog, date('Y-m-d H:i:s') . " - LOAD FAILED: " . $e->getMessage() . " in " . $e->getFile() . ":" . $e->getLine() . "\n", FILE_APPEND);
+    $errMsg = "LOAD FAILED: " . $e->getMessage() . " in " . $e->getFile() . ":" . $e->getLine();
+    file_put_contents($earlyLog, date('Y-m-d H:i:s') . " - " . $errMsg . "\n", FILE_APPEND);
+    
+    // Attempt to update status to error if possible
+    if ($uid) {
+        $userPostsFile = __DIR__ . '/users/' . $uid . '_posts.json';
+        if (file_exists($userPostsFile)) {
+            $posts = json_decode(file_get_contents($userPostsFile), true);
+            if (is_array($posts)) {
+                $found = false;
+                foreach ($posts as &$p) {
+                    if (($p['id'] ?? '') === $jobId) {
+                        $p['status'] = 'エラー';
+                        $p['title'] = '❌ 起動エラー';
+                        $p['text'] = $errMsg;
+                        $found = true;
+                        break;
+                    }
+                }
+                if ($found) {
+                    file_put_contents($userPostsFile, json_encode($posts, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+                }
+            }
+        }
+    }
     exit(1);
 }
 

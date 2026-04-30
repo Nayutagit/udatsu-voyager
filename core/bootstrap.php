@@ -23,14 +23,16 @@ ini_set('session.use_only_cookies','1');
 ini_set('session.gc_maxlifetime', 2592000);
 ini_set('session.cookie_lifetime', 2592000);
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-
-    if (empty($_SESSION['initiated'])) {
-        session_regenerate_id(true);
-        $_SESSION['initiated'] = 1;
-        session_write_close();
+if (PHP_SAPI !== 'cli') {
+    if (session_status() === PHP_SESSION_NONE) {
         session_start();
+
+        if (empty($_SESSION['initiated'])) {
+            session_regenerate_id(true);
+            $_SESSION['initiated'] = 1;
+            session_write_close();
+            session_start();
+        }
     }
 }
 
