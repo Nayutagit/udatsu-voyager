@@ -35,15 +35,26 @@ if (PHP_SAPI === 'cli') {
 }
 
 // === EARLY LOG (before bootstrap, to detect crash location) ===
-$earlyLog = __DIR__ . '/log/analysis_log.txt';
-@mkdir(__DIR__ . '/log', 0755, true);
+$logDir = __DIR__ . '/log';
+$earlyLog = $logDir . '/analysis_log.txt';
+if (!file_exists($logDir)) {
+    @mkdir($logDir, 0775, true);
+}
+
+// Fallback to a temporary file if the log directory is not writable
+if (!is_writable($logDir) && !file_exists($earlyLog)) {
+    $earlyLog = sys_get_temp_dir() . '/udatsu_analysis_' . date('Ymd') . '.log';
+}
+
 file_put_contents($earlyLog, date('Y-m-d H:i:s') . " - run_analysis.php started. SAPI=" . PHP_SAPI . " uid=$uid audioPath=$audioPath jobId=$jobId\n", FILE_APPEND);
 
 try {
     require_once __DIR__ . '/core/bootstrap.php';
-    file_put_contents($earlyLog, date('Y-m-d H:i:s') . " - bootstrap loaded OK\n", FILE_APPEND);
+    require_once __DIR__ . '/core/GeminiService.php';
+    require_once __DIR__ . '/core/FirebaseService.php';
+    file_put_contents($earlyLog, date('Y-m-d H:i:s') . " - Dependencies loaded OK\n", FILE_APPEND);
 } catch (Throwable $e) {
-    file_put_contents($earlyLog, date('Y-m-d H:i:s') . " - BOOTSTRAP FAILED: " . $e->getMessage() . "\n", FILE_APPEND);
+    file_put_contents($earlyLog, date('Y-m-d H:i:s') . " - LOAD FAILED: " . $e->getMessage() . " in " . $e->getFile() . ":" . $e->getLine() . "\n", FILE_APPEND);
     exit(1);
 }
 
@@ -59,6 +70,15 @@ if (!is_array($posts)) $posts = [];
 $isTextOnlyRetry = ($audioPath === 'TEXT_ONLY');
 $existingText = '';
 $existingAudioFile = '';
+
+// Concurrency Control: Prevent multiple processes for the same jobId
+$lockFile = __DIR__ . '/log/job_' . ($jobId ?: 'unknown') . '.lock';
+$lockFp = fopen($lockFile, 'w');
+if (!$lockFp || !flock($lockFp, LOCK_EX | LOCK_NB)) {
+    file_put_contents($logFile, date('Y-m-d H:i:s') . " - Job $jobId is already being processed. Exiting.\n", FILE_APPEND);
+    exit(0);
+}
+fwrite($lockFp, getmypid());
 
 if (empty($jobId)) {
     $jobId = 'job_' . time() . '_' . rand(1000, 9999);
@@ -257,25 +277,33 @@ try {
         file_put_contents($logFile, date('Y-m-d H:i:s') . " - LINE user ID not found for uid: $uid\n", FILE_APPEND);
     }
 
-    if (isset($lockFp)) {
+    if (isset($lockFp) && is_resource($lockFp)) {
         flock($lockFp, LOCK_UN);
         fclose($lockFp);
+        @unlink($lockFile);
     }
-} catch (Exception $e) {
-    file_put_contents($logFile, date('Y-m-d H:i:s') . " - ERROR: " . $e->getMessage() . "\n", FILE_APPEND);
+} catch (Throwable $e) {
+    $errorMsg = $e->getMessage() . " in " . $e->getFile() . ":" . $e->getLine();
+    file_put_contents($logFile, date('Y-m-d H:i:s') . " - ERROR: " . $errorMsg . "\n", FILE_APPEND);
+    
+    // Attempt to log trace for deep debugging
+    file_put_contents($logFile, $e->getTraceAsString() . "\n", FILE_APPEND);
+
     $posts = json_decode(file_get_contents($userPostsFile), true);
     foreach ($posts as &$p) {
         if (($p['id'] ?? '') === $jobId) {
-            $p['title']  = '（解析中...）';
-            $p['status'] = '解析中'; // Keep as processing so cron retries
+            $p['title']  = '❌ 解析エラー';
+            $p['status'] = 'エラー'; // Set to 'エラー' so user knows it failed, or '解析中' to retry
+            $p['text']   = "解析中にエラーが発生しました: " . $e->getMessage();
             break;
         }
     }
     file_put_contents($userPostsFile, json_encode($posts, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
     
-    if (isset($lockFp)) {
+    if (isset($lockFp) && is_resource($lockFp)) {
         flock($lockFp, LOCK_UN);
         fclose($lockFp);
+        @unlink($lockFile);
     }
 }
 

@@ -54,6 +54,7 @@ foreach ($postFiles as $file) {
                 file_put_contents($logFile, date('Y-m-d H:i:s') . " - Retrying with AUDIO: uid=$uid, jobId=$jobId\n", FILE_APPEND);
                 $phpPath = PHP_BINARY ?: '/usr/bin/php';
                 $cmd = "{$phpPath} \"{$root}/run_analysis.php\" \"{$uid}\" \"{$audioPath}\" \"{$jobId}\" > /dev/null 2>&1 &";
+                file_put_contents($logFile, date('Y-m-d H:i:s') . " - Executing: $cmd\n", FILE_APPEND);
                 exec($cmd);
                 $posts[$idx]['status'] = 'リトライ中...';
                 $updated = true;
@@ -61,6 +62,7 @@ foreach ($postFiles as $file) {
                 file_put_contents($logFile, date('Y-m-d H:i:s') . " - Retrying TEXT ONLY: uid=$uid, jobId=$jobId\n", FILE_APPEND);
                 $phpPath = PHP_BINARY ?: '/usr/bin/php';
                 $cmd = "{$phpPath} \"{$root}/run_analysis.php\" \"{$uid}\" \"TEXT_ONLY\" \"{$jobId}\" > /dev/null 2>&1 &";
+                file_put_contents($logFile, date('Y-m-d H:i:s') . " - Executing: $cmd\n", FILE_APPEND);
                 exec($cmd);
                 $posts[$idx]['status'] = 'リトライ中(要約のみ)...';
                 $updated = true;

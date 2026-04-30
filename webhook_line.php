@@ -51,7 +51,7 @@ foreach ($events['events'] as $event) {
         
         $msgText = "初めまして！Udatsu Voyagerにようこそ。\n\n音声を自動解析するには、まずお持ちのアカウントとの連携が必要です。\n以下のURLを開いて連携を完了させてください。\n(有効期限: 1時間)\n{$linkUrl}";
         if ($event['type'] === 'message' && ($messageType === 'audio' || $messageType === 'file')) {
-            $msgText = "⚠️ まだアカウントが連携されていません！\n\n今お送りいただいた音声は保存されていません。以下のURLから連携を完了させた後、もう一度音声を送信してください。\n\n{$linkUrl}";
+            $msgText = "⚠️ アカウントが連携されていません！\n\n今お送りいただいた音声は解析できませんでした。\n\n以下のURLからマイページにログインし、連携を完了させてください。\n{$linkUrl}";
         }
         
         replyLineMessage($channelAccessToken, $replyToken, $msgText);
@@ -70,7 +70,7 @@ foreach ($events['events'] as $event) {
         $originalFileName = $event['message']['fileName'] ?? 'voice_message.m4a';
         
         // Reply instantly
-        replyLineMessage($channelAccessToken, $replyToken, "🎙 音声を受信しました！\nAIが文字起こしと記事化を行っています。\n\n数分後にこのLINEへ直接、清書された記事が届きますので、そのままお待ちください🚀");
+        replyLineMessage($channelAccessToken, $replyToken, "🎙 音声を受信しました！\n現在AIが文字起こしと記事化を行っています。解析が終わると、このLINEへ直接記事が届きますので、そのまま1〜2分ほどお待ちください🚀");
         
         // Download audio/file data
         $audioData = downloadLineAudio($channelAccessToken, $messageId);
