@@ -178,8 +178,10 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
                 <span><i class="far fa-calendar-alt"></i> <?= htmlspecialchars($post['date']) ?></span>
                 <?php if (($post['status'] ?? '') === '解析中'): ?>
                   <span style="background: rgba(0, 255, 204, 0.2); color: var(--primary-neon); padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;"><i class="fas fa-spinner fa-spin"></i> 解析中...</span>
-                <?php elseif (($post['status'] ?? '') === 'エラー'): ?>
-                  <span style="background: rgba(0, 255, 204, 0.2); color: var(--primary-neon); padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;"><i class="fas fa-spinner fa-spin"></i> 解析中...</span>
+                <?php elseif (($post['status'] ?? '') === 'エラー' || strpos(($post['title'] ?? ''), '解析エラー') !== false): ?>
+                  <span style="background: rgba(255, 68, 68, 0.2); color: #ff4444; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem; cursor: pointer;" onclick="handlePostAction(<?= $i ?>, 'retry')">
+                    <i class="fas fa-redo"></i> ❌ 解析エラー (再試行)
+                  </span>
                 <?php elseif (($post['status'] ?? '') === 'My Udastack追加済'): ?>
                   <span style="background: rgba(252, 200, 0, 0.1); color: var(--primary-neon); padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;"><i class="fas fa-check"></i> Stacked</span>
                 <?php endif; ?>
@@ -220,11 +222,7 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
                 
                 <!-- Stack/Unstack Button -->
                 <div id="stack-btn-container-<?= $i ?>" style="display: flex;">
-                  <?php if (($post['status'] ?? '') === 'エラー'): ?>
-                    <button type="button" onclick="handlePostAction(<?= $i ?>, 'retry')" class="btn btn-primary" style="padding: 5px 10px; font-size: 0.8rem; width: 100%; background: var(--warning-red); color: white;">
-                      <i class="fas fa-redo"></i> 再試行
-                    </button>
-                  <?php elseif (($post['status'] ?? '') === 'My Udastack追加済'): ?>
+                  <?php if (($post['status'] ?? '') === 'My Udastack追加済'): ?>
                     <button type="button" onclick="handlePostAction(<?= $i ?>, 'unstack')" class="btn btn-primary" style="padding: 5px 10px; font-size: 0.8rem; flex: 1; border-color: var(--primary-neon); background: rgba(252, 200, 0, 0.1); color: var(--primary-neon);">
                       <i class="fas fa-check"></i> Stacked
                     </button>
@@ -375,8 +373,16 @@ function handlePostAction(index, action) {
           if (badge) badge.remove();
         }
       } else if (action === 'retry') {
-        alert("再試行を開始しました。完了までお待ちください。");
-        btn.innerHTML = '<i class="fas fa-check"></i> 再試行中';
+        const meta = document.getElementById('post-meta-' + index);
+        // Find the retry badge and update it
+        const retryBadge = meta.querySelector('[onclick*="retry"]');
+        if (retryBadge) {
+          retryBadge.style.background = 'rgba(0, 255, 204, 0.2)';
+          retryBadge.style.color = 'var(--primary-neon)';
+          retryBadge.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 解析中...';
+          retryBadge.onclick = null;
+        }
+        alert("再試行を開始しました。数分後に自動で反映されます。");
       }
     } else {
       alert(data.message || 'エラーが発生しました');

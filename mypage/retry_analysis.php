@@ -41,6 +41,11 @@ if (!empty($audioPath)) {
     exec($command);
 }
 
+if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+    echo json_encode(['status' => 'success', 'message' => '再試行を開始しました。']);
+    exit();
+}
+
 $referer = $_SERVER['HTTP_REFERER'] ?? 'mypage.php';
 header("Location: " . $referer);
 exit();
