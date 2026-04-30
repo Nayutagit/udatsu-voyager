@@ -2,6 +2,8 @@
 if (($_GET['key'] ?? '') !== 'udatsu2026diag') { http_response_code(403); exit('Forbidden'); }
 
 echo "<pre>";
+echo "PHP Version: " . phpversion() . "\n";
+echo "SAPI: " . PHP_SAPI . "\n";
 
 // 1. Log files
 echo "=== LOG FILES ===\n";
