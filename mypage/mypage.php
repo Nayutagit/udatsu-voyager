@@ -172,9 +172,9 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
     <?php else: ?>
       <div class="dashboard-grid animate-fadeup delay-300">
         <?php foreach ($visiblePosts as $i => $post): ?>
-          <div class="post-card">
+          <div class="post-card" id="post-card-<?= $i ?>">
             <div class="post-content">
-              <div class="post-meta" style="margin-bottom: 10px; display: flex; align-items: center; gap: 10px;">
+              <div class="post-meta" style="margin-bottom: 10px; display: flex; align-items: center; gap: 10px;" id="post-meta-<?= $i ?>">
                 <span><i class="far fa-calendar-alt"></i> <?= htmlspecialchars($post['date']) ?></span>
                 <?php if (($post['status'] ?? '') === '解析中'): ?>
                   <span style="background: rgba(0, 255, 204, 0.2); color: var(--primary-neon); padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;"><i class="fas fa-spinner fa-spin"></i> 解析中...</span>
@@ -209,62 +209,44 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
                 </div>
               <?php endif; ?>
               
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px;">
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px;" id="post-actions-<?= $i ?>">
                 <a href="edit_post.php?index=<?= $i ?>" class="btn btn-secondary" style="padding: 5px 10px; font-size: 0.8rem; flex: 1;">
                   <i class="fas fa-edit"></i> Edit
                 </a>
-                <form method="POST" action="submit_post.php" style="flex: 1; display: flex;" onsubmit="return confirm('本当にこの投稿を削除しますか？');">
-                  <input type="hidden" name="index" value="<?= $i ?>">
-                  <input type="hidden" name="action" value="delete">
-                  <button type="submit" class="btn btn-secondary" style="padding: 5px 10px; font-size: 0.8rem; width: 100%; color: var(--warning-red); border-color: var(--warning-red);">
-                    <i class="fas fa-trash"></i> Delete
-                  </button>
-                </form>
                 
-                <!-- Actions -->
-                <?php if (($post['status'] ?? '') === 'エラー'): ?>
-                  <form method="POST" action="retry_analysis.php" style="flex: 1; display: flex;">
-                    <input type="hidden" name="index" value="<?= $i ?>">
-                    <button type="submit" class="btn btn-primary" style="padding: 5px 10px; font-size: 0.8rem; width: 100%; background: var(--warning-red); color: white;">
+                <button type="button" onclick="handlePostAction(<?= $i ?>, 'delete')" class="btn btn-secondary" style="padding: 5px 10px; font-size: 0.8rem; width: 100%; color: var(--warning-red); border-color: var(--warning-red);">
+                  <i class="fas fa-trash"></i> Delete
+                </button>
+                
+                <!-- Stack/Unstack Button -->
+                <div id="stack-btn-container-<?= $i ?>" style="display: flex;">
+                  <?php if (($post['status'] ?? '') === 'エラー'): ?>
+                    <button type="button" onclick="handlePostAction(<?= $i ?>, 'retry')" class="btn btn-primary" style="padding: 5px 10px; font-size: 0.8rem; width: 100%; background: var(--warning-red); color: white;">
                       <i class="fas fa-redo"></i> 再試行
                     </button>
-                  </form>
-                <?php elseif ($post['status'] === 'My Udastack追加済'): ?>
-                  <form method="POST" action="submit_post.php" style="flex: 1; display: flex;">
-                    <input type="hidden" name="index" value="<?= $i ?>">
-                    <input type="hidden" name="action" value="unstack">
-                    <button type="submit" class="btn btn-primary" style="padding: 5px 10px; font-size: 0.8rem; flex: 1; border-color: var(--primary-neon); background: rgba(252, 200, 0, 0.1); color: var(--primary-neon);">
+                  <?php elseif (($post['status'] ?? '') === 'My Udastack追加済'): ?>
+                    <button type="button" onclick="handlePostAction(<?= $i ?>, 'unstack')" class="btn btn-primary" style="padding: 5px 10px; font-size: 0.8rem; flex: 1; border-color: var(--primary-neon); background: rgba(252, 200, 0, 0.1); color: var(--primary-neon);">
                       <i class="fas fa-check"></i> Stacked
                     </button>
-                  </form>
-                <?php else: ?>
-                  <form method="POST" action="submit_post.php" style="flex: 1; display: flex;">
-                    <input type="hidden" name="index" value="<?= $i ?>">
-                    <input type="hidden" name="action" value="stack">
-                    <button type="submit" class="btn btn-primary" style="padding: 5px 10px; font-size: 0.8rem; width: 100%;">
+                  <?php else: ?>
+                    <button type="button" onclick="handlePostAction(<?= $i ?>, 'stack')" class="btn btn-primary" style="padding: 5px 10px; font-size: 0.8rem; width: 100%;">
                       <i class="fas fa-plus"></i> Stack
                     </button>
-                  </form>
-                <?php endif; ?>
+                  <?php endif; ?>
+                </div>
                 
                 <!-- Share Button -->
-                <?php if (!empty($post['is_shared'])): ?>
-                  <form id="unshareForm<?= $i ?>" method="POST" action="submit_post.php" style="flex: 1; display: flex;">
-                    <input type="hidden" name="index" value="<?= $i ?>">
-                    <input type="hidden" name="action" value="unshare">
-                    <button type="button" onclick="confirmUnshare(<?= $i ?>)" class="btn btn-secondary" style="padding: 5px 10px; font-size: 0.8rem; width: 100%; border-color: #a855f7; color: #a855f7;">
+                <div id="share-btn-container-<?= $i ?>" style="display: flex;">
+                  <?php if (!empty($post['is_shared'])): ?>
+                    <button type="button" onclick="handlePostAction(<?= $i ?>, 'unshare')" class="btn btn-secondary" style="padding: 5px 10px; font-size: 0.8rem; width: 100%; border-color: #a855f7; color: #a855f7;">
                       <i class="fas fa-share-alt"></i> Shared
                     </button>
-                  </form>
-                <?php else: ?>
-                  <form id="shareForm<?= $i ?>" method="POST" action="submit_post.php" style="flex: 1; display: flex;">
-                    <input type="hidden" name="index" value="<?= $i ?>">
-                    <input type="hidden" name="action" value="share">
-                    <button type="button" onclick="confirmShare(<?= $i ?>)" class="btn btn-secondary" style="padding: 5px 10px; font-size: 0.8rem; width: 100%;">
+                  <?php else: ?>
+                    <button type="button" onclick="handlePostAction(<?= $i ?>, 'share')" class="btn btn-secondary" style="padding: 5px 10px; font-size: 0.8rem; width: 100%;">
                       <i class="fas fa-share-alt"></i> Share
                     </button>
-                  </form>
-                <?php endif; ?>
+                  <?php endif; ?>
+                </div>
               </div>
             </div>
           </div>
@@ -321,24 +303,93 @@ function updateBrain() {
     });
 }
 
-function confirmShare(index) {
-  if (!confirm("タイムラインにこの投稿を共有しますか？")) return;
-  const form = document.getElementById('shareForm' + index);
-  fetch(form.action, { method: 'POST', body: new FormData(form) })
-    .then(() => {
-      const btn = document.querySelector('[onclick="confirmShare(' + index + ')"]');
-      if (btn) { btn.textContent = '✅ 共有済'; btn.disabled = true; }
-    }).catch(() => form.submit());
-}
+function handlePostAction(index, action) {
+  if (action === 'delete') {
+    if (!confirm('本当にこの投稿を削除しますか？')) return;
+  }
+  if (action === 'share') {
+    if (!confirm('タイムラインにこの投稿を共有しますか？')) return;
+  }
+  if (action === 'unshare') {
+    if (!confirm('タイムラインからこの投稿を非表示にしますか？')) return;
+  }
 
-function confirmUnshare(index) {
-  if (!confirm("タイムラインからこの投稿を非表示にしますか？")) return;
-  const form = document.getElementById('unshareForm' + index);
-  fetch(form.action, { method: 'POST', body: new FormData(form) })
-    .then(() => {
-      const btn = document.querySelector('[onclick="confirmUnshare(' + index + ')"]');
-      if (btn) { btn.textContent = '非公開'; btn.disabled = true; }
-    }).catch(() => form.submit());
+  const btn = event.currentTarget;
+  const originalContent = btn.innerHTML;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+  btn.disabled = true;
+
+  const formData = new FormData();
+  formData.append('index', index);
+  formData.append('action', action);
+
+  const endpoint = (action === 'retry') ? 'retry_analysis.php' : 'submit_post.php';
+
+  fetch(endpoint, {
+    method: 'POST',
+    body: formData,
+    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.status === 'ok' || data.status === 'success' || data.status === 'async_started') {
+      if (action === 'delete') {
+        const card = document.getElementById('post-card-' + index);
+        card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+        card.style.opacity = '0';
+        card.style.transform = 'scale(0.9)';
+        setTimeout(() => card.remove(), 500);
+      } else if (action === 'stack' || action === 'unstack') {
+        const container = document.getElementById('stack-btn-container-' + index);
+        const meta = document.getElementById('post-meta-' + index);
+        
+        if (action === 'stack') {
+          container.innerHTML = `<button type="button" onclick="handlePostAction(${index}, 'unstack')" class="btn btn-primary" style="padding: 5px 10px; font-size: 0.8rem; flex: 1; border-color: var(--primary-neon); background: rgba(252, 200, 0, 0.1); color: var(--primary-neon);"><i class="fas fa-check"></i> Stacked</button>`;
+          const badge = document.createElement('span');
+          badge.id = 'stack-badge-' + index;
+          badge.style.cssText = 'background: rgba(252, 200, 0, 0.1); color: var(--primary-neon); padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;';
+          badge.innerHTML = '<i class="fas fa-check"></i> Stacked';
+          meta.appendChild(badge);
+          
+          // If we have auto-summary, reload might be needed to show it, but for now just show stacked
+          alert("My Udastackに追加しました。AIによる整理が完了するまで数秒かかる場合があります。");
+        } else {
+          container.innerHTML = `<button type="button" onclick="handlePostAction(${index}, 'stack')" class="btn btn-primary" style="padding: 5px 10px; font-size: 0.8rem; width: 100%;"><i class="fas fa-plus"></i> Stack</button>`;
+          const badge = document.getElementById('stack-badge-' + index);
+          if (badge) badge.remove();
+        }
+      } else if (action === 'share' || action === 'unshare') {
+        const container = document.getElementById('share-btn-container-' + index);
+        const meta = document.getElementById('post-meta-' + index);
+        
+        if (action === 'share') {
+          container.innerHTML = `<button type="button" onclick="handlePostAction(${index}, 'unshare')" class="btn btn-secondary" style="padding: 5px 10px; font-size: 0.8rem; width: 100%; border-color: #a855f7; color: #a855f7;"><i class="fas fa-share-alt"></i> Shared</button>`;
+          const badge = document.createElement('span');
+          badge.id = 'share-badge-' + index;
+          badge.style.cssText = 'background: rgba(168, 85, 247, 0.1); color: #a855f7; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;';
+          badge.innerHTML = '<i class="fas fa-share-alt"></i> Shared';
+          meta.appendChild(badge);
+        } else {
+          container.innerHTML = `<button type="button" onclick="handlePostAction(${index}, 'share')" class="btn btn-secondary" style="padding: 5px 10px; font-size: 0.8rem; width: 100%;"><i class="fas fa-share-alt"></i> Share</button>`;
+          const badge = document.getElementById('share-badge-' + index);
+          if (badge) badge.remove();
+        }
+      } else if (action === 'retry') {
+        alert("再試行を開始しました。完了までお待ちください。");
+        btn.innerHTML = '<i class="fas fa-check"></i> 再試行中';
+      }
+    } else {
+      alert(data.message || 'エラーが発生しました');
+      btn.innerHTML = originalContent;
+      btn.disabled = false;
+    }
+  })
+  .catch(e => {
+    console.error(e);
+    alert('通信エラーが発生しました');
+    btn.innerHTML = originalContent;
+    btn.disabled = false;
+  });
 }
 
 // Auto-poll: 解析中の投稿があれば5秒ごとに確認
