@@ -73,12 +73,16 @@ $existingAudioFile = '';
 
 // Concurrency Control: Prevent multiple processes for the same jobId
 $lockFile = __DIR__ . '/log/job_' . ($jobId ?: 'unknown') . '.lock';
-$lockFp = fopen($lockFile, 'w');
-if (!$lockFp || !flock($lockFp, LOCK_EX | LOCK_NB)) {
-    file_put_contents($logFile, date('Y-m-d H:i:s') . " - Job $jobId is already being processed. Exiting.\n", FILE_APPEND);
-    exit(0);
+$lockFp = @fopen($lockFile, 'w');
+if ($lockFp) {
+    if (!flock($lockFp, LOCK_EX | LOCK_NB)) {
+        file_put_contents($logFile, date('Y-m-d H:i:s') . " - Job $jobId is already being processed. Exiting.\n", FILE_APPEND);
+        exit(0);
+    }
+    fwrite($lockFp, getmypid());
+} else {
+    file_put_contents($earlyLog, date('Y-m-d H:i:s') . " - WARNING: Could not create lock file $lockFile. Proceeding without lock.\n", FILE_APPEND);
 }
-fwrite($lockFp, getmypid());
 
 if (empty($jobId)) {
     $jobId = 'job_' . time() . '_' . rand(1000, 9999);

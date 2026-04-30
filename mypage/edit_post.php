@@ -75,7 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <style>
     /* Page specific styles */
     .container {
-      max-width: 700px;
+      max-width: 1100px;
       margin: 0 auto;
       position: relative;
     }
