@@ -52,16 +52,26 @@ foreach ($postFiles as $file) {
             $audioPath = $post['audio_file'] ?? $post['local_path'] ?? '';
             if (!empty($audioPath) && file_exists($root . '/' . $audioPath)) {
                 file_put_contents($logFile, date('Y-m-d H:i:s') . " - Retrying with AUDIO: uid=$uid, jobId=$jobId\n", FILE_APPEND);
-                $phpPath = PHP_BINARY ?: '/usr/bin/php';
-                $cmd = "{$phpPath} \"{$root}/run_analysis.php\" \"{$uid}\" \"{$audioPath}\" \"{$jobId}\" > /dev/null 2>&1 &";
+                $phpPath = PHP_BINARY ?: '/usr/local/bin/php';
+                $cmd = escapeshellarg($phpPath) . ' '
+                     . escapeshellarg("{$root}/run_analysis.php") . ' '
+                     . escapeshellarg($uid) . ' '
+                     . escapeshellarg($audioPath) . ' '
+                     . escapeshellarg($jobId)
+                     . ' >> ' . escapeshellarg($logFile) . ' 2>&1 &';
                 file_put_contents($logFile, date('Y-m-d H:i:s') . " - Executing: $cmd\n", FILE_APPEND);
                 exec($cmd);
                 $posts[$idx]['status'] = 'リトライ中...';
                 $updated = true;
             } elseif (!empty($post['original_text']) || !empty($post['text'])) {
                 file_put_contents($logFile, date('Y-m-d H:i:s') . " - Retrying TEXT ONLY: uid=$uid, jobId=$jobId\n", FILE_APPEND);
-                $phpPath = PHP_BINARY ?: '/usr/bin/php';
-                $cmd = "{$phpPath} \"{$root}/run_analysis.php\" \"{$uid}\" \"TEXT_ONLY\" \"{$jobId}\" > /dev/null 2>&1 &";
+                $phpPath = PHP_BINARY ?: '/usr/local/bin/php';
+                $cmd = escapeshellarg($phpPath) . ' '
+                     . escapeshellarg("{$root}/run_analysis.php") . ' '
+                     . escapeshellarg($uid) . ' '
+                     . "'TEXT_ONLY' "
+                     . escapeshellarg($jobId)
+                     . ' >> ' . escapeshellarg($logFile) . ' 2>&1 &';
                 file_put_contents($logFile, date('Y-m-d H:i:s') . " - Executing: $cmd\n", FILE_APPEND);
                 exec($cmd);
                 $posts[$idx]['status'] = 'リトライ中(要約のみ)...';

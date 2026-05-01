@@ -37,8 +37,17 @@ file_put_contents($postsFile, json_encode($posts, JSON_PRETTY_PRINT | JSON_UNESC
 
 // Re-run analysis
 $audioPath = $posts[$index]['audio_file'] ?? $posts[$index]['audio'] ?? '';
+$jobId = $posts[$index]['id'] ?? '';
 if (!empty($audioPath)) {
-    $command = "php " . escapeshellarg(__DIR__ . '/../run_analysis.php') . " " . escapeshellarg($targetUid) . " " . escapeshellarg($audioPath) . " > /dev/null 2>&1 &";
+    $phpBin  = PHP_BINARY ?: '/usr/local/bin/php';
+    $logFile = __DIR__ . '/../log/analysis_log.txt';
+    $command = escapeshellarg($phpBin) . ' '
+             . escapeshellarg(__DIR__ . '/../run_analysis.php') . ' '
+             . escapeshellarg($targetUid) . ' '
+             . escapeshellarg($audioPath) . ' '
+             . escapeshellarg($jobId)
+             . ' >> ' . escapeshellarg($logFile) . ' 2>&1 &';
+    file_put_contents($logFile, date('Y-m-d H:i:s') . " - retry_analysis triggered: $command\n", FILE_APPEND);
     exec($command);
 }
 

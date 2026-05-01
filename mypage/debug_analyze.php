@@ -24,9 +24,12 @@ $posts     = file_exists($postsFile) ? json_decode(file_get_contents($postsFile)
 
 $log = [];
 $log[] = "PHP " . PHP_VERSION . " / SAPI=" . PHP_SAPI;
+$log[] = "PHP_BINARY: " . (PHP_BINARY ?: 'NOT SET');
+$log[] = "which php: " . trim(shell_exec('which php 2>&1') ?: 'not found');
 $log[] = "UID: $target_uid";
 $log[] = "GeminiService: " . (class_exists('GeminiService') ? 'OK' : 'NOT FOUND');
 $log[] = "FirebaseService: " . (class_exists('FirebaseService') ? 'OK' : 'NOT FOUND');
+$log[] = "log/ writable: " . (is_writable(__DIR__ . '/../log') ? 'YES' : 'NO (will try to create)');
 
 if ($index !== null && isset($posts[$index])) {
     $post      = $posts[$index];
