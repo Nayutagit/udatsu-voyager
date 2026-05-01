@@ -24,11 +24,12 @@ $sessFile        = $userDir . $uid . '_quiz_sessions.json';
 $quizSessions    = file_exists($sessFile) ? json_decode(file_get_contents($sessFile), true) : [];
 $quizCount       = count($quizSessions ?? []);
 
-$profile = ["display_name" => $userName, "title" => '', "bio" => '', "image" => ''];
+$profile = ["display_name" => $userName, "title" => '', "bio" => '', "image" => '', "network_id" => ''];
 if (file_exists($profileFile)) {
-  $profile = json_decode(file_get_contents($profileFile), true);
+  $profile = array_merge($profile, json_decode(file_get_contents($profileFile), true) ?: []);
 }
 $displayName = $profile['display_name'] ?? $userName;
+$networkId   = $profile['network_id'] ?? '';
 $title = $profile['title'] ?? '';
 $imagePath   = !empty($profile['image']) ? '../uploads/' . $uid . '/' . $profile['image'] : '../img/default-icon.png';
 
@@ -84,12 +85,18 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
         <img src="<?= htmlspecialchars($imagePath) ?>" alt="Profile" style="width: 70px; height: 70px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary-neon); box-shadow: 0 0 10px rgba(252, 200, 0, 0.2);">
       </div>
       <div style="flex: 1;">
-        <h2 style="font-size: 1.3rem; margin-bottom: 5px;"><?= htmlspecialchars($displayName) ?></h2>
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px; flex-wrap: wrap;">
+          <h2 style="font-size: 1.3rem; margin: 0;"><?= htmlspecialchars($displayName) ?></h2>
+          <?php if (!empty($networkId)): ?>
+            <span style="background: rgba(252,200,0,0.1); border: 1px solid rgba(252,200,0,0.4); color: var(--primary-neon); padding: 2px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.05em;">@ <?= htmlspecialchars($networkId) ?></span>
+          <?php endif; ?>
+        </div>
         <div style="font-size: 0.85rem; color: var(--text-muted); display: flex; gap: 15px;">
           <span><i class="fas fa-layer-group"></i> Stacked: <strong><?= $stackedCount ?></strong></span>
           <span><i class="fas fa-pen-nib"></i> Posts: <strong><?= count($visiblePosts) ?></strong></span>
         </div>
       </div>
+      <a href="edit_profile.php" style="color: var(--text-muted); font-size: 0.8rem; white-space: nowrap;"><i class="fas fa-cog"></i></a>
     </div>
 
   <?php if ($uploadSuccess === '1'): ?>
@@ -158,7 +165,12 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
     </div>
 
     <!-- Recent Posts -->
-    <h2 class="section-title animate-fadeup delay-200" style="font-size: 1.8rem; margin-bottom: 30px;">Recent Posts</h2>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;" class="animate-fadeup delay-200">
+      <h2 class="section-title" style="font-size: 1.8rem; margin: 0;">Recent Posts</h2>
+      <button onclick="location.reload()" class="btn btn-secondary" style="padding: 6px 16px; font-size: 0.8rem;">
+        <i class="fas fa-sync-alt"></i> 更新
+      </button>
+    </div>
     
     <?php if (count($visiblePosts) === 0): ?>
       <div class="glass-card animate-fadeup delay-300" style="text-align: center; padding: 60px;">
