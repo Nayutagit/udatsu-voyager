@@ -8,39 +8,39 @@
 if (PHP_SAPI === 'cli') {
     $uid           = $argv[1] ?? null;
     $audioPath     = $argv[2] ?? null;
-    $jobId         = $argv[3] ?? null; // Optional jobId to retry
-    $originalTitle = $argv[4] ?? null; // Optional original filename
+    $jobId         = $argv[3] ?? null;
+    $originalTitle = $argv[4] ?? null;
 } else {
     $secret = $_POST['secret'] ?? '';
     if ($secret !== 'voyager_internal_exec_1234') {
         http_response_code(403);
         exit('Unauthorized');
     }
-    $uid           = $_POST['uid'] ?? null;
-    $audioPath     = $_POST['audioPath'] ?? null;
-    $jobId         = $_POST['jobId'] ?? null; // Optional jobId to retry
-    $originalTitle = $_POST['originalTitle'] ?? null;
+    // Set variables if not already set by an inline caller
+    if (!isset($uid)) $uid = $_POST['uid'] ?? null;
+    if (!isset($audioPath)) $audioPath = $_POST['audioPath'] ?? null;
+    if (!isset($jobId)) $jobId = $_POST['jobId'] ?? null;
+    if (!isset($originalTitle)) $originalTitle = $_POST['originalTitle'] ?? null;
 
-    // Close connection immediately so webhook can return 200 to LINE
-    // while we continue processing in the background
-    ignore_user_abort(true);
-    set_time_limit(300);
-    ob_start();
-    echo 'OK';
-    $size = ob_get_length();
-    header('Content-Length: ' . $size);
-    header('Connection: close');
-    ob_end_flush();
-    flush();
+    // Only close connection if headers haven't been sent yet
+    if (!headers_sent()) {
+        ignore_user_abort(true);
+        set_time_limit(300);
+        ob_start();
+        echo 'OK';
+        $size = ob_get_length();
+        header('Content-Length: ' . $size);
+        header('Connection: close');
+        ob_end_flush();
+        flush();
+    }
 }
 
-// Load dependencies (after connection is closed)
-// IMPORTANT: bootstrap.php overwrites $uid/$userPlan from session.
-// Save our values first, then restore them.
-$_savedUid           = $uid;
-$_savedAudioPath     = $audioPath;
-$_savedJobId         = $jobId;
-$_savedOriginalTitle = $originalTitle;
+// Load dependencies
+// Save values to prevent bootstrap.php from overwriting them with session data
+$_savedUid = $uid;
+$_savedAudioPath = $audioPath;
+$_savedJobId = $jobId;
 
 if (PHP_SAPI === 'cli' && !isset($_SERVER['HTTP_HOST'])) {
     $_SERVER['HTTP_HOST'] = '127.0.0.1:8000';
@@ -50,11 +50,10 @@ require_once __DIR__ . '/core/bootstrap.php';
 require_once __DIR__ . '/core/GeminiService.php';
 require_once __DIR__ . '/core/FirebaseService.php';
 
-// Restore values that bootstrap.php may have overwritten
-$uid           = $_savedUid;
-$audioPath     = $_savedAudioPath;
-$jobId         = $_savedJobId;
-$originalTitle = $_savedOriginalTitle;
+// Restore
+$uid = $_savedUid;
+$audioPath = $_savedAudioPath;
+$jobId = $_savedJobId;
 
 $userDir = __DIR__ . '/users/';
 $logFile = __DIR__ . '/log/analysis_log.txt';
