@@ -210,9 +210,19 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
                 <a href="view_post.php?index=<?= $i ?>"><?= htmlspecialchars(mb_strimwidth($post['title'], 0, 50, '...')) ?></a>
               </h3>
               
-              <?php if (!empty($post['summary'])): ?>
-                <div class="post-summary" style="margin: 10px 0; font-size: 0.85rem; color: var(--text-white); line-height: 1.6; background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; border-left: 3px solid var(--primary-neon);">
+              <?php
+                $hasSummary = !empty($post['summary']) && $post['summary'] !== '(要約解析失敗)';
+                $hasTranscription = !empty($post['original_text']) || (!empty($post['text']) && strlen($post['text'] ?? '') > 50);
+              ?>
+              <?php if ($hasSummary): ?>
+                <div id="summary-box-<?= $i ?>" class="post-summary" style="margin: 10px 0; font-size: 0.85rem; color: var(--text-white); line-height: 1.6; background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; border-left: 3px solid var(--primary-neon);">
                   <?= nl2br(htmlspecialchars($post['summary'])) ?>
+                </div>
+              <?php elseif ($hasTranscription): ?>
+                <div id="summary-box-<?= $i ?>" style="margin: 10px 0;">
+                  <button type="button" onclick="regenSummary(<?= $i ?>)" class="btn btn-secondary" style="padding: 5px 14px; font-size: 0.8rem; border-color: #f59e0b; color: #f59e0b;">
+                    <i class="fas fa-magic"></i> 要約を生成する
+                  </button>
                 </div>
               <?php endif; ?>
               
@@ -416,6 +426,41 @@ function handlePostAction(index, action) {
     alert('通信エラーが発生しました');
     btn.innerHTML = originalContent;
     btn.disabled = false;
+  });
+}
+
+function regenSummary(index) {
+  const box = document.getElementById('summary-box-' + index);
+  const originalContent = box ? box.innerHTML : '';
+  if (box) {
+    box.innerHTML = '<span style="color: var(--text-muted); font-size: 0.8rem;"><i class="fas fa-spinner fa-spin"></i> AIが要約を生成中...</span>';
+  }
+
+  const formData = new FormData();
+  formData.append('index', index);
+
+  fetch('regen_post_summary.php', {
+    method: 'POST',
+    body: formData,
+    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.status === 'ok' && data.summary) {
+      if (box) {
+        box.className = 'post-summary';
+        box.style.cssText = 'margin: 10px 0; font-size: 0.85rem; color: var(--text-white); line-height: 1.6; background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; border-left: 3px solid var(--primary-neon);';
+        box.innerHTML = data.summary.replace(/\n/g, '<br>');
+      }
+    } else {
+      alert(data.message || 'エラーが発生しました');
+      if (box) box.innerHTML = originalContent;
+    }
+  })
+  .catch(e => {
+    console.error(e);
+    alert('通信エラーが発生しました');
+    if (box) box.innerHTML = originalContent;
   });
 }
 
