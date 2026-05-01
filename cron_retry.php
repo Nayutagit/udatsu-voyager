@@ -52,7 +52,7 @@ foreach ($postFiles as $file) {
             $audioPath = $post['audio_file'] ?? $post['local_path'] ?? '';
             if (!empty($audioPath) && file_exists($root . '/' . $audioPath)) {
                 file_put_contents($logFile, date('Y-m-d H:i:s') . " - Retrying with AUDIO: uid=$uid, jobId=$jobId\n", FILE_APPEND);
-                $phpPath = PHP_BINARY ?: '/usr/local/bin/php';
+                $phpPath = '/usr/bin/php';
                 $cmd = escapeshellarg($phpPath) . ' '
                      . escapeshellarg("{$root}/run_analysis.php") . ' '
                      . escapeshellarg($uid) . ' '
@@ -65,7 +65,7 @@ foreach ($postFiles as $file) {
                 $updated = true;
             } elseif (!empty($post['original_text']) || !empty($post['text'])) {
                 file_put_contents($logFile, date('Y-m-d H:i:s') . " - Retrying TEXT ONLY: uid=$uid, jobId=$jobId\n", FILE_APPEND);
-                $phpPath = PHP_BINARY ?: '/usr/local/bin/php';
+                $phpPath = '/usr/bin/php';
                 $cmd = escapeshellarg($phpPath) . ' '
                      . escapeshellarg("{$root}/run_analysis.php") . ' '
                      . escapeshellarg($uid) . ' '

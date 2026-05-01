@@ -35,18 +35,31 @@ if (PHP_SAPI === 'cli') {
 }
 
 // Load dependencies (after connection is closed)
-// CLI mode: bootstrap.php reads $_SERVER['HTTP_HOST'], set a safe default
+// IMPORTANT: bootstrap.php overwrites $uid/$userPlan from session.
+// Save our values first, then restore them.
+$_savedUid           = $uid;
+$_savedAudioPath     = $audioPath;
+$_savedJobId         = $jobId;
+$_savedOriginalTitle = $originalTitle;
+
 if (PHP_SAPI === 'cli' && !isset($_SERVER['HTTP_HOST'])) {
-    $_SERVER['HTTP_HOST'] = '127.0.0.1:8000'; // Treat as local to avoid session issues
+    $_SERVER['HTTP_HOST'] = '127.0.0.1:8000';
 }
 
 require_once __DIR__ . '/core/bootstrap.php';
 require_once __DIR__ . '/core/GeminiService.php';
 require_once __DIR__ . '/core/FirebaseService.php';
+
+// Restore values that bootstrap.php may have overwritten
+$uid           = $_savedUid;
+$audioPath     = $_savedAudioPath;
+$jobId         = $_savedJobId;
+$originalTitle = $_savedOriginalTitle;
+
 $userDir = __DIR__ . '/users/';
 $logFile = __DIR__ . '/log/analysis_log.txt';
 if (!file_exists(__DIR__ . '/log')) mkdir(__DIR__ . '/log', 0775, true);
-file_put_contents($logFile, date('Y-m-d H:i:s') . " - run_analysis.php started. uid=$uid audioPath=$audioPath jobId=$jobId\n", FILE_APPEND);
+file_put_contents($logFile, date('Y-m-d H:i:s') . " - run_analysis.php started. SAPI=" . PHP_SAPI . " uid=$uid audioPath=$audioPath jobId=$jobId\n", FILE_APPEND);
 
 // Create "解析中" placeholder post ONLY if we don't have a jobId to retry
 $userPostsFile = $userDir . $uid . '_posts.json';

@@ -39,7 +39,7 @@ file_put_contents($postsFile, json_encode($posts, JSON_PRETTY_PRINT | JSON_UNESC
 $audioPath = $posts[$index]['audio_file'] ?? $posts[$index]['audio'] ?? '';
 $jobId = $posts[$index]['id'] ?? '';
 if (!empty($audioPath)) {
-    $phpBin  = PHP_BINARY ?: '/usr/local/bin/php';
+    $phpBin  = '/usr/bin/php';
     $logFile = __DIR__ . '/../log/analysis_log.txt';
     $command = escapeshellarg($phpBin) . ' '
              . escapeshellarg(__DIR__ . '/../run_analysis.php') . ' '
