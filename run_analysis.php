@@ -34,57 +34,19 @@ if (PHP_SAPI === 'cli') {
     flush();
 }
 
-// === EARLY LOG (before bootstrap, to detect crash location) ===
-$logDir = __DIR__ . '/log';
-$earlyLog = $logDir . '/analysis_log.txt';
-if (!file_exists($logDir)) {
-    @mkdir($logDir, 0775, true);
-}
-
-// Fallback to a temporary file if the log directory is not writable
-if (!is_writable($logDir) && !file_exists($earlyLog)) {
-    $earlyLog = sys_get_temp_dir() . '/udatsu_analysis_' . date('Ymd') . '.log';
-}
-
-file_put_contents($earlyLog, date('Y-m-d H:i:s') . " - run_analysis.php started. SAPI=" . PHP_SAPI . " uid=$uid audioPath=$audioPath jobId=$jobId\n", FILE_APPEND);
-
-try {
-    require_once __DIR__ . '/core/bootstrap.php';
-    require_once __DIR__ . '/core/GeminiService.php';
-    require_once __DIR__ . '/core/FirebaseService.php';
-    file_put_contents($earlyLog, date('Y-m-d H:i:s') . " - Dependencies loaded OK\n", FILE_APPEND);
-} catch (Throwable $e) {
-    $errMsg = "LOAD FAILED: " . $e->getMessage() . " in " . $e->getFile() . ":" . $e->getLine();
-    file_put_contents($earlyLog, date('Y-m-d H:i:s') . " - " . $errMsg . "\n", FILE_APPEND);
-    
-    // Attempt to update status to error if possible
-    if ($uid) {
-        $userPostsFile = __DIR__ . '/users/' . $uid . '_posts.json';
-        if (file_exists($userPostsFile)) {
-            $posts = json_decode(file_get_contents($userPostsFile), true);
-            if (is_array($posts)) {
-                $found = false;
-                foreach ($posts as &$p) {
-                    if (($p['id'] ?? '') === $jobId) {
-                        $p['status'] = 'エラー';
-                        $p['title'] = '❌ 起動エラー';
-                        $p['text'] = $errMsg;
-                        $found = true;
-                        break;
-                    }
-                }
-                if ($found) {
-                    file_put_contents($userPostsFile, json_encode($posts, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-                }
-            }
-        }
-    }
-    exit(1);
-}
-
 // Load dependencies (after connection is closed)
+// CLI mode: bootstrap.php reads $_SERVER['HTTP_HOST'], set a safe default
+if (PHP_SAPI === 'cli' && !isset($_SERVER['HTTP_HOST'])) {
+    $_SERVER['HTTP_HOST'] = '127.0.0.1:8000'; // Treat as local to avoid session issues
+}
+
+require_once __DIR__ . '/core/bootstrap.php';
+require_once __DIR__ . '/core/GeminiService.php';
+require_once __DIR__ . '/core/FirebaseService.php';
 $userDir = __DIR__ . '/users/';
-$logFile = $earlyLog;
+$logFile = __DIR__ . '/log/analysis_log.txt';
+if (!file_exists(__DIR__ . '/log')) mkdir(__DIR__ . '/log', 0775, true);
+file_put_contents($logFile, date('Y-m-d H:i:s') . " - run_analysis.php started. uid=$uid audioPath=$audioPath jobId=$jobId\n", FILE_APPEND);
 
 // Create "解析中" placeholder post ONLY if we don't have a jobId to retry
 $userPostsFile = $userDir . $uid . '_posts.json';
@@ -94,19 +56,6 @@ if (!is_array($posts)) $posts = [];
 $isTextOnlyRetry = ($audioPath === 'TEXT_ONLY');
 $existingText = '';
 $existingAudioFile = '';
-
-// Concurrency Control: Prevent multiple processes for the same jobId
-$lockFile = __DIR__ . '/log/job_' . ($jobId ?: 'unknown') . '.lock';
-$lockFp = @fopen($lockFile, 'w');
-if ($lockFp) {
-    if (!flock($lockFp, LOCK_EX | LOCK_NB)) {
-        file_put_contents($logFile, date('Y-m-d H:i:s') . " - Job $jobId is already being processed. Exiting.\n", FILE_APPEND);
-        exit(0);
-    }
-    fwrite($lockFp, getmypid());
-} else {
-    file_put_contents($earlyLog, date('Y-m-d H:i:s') . " - WARNING: Could not create lock file $lockFile. Proceeding without lock.\n", FILE_APPEND);
-}
 
 if (empty($jobId)) {
     $jobId = 'job_' . time() . '_' . rand(1000, 9999);
@@ -154,10 +103,7 @@ if ($isTextOnlyRetry) {
     // Transcribe
     try {
         $gemini = new GeminiService();
-        $ext = strtolower(pathinfo($audioPath, PATHINFO_EXTENSION));
-        $mimeMap = ['m4a'=>'audio/mp4','mp4'=>'audio/mp4','mp3'=>'audio/mpeg','wav'=>'audio/wav','ogg'=>'audio/ogg','webm'=>'audio/webm'];
-        $mimeType = $mimeMap[$ext] ?? 'audio/mp4';
-        file_put_contents($logFile, date('Y-m-d H:i:s') . " - Transcribing: $audioPath ($mimeType)\n", FILE_APPEND);
+        file_put_contents($logFile, date('Y-m-d H:i:s') . " - Transcribing...\n", FILE_APPEND);
         $raw    = $gemini->transcribe(__DIR__ . '/' . $audioPath, $mimeType);
         file_put_contents($logFile, date('Y-m-d H:i:s') . " - Transcribed length: " . mb_strlen($raw) . "\n", FILE_APPEND);
     } catch (Exception $e) {
@@ -305,33 +251,25 @@ try {
         file_put_contents($logFile, date('Y-m-d H:i:s') . " - LINE user ID not found for uid: $uid\n", FILE_APPEND);
     }
 
-    if (isset($lockFp) && is_resource($lockFp)) {
+    if (isset($lockFp)) {
         flock($lockFp, LOCK_UN);
         fclose($lockFp);
-        @unlink($lockFile);
     }
-} catch (Throwable $e) {
-    $errorMsg = $e->getMessage() . " in " . $e->getFile() . ":" . $e->getLine();
-    file_put_contents($logFile, date('Y-m-d H:i:s') . " - ERROR: " . $errorMsg . "\n", FILE_APPEND);
-    
-    // Attempt to log trace for deep debugging
-    file_put_contents($logFile, $e->getTraceAsString() . "\n", FILE_APPEND);
-
+} catch (Exception $e) {
+    file_put_contents($logFile, date('Y-m-d H:i:s') . " - ERROR: " . $e->getMessage() . "\n", FILE_APPEND);
     $posts = json_decode(file_get_contents($userPostsFile), true);
     foreach ($posts as &$p) {
         if (($p['id'] ?? '') === $jobId) {
-            $p['title']  = '❌ 解析エラー';
-            $p['status'] = 'エラー'; // Set to 'エラー' so user knows it failed, or '解析中' to retry
-            $p['text']   = "解析中にエラーが発生しました: " . $e->getMessage();
+            $p['title']  = '（解析中...）';
+            $p['status'] = '解析中'; // Keep as processing so cron retries
             break;
         }
     }
     file_put_contents($userPostsFile, json_encode($posts, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
     
-    if (isset($lockFp) && is_resource($lockFp)) {
+    if (isset($lockFp)) {
         flock($lockFp, LOCK_UN);
         fclose($lockFp);
-        @unlink($lockFile);
     }
 }
 
