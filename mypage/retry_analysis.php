@@ -25,7 +25,8 @@ if (!isset($posts[$index])) {
     header("Location: mypage.php");
     exit();
 }
-if ($posts[$index]['status'] !== 'エラー' && strpos($posts[$index]['title'], '解析エラー') === false && $userPlan !== 'admin') {
+$isRawTitle = preg_match('/^新規録音/', $posts[$index]['title'] ?? '') || ($posts[$index]['title'] ?? '') === '🎙';
+if ($posts[$index]['status'] !== 'エラー' && strpos($posts[$index]['title'], '解析エラー') === false && !$isRawTitle && $userPlan !== 'admin') {
     header("Location: mypage.php");
     exit();
 }

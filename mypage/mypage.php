@@ -188,14 +188,19 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
             <div class="post-content">
               <div class="post-meta" style="margin-bottom: 10px; display: flex; align-items: center; gap: 10px;" id="post-meta-<?= $i ?>">
                 <span><i class="far fa-calendar-alt"></i> <?= htmlspecialchars($post['date']) ?></span>
-                <?php if (($post['status'] ?? '') === '解析中'): ?>
+                <?php
+                  $postStatus = $post['status'] ?? '';
+                  $postTitle = $post['title'] ?? '';
+                  $isRawTitle = preg_match('/^新規録音/', $postTitle) || $postTitle === '🎙';
+                ?>
+                <?php if ($postStatus === '解析中'): ?>
                   <span style="background: rgba(0, 255, 204, 0.2); color: var(--primary-neon); padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;"><i class="fas fa-spinner fa-spin"></i> 解析中...</span>
-                <?php elseif (($post['status'] ?? '') === 'エラー' || strpos(($post['title'] ?? ''), '解析エラー') !== false): ?>
-                  <span style="background: rgba(255, 68, 68, 0.2); color: #ff4444; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem; cursor: pointer;" onclick="handlePostAction(<?= $i ?>, 'retry')">
-                    <i class="fas fa-redo"></i> ❌ 解析エラー (再試行)
+                <?php elseif ($postStatus === 'エラー' || strpos($postTitle, '解析エラー') !== false || $isRawTitle): ?>
+                  <span id="retry-badge-<?= $i ?>" style="background: rgba(255, 68, 68, 0.2); color: #ff4444; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem; cursor: pointer;" onclick="handlePostAction(<?= $i ?>, 'retry')">
+                    <i class="fas fa-redo"></i> <?= $isRawTitle && $postStatus !== 'エラー' ? '解析する' : '❌ 解析エラー (再試行)' ?>
                   </span>
-                <?php elseif (($post['status'] ?? '') === 'My Udastack追加済'): ?>
-                  <span style="background: rgba(252, 200, 0, 0.1); color: var(--primary-neon); padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;"><i class="fas fa-check"></i> Stacked</span>
+                <?php elseif ($postStatus === 'My Udastack追加済'): ?>
+                  <span id="stack-badge-<?= $i ?>" style="background: rgba(252, 200, 0, 0.1); color: var(--primary-neon); padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;"><i class="fas fa-check"></i> Stacked</span>
                 <?php endif; ?>
                 <?php if (!empty($post['is_shared'])): ?>
                   <span style="background: rgba(168, 85, 247, 0.1); color: #a855f7; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;"><i class="fas fa-share-alt"></i> Shared</span>
@@ -355,14 +360,15 @@ function handlePostAction(index, action) {
         
         if (action === 'stack') {
           container.innerHTML = `<button type="button" onclick="handlePostAction(${index}, 'unstack')" class="btn btn-primary" style="padding: 5px 10px; font-size: 0.8rem; flex: 1; border-color: var(--primary-neon); background: rgba(252, 200, 0, 0.1); color: var(--primary-neon);"><i class="fas fa-check"></i> Stacked</button>`;
+          // Remove any existing badge before adding a new one
+          const existingBadge = document.getElementById('stack-badge-' + index);
+          if (existingBadge) existingBadge.remove();
           const badge = document.createElement('span');
           badge.id = 'stack-badge-' + index;
           badge.style.cssText = 'background: rgba(252, 200, 0, 0.1); color: var(--primary-neon); padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;';
           badge.innerHTML = '<i class="fas fa-check"></i> Stacked';
           meta.appendChild(badge);
-          
-          // If we have auto-summary, reload might be needed to show it, but for now just show stacked
-          alert("My Udastackに追加しました。AIによる整理が完了するまで数秒かかる場合があります。");
+          alert("完了しました！My Udastackに追加しました。");
         } else {
           container.innerHTML = `<button type="button" onclick="handlePostAction(${index}, 'stack')" class="btn btn-primary" style="padding: 5px 10px; font-size: 0.8rem; width: 100%;"><i class="fas fa-plus"></i> Stack</button>`;
           const badge = document.getElementById('stack-badge-' + index);
@@ -374,6 +380,9 @@ function handlePostAction(index, action) {
         
         if (action === 'share') {
           container.innerHTML = `<button type="button" onclick="handlePostAction(${index}, 'unshare')" class="btn btn-secondary" style="padding: 5px 10px; font-size: 0.8rem; width: 100%; border-color: #a855f7; color: #a855f7;"><i class="fas fa-share-alt"></i> Shared</button>`;
+          // Remove any existing badge before adding a new one
+          const existingShareBadge = document.getElementById('share-badge-' + index);
+          if (existingShareBadge) existingShareBadge.remove();
           const badge = document.createElement('span');
           badge.id = 'share-badge-' + index;
           badge.style.cssText = 'background: rgba(168, 85, 247, 0.1); color: #a855f7; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;';
