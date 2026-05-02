@@ -276,15 +276,26 @@ $thumbnail = $post['thumbnail'] ?? '';
     </header>
     
     <div class="post-container">
-      <div style="display: flex; justify-content: flex-end; gap: 15px; margin-bottom: 25px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px;">
-        <button onclick="copyContent(this)" class="btn-small" style="background: rgba(0, 255, 204, 0.05); color: var(--primary-neon); border: 1px solid rgba(0, 255, 204, 0.4); border-radius: 8px; padding: 8px 16px; cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: 0.3s; display: flex; align-items: center; gap: 8px;">
-          <i class="far fa-copy"></i> 本文をコピー
+      <!-- アクションバー -->
+      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 25px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; flex-wrap: wrap;">
+        <button onclick="copyContent(this)" id="btn-copy" class="btn-small" style="background: rgba(0,255,204,0.05); color: var(--primary-neon); border: 1px solid rgba(0,255,204,0.4); border-radius: 8px; padding: 8px 14px; cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: 0.3s; display: flex; align-items: center; gap: 6px;">
+          <i class="far fa-copy"></i> コピー
         </button>
-        <a href="edit_post.php?index=<?= $index ?>" class="btn-small" style="background: rgba(255, 255, 255, 0.05); color: #fff; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 8px; padding: 8px 16px; text-decoration: none; font-size: 0.9rem; font-weight: 600; transition: 0.3s; display: flex; align-items: center; gap: 8px;">
-          <i class="far fa-edit"></i> 編集する
-        </a>
+        <button onclick="toggleEdit()" id="btn-edit" class="btn-small" style="background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 8px 14px; cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: 0.3s; display: flex; align-items: center; gap: 6px;">
+          <i class="far fa-edit"></i> 編集
+        </button>
+        <button onclick="savePost()" id="btn-save" style="display:none; background: var(--primary-neon); color: #000; border: none; border-radius: 8px; padding: 8px 16px; cursor: pointer; font-size: 0.85rem; font-weight: 700; transition: 0.3s; align-items: center; gap: 6px;">
+          <i class="fas fa-save"></i> 保存
+        </button>
+        <button onclick="cancelEdit()" id="btn-cancel" style="display:none; background: rgba(255,68,68,0.1); color: #ff4444; border: 1px solid rgba(255,68,68,0.3); border-radius: 8px; padding: 8px 14px; cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: 0.3s; align-items: center; gap: 6px;">
+          <i class="fas fa-times"></i> キャンセル
+        </button>
       </div>
-      <div class="post-title"><?php echo htmlspecialchars($title); ?></div>
+
+      <!-- タイトル（表示/編集切り替え） -->
+      <div id="view-title" class="post-title"><?php echo htmlspecialchars($title); ?></div>
+      <input id="edit-title" type="text" value="<?php echo htmlspecialchars($title); ?>" style="display:none; width:100%; font-size:1.4rem; font-weight:700; background:rgba(255,255,255,0.08); border:1px solid rgba(252,200,0,0.5); border-radius:10px; padding:10px 14px; color:#fff; margin-bottom:1rem; box-sizing:border-box;">
+
       <div class="post-meta"><?php echo htmlspecialchars($date); ?></div>
       
       <?php if ($thumbnail): ?>
@@ -308,8 +319,10 @@ $thumbnail = $post['thumbnail'] ?? '';
           </div>
         </div>
       <?php endif; ?>
-      
-      <div id="post-text-content" class="post-text markdown-body"><?php echo $text; ?></div>
+
+      <!-- 本文（表示/編集切り替え） -->
+      <div id="view-text" class="post-text markdown-body"><?php echo $text; ?></div>
+      <textarea id="edit-text" style="display:none; width:100%; min-height:60vh; font-size:1rem; line-height:1.8; background:rgba(255,255,255,0.06); border:1px solid rgba(252,200,0,0.4); border-radius:12px; padding:16px; color:#fff; resize:vertical; box-sizing:border-box; font-family:inherit;"><?php echo htmlspecialchars($text); ?></textarea>
     </div>
     
     <div class="back-button">
@@ -318,47 +331,101 @@ $thumbnail = $post['thumbnail'] ?? '';
   </div>
 
   <script>
-    // Render Markdown
-    const postTextElement = document.getElementById('post-text-content');
-    if (postTextElement) {
-      postTextElement.innerHTML = marked.parse(postTextElement.textContent.trim());
+    const postIndex = <?= $index ?>;
+    let isEditing = false;
+
+    // --- Markdown レンダリング ---
+    function renderMarkdown() {
+      const viewText = document.getElementById('view-text');
+      if (viewText) viewText.innerHTML = marked.parse(viewText.textContent.trim());
+      const summary = document.getElementById('summary-content');
+      if (summary) summary.innerHTML = marked.parse(summary.textContent.trim());
     }
-    const summaryElement = document.getElementById('summary-content');
-    if (summaryElement) {
-      summaryElement.innerHTML = marked.parse(summaryElement.textContent.trim());
+    renderMarkdown();
+
+    // --- 編集モード切り替え ---
+    function toggleEdit() {
+      isEditing = true;
+      document.getElementById('view-title').style.display = 'none';
+      document.getElementById('edit-title').style.display = 'block';
+      document.getElementById('view-text').style.display  = 'none';
+      document.getElementById('edit-text').style.display  = 'block';
+      document.getElementById('btn-edit').style.display   = 'none';
+      document.getElementById('btn-copy').style.display   = 'none';
+      document.getElementById('btn-save').style.display   = 'flex';
+      document.getElementById('btn-cancel').style.display = 'flex';
+      document.getElementById('edit-title').focus();
     }
 
-    async function copyContent(btn) {
-      const title = "<?php echo addslashes($title); ?>";
-      const text = document.getElementById('post-text-content').innerText;
-      const combined = title + "\n\n" + text;
+    function cancelEdit() {
+      isEditing = false;
+      document.getElementById('view-title').style.display = 'block';
+      document.getElementById('edit-title').style.display = 'none';
+      document.getElementById('view-text').style.display  = 'block';
+      document.getElementById('edit-text').style.display  = 'none';
+      document.getElementById('btn-edit').style.display   = 'flex';
+      document.getElementById('btn-copy').style.display   = 'flex';
+      document.getElementById('btn-save').style.display   = 'none';
+      document.getElementById('btn-cancel').style.display = 'none';
+    }
+
+    async function savePost() {
+      const saveBtn = document.getElementById('btn-save');
+      saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 保存中...';
+      saveBtn.disabled = true;
+
+      const newTitle = document.getElementById('edit-title').value.trim();
+      const newText  = document.getElementById('edit-text').value.trim();
+
+      const fd = new FormData();
+      fd.append('index', postIndex);
+      fd.append('title', newTitle);
+      fd.append('text',  newText);
 
       try {
-        await navigator.clipboard.writeText(combined);
-        const originalText = btn.innerHTML;
-        btn.innerHTML = '<i class="fas fa-check"></i> コピー完了';
-        btn.style.background = 'var(--primary-neon)';
-        btn.style.color = '#000';
-        setTimeout(() => {
-          btn.innerHTML = originalText;
-          btn.style.background = 'rgba(255, 255, 255, 0.05)';
-          btn.style.color = '#fff';
-        }, 2000);
-      } catch (err) {
-        // Fallback for some browsers
-        const textArea = document.createElement("textarea");
-        textArea.value = combined;
-        document.body.appendChild(textArea);
-        textArea.select();
-        try {
-          document.execCommand('copy');
-          const originalText = btn.innerHTML;
-          btn.innerHTML = '<i class="fas fa-check"></i> コピー完了';
-          setTimeout(() => { btn.innerHTML = originalText; }, 2000);
-        } catch (e) {
-          alert("コピーに失敗しました");
+        const res  = await fetch('save_post_ajax.php', { method: 'POST', body: fd });
+        const data = await res.json();
+        if (data.status === 'ok') {
+          // 表示を更新してビューモードに戻る
+          document.getElementById('view-title').textContent = newTitle;
+          document.getElementById('view-text').innerHTML = marked.parse(newText);
+          document.title = newTitle + ' | Udatsu投稿詳細';
+          cancelEdit();
+          // 一時的な保存完了トースト
+          const toast = document.createElement('div');
+          toast.textContent = '✅ 保存しました';
+          toast.style.cssText = 'position:fixed;bottom:24px;right:24px;background:var(--primary-neon);color:#000;padding:12px 20px;border-radius:8px;font-weight:700;z-index:9999;animation:slideIn 0.3s ease;';
+          document.body.appendChild(toast);
+          setTimeout(() => toast.remove(), 2500);
+        } else {
+          alert(data.message || '保存に失敗しました');
         }
-        document.body.removeChild(textArea);
+      } catch(e) {
+        alert('通信エラーが発生しました');
+      } finally {
+        saveBtn.innerHTML = '<i class="fas fa-save"></i> 保存';
+        saveBtn.disabled = false;
+      }
+    }
+
+    // コピー
+    async function copyContent(btn) {
+      const title = document.getElementById('view-title').textContent;
+      const text  = document.getElementById('view-text').innerText;
+      const combined = title + '\n\n' + text;
+      try {
+        await navigator.clipboard.writeText(combined);
+        const orig = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check"></i> コピー完了';
+        btn.style.background = 'rgba(0,255,204,0.2)';
+        setTimeout(() => { btn.innerHTML = orig; btn.style.background = ''; }, 2000);
+      } catch(err) {
+        const ta = document.createElement('textarea');
+        ta.value = combined;
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); } catch(e) { alert('コピーに失敗しました'); }
+        document.body.removeChild(ta);
       }
     }
   </script>
