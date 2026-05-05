@@ -27,6 +27,7 @@ if (!isset($events['events'])) {
 $lineMapFile = __DIR__ . '/users/line_map.json';
 $lineMap = file_exists($lineMapFile) ? json_decode(file_get_contents($lineMapFile), true) : [];
 
+$pendingJobs = [];
 foreach ($events['events'] as $event) {
     if ($event['type'] !== 'message' && $event['type'] !== 'follow') {
         continue;
@@ -106,28 +107,14 @@ foreach ($events['events'] as $event) {
             file_put_contents($postsFile, json_encode($posts, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
             file_put_contents(__DIR__ . '/webhook_debug.txt', date('Y-m-d H:i:s') . " - Pending post created: $jobId\n", FILE_APPEND);
 
-            // ② 解析をバックグラウンドで起動（Fire-and-forget curl）
-            // タイムアウトを極小にして即座に切断→サーバー側は処理を継続する
-            $kickUrl = 'https://udatsu-voyager.com/run_analysis.php';
-            $kch = curl_init($kickUrl);
-            curl_setopt_array($kch, [
-                CURLOPT_POST           => true,
-                CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_NOSIGNAL       => true,
-                CURLOPT_TIMEOUT_MS     => 500,   // 0.5秒で接続を切る（サーバー側は継続）
-                CURLOPT_SSL_VERIFYPEER => false,
-                CURLOPT_POSTFIELDS     => http_build_query([
-                    'secret'        => 'voyager_internal_exec_1234',
-                    'uid'           => $uid,
-                    'audioPath'     => $targetPath,
-                    'jobId'         => $jobId,
-                    'originalTitle' => $originalTitle,
-                ]),
-            ]);
-            curl_exec($kch); // intentionally ignore timeout error
-            curl_close($kch);
-
-            file_put_contents(__DIR__ . '/webhook_debug.txt', date('Y-m-d H:i:s') . " - Fire-and-forget kick sent for $targetPath\n", FILE_APPEND);
+            // ② 解析ジョブ情報を記録しておく
+            $pendingJobs[] = [
+                'uid'           => $uid,
+                'audioPath'     => $targetPath,
+                'jobId'         => $jobId,
+                'originalTitle' => $originalTitle,
+            ];
+            file_put_contents(__DIR__ . '/webhook_debug.txt', date('Y-m-d H:i:s') . " - Pending post created: $jobId\n", FILE_APPEND);
         } else {
             file_put_contents(__DIR__ . '/webhook_debug.txt', date('Y-m-d H:i:s') . " - Failed to download audio. Message ID: $messageId\n", FILE_APPEND);
         }
@@ -136,8 +123,34 @@ foreach ($events['events'] as $event) {
     }
 }
 
+// === LINEへ200 OKを即座に返す ===
 http_response_code(200);
 echo "OK";
+
+// PHP-FPM専用: レスポンスを送信してLINEとの接続を閉じる
+if (function_exists('fastcgi_finish_request')) {
+    fastcgi_finish_request();
+} else {
+    ob_end_flush();
+    flush();
+}
+
+// === ここから解析処理（LINEは既に切断済み） ===
+if (!empty($pendingJobs)) {
+    ignore_user_abort(true);
+    set_time_limit(600);
+
+    require_once __DIR__ . '/core/GeminiService.php';
+    require_once __DIR__ . '/core/FirebaseService.php';
+    require_once __DIR__ . '/analysis_core.php';
+
+    foreach ($pendingJobs as $job) {
+        file_put_contents(__DIR__ . '/webhook_debug.txt', date('Y-m-d H:i:s') . " - Starting inline analysis for {$job['audioPath']}\n", FILE_APPEND);
+        run_analysis_for_post($job['uid'], $job['audioPath'], $job['jobId'], $job['originalTitle']);
+        file_put_contents(__DIR__ . '/webhook_debug.txt', date('Y-m-d H:i:s') . " - Inline analysis complete for {$job['jobId']}\n", FILE_APPEND);
+    }
+}
+
 
 /* ------------- Helpers ------------- */
 function replyLineMessage($accessToken, $replyToken, $text) {
