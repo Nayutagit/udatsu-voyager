@@ -90,8 +90,18 @@ try {
     $gemini = new GeminiService();
     $jsonResult = $gemini->generateText($prompt, true);
     
+    // Clean up potential markdown formatting
+    $jsonResult = preg_replace('/^```(?:json)?\s*/i', '', trim($jsonResult));
+    $jsonResult = preg_replace('/\s*```$/i', '', $jsonResult);
+    
     // Parse to ensure validity
     $parsed = json_decode($jsonResult, true);
+    
+    // Fallback parsing
+    if ($parsed === null && preg_match('/\{.*\}/s', $jsonResult, $matches)) {
+        $parsed = json_decode($matches[0], true);
+    }
+    
     if (is_array($parsed)) {
         file_put_contents($dictFile, json_encode($parsed, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
     }

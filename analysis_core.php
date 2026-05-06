@@ -87,10 +87,12 @@ function run_analysis_for_post(string $uid, string $audioPath, string $jobId, st
             $titleCtx = "なお、元のファイル名は「{$originalTitle}」です。内容を表していれば参考にしてください。";
         }
 
-        $prompt = "以下の音声文字起こしから、JSON形式で次の3項目を出力してください。\n"
+        $prompt = "以下の音声文字起こしから、JSON形式で次の4項目を出力してください。\n"
+                . "【重要指示】記述は必ず一人称（自分視点）で行ってください。「ユーザーは〜」ではなく「私は〜」「〜だと考えた」といった、本人の独白・思考ログとして整理してください。\n\n"
                 . "1. title: 内容を端的に表す15文字以内のタイトル。{$titleCtx}\n"
                 . "2. date: 音声内に収録日の言及があれば「YYYYMMDD」の8桁。なければ「UNKNOWN」\n"
-                . "3. article: ブログ/ジャーナル形式の読みやすい記事（見出し・箇条書き可）\n\n"
+                . "3. summary: 内容を100〜200文字程度で要約したもの。マイページのカードに表示されます。\n"
+                . "4. article: ブログ/ジャーナル形式の読みやすい記事（見出し・箇条書き可）\n\n"
                 . "出力はJSONオブジェクトのみ。\n\n文字起こし:\n" . mb_strimwidth($raw, 0, 8000);
 
         $gemini     = new GeminiService();
@@ -114,23 +116,45 @@ function run_analysis_for_post(string $uid, string $audioPath, string $jobId, st
         }
         $finalTitle = 'VJ' . $datePfx . '_' . $generatedTitle;
         $article    = !empty($data['article']) ? $data['article'] : $raw;
+        $summary    = $data['summary'] ?? '';
 
-        // --- 投稿を更新 ---
-        $posts = json_decode(file_get_contents($userPostsFile), true);
+        // RE-READ the file to prevent overwriting changes (like eyecatch images) made during background analysis
+        $posts = file_exists($userPostsFile) ? json_decode(file_get_contents($userPostsFile), true) : [];
+        if (!is_array($posts)) $posts = [];
+        
+        $found = false;
         foreach ($posts as &$p) {
             if (($p['id'] ?? '') === $jobId) {
                 $p['title']         = $finalTitle;
                 $p['text']          = $article;
+                $p['summary']       = $summary;
                 $p['original_text'] = $raw;
                 $p['date']          = $postDateStr;
                 $p['status']        = 'Inbox';
-                $p['audio_file']    = $storagePath;
+                if (!empty($storagePath)) $p['audio_file'] = $storagePath;
                 unset($p['local_path']);
+                $found = true;
                 break;
             }
         }
+        if (!$found) {
+            // 投稿が見つからない場合は、新規作成（これが無いとマイページに現れない）
+            array_unshift($posts, [
+                'id'         => $jobId,
+                'title'      => $finalTitle,
+                'text'       => $article,
+                'summary'    => $summary,
+                'date'       => $postDateStr,
+                'category'   => 'ボイスジャーナル',
+                'audio_file' => $storagePath,
+                'status'     => 'Inbox',
+                'original_text' => $raw,
+                'is_shared'  => 0,
+            ]);
+        }
         unset($p);
         file_put_contents($userPostsFile, json_encode($posts, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        file_put_contents($logFile, date('Y-m-d H:i:s') . " - SAVED to $userPostsFile (Total: " . count($posts) . ")\n", FILE_APPEND);
 
         // ローカルファイル削除（Firebaseにアップ済なら）
         if ($storagePath !== $audioPath) {

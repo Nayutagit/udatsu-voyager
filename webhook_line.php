@@ -39,6 +39,8 @@ foreach ($events['events'] as $event) {
     
     // Check if user is linked
     $uid = $lineMap[$lineUserId] ?? null;
+    
+    file_put_contents(__DIR__ . '/webhook_debug.txt', date('Y-m-d H:i:s') . " - Processing event: type={$event['type']}, messageType={$messageType}, userId={$lineUserId}, uid=" . ($uid ?? 'NULL') . "\n", FILE_APPEND);
 
     if (!$uid) {
         // Not linked. Generate link URL.
@@ -87,7 +89,7 @@ foreach ($events['events'] as $event) {
             file_put_contents(__DIR__ . '/' . $targetPath, $audioData);
 
             // ① まず「解析中」投稿レコードをマイページに即作成
-            $jobId        = uniqid('job_');
+            $jobId        = 'job_' . time() . '_' . rand(1000, 9999);
             $postsFile    = __DIR__ . '/users/' . $uid . '_posts.json';
             $posts        = file_exists($postsFile) ? json_decode(file_get_contents($postsFile), true) : [];
             if (!is_array($posts)) $posts = [];
@@ -118,8 +120,34 @@ foreach ($events['events'] as $event) {
         } else {
             file_put_contents(__DIR__ . '/webhook_debug.txt', date('Y-m-d H:i:s') . " - Failed to download audio. Message ID: $messageId\n", FILE_APPEND);
         }
+    } elseif ($messageType === 'image' || $messageType === 'file' || $messageType === 'video') {
+        $messageId = $event['message']['id'];
+        file_put_contents(__DIR__ . '/webhook_debug.txt', date('Y-m-d H:i:s') . " - Media received (type=$messageType): $messageId\n", FILE_APPEND);
+        
+        // Download data
+        $mediaData = ($messageType === 'image') ? downloadLineImage($channelAccessToken, $messageId) : downloadLineAudio($channelAccessToken, $messageId);
+        
+        if ($mediaData) {
+            $uploadDir = __DIR__ . '/uploads/';
+            if (!file_exists($uploadDir)) mkdir($uploadDir, 0755, true);
+            $filename     = 'media_' . $messageId . '_' . time() . '.jpg';
+            $targetPath   = 'uploads/' . $filename;
+            file_put_contents(__DIR__ . '/' . $targetPath, $mediaData);
+
+            $postsFile = __DIR__ . '/users/' . $uid . '_posts.json';
+            if (file_exists($postsFile)) {
+                $posts = json_decode(file_get_contents($postsFile), true);
+                if (is_array($posts) && !empty($posts)) {
+                    // 最新の投稿にアイキャッチを設定
+                    $posts[0]['thumbnail'] = $targetPath;
+                    file_put_contents($postsFile, json_encode($posts, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+                    replyLineMessage($channelAccessToken, $replyToken, "🖼 メディアを受信しました！\nアイキャッチ画像として登録しました🚀");
+                }
+            }
+        }
     } else {
-        replyLineMessage($channelAccessToken, $replyToken, "音声ファイル（ボイスメッセージなど）を送ってください！");
+        file_put_contents(__DIR__ . '/webhook_debug.txt', date('Y-m-d H:i:s') . " - Unhandled type: $messageType\n", FILE_APPEND);
+        replyLineMessage($channelAccessToken, $replyToken, "音声メッセージを送ってください！その直後に画像を送るとアイキャッチになります。");
     }
 }
 
@@ -177,6 +205,10 @@ function replyLineMessage($accessToken, $replyToken, $text) {
     if ($error) {
         file_put_contents(__DIR__ . '/webhook_debug.txt', date('Y-m-d H:i:s') . " - replyLineMessage error: $error\n", FILE_APPEND);
     }
+}
+
+function downloadLineImage($accessToken, $messageId) {
+    return downloadLineAudio($accessToken, $messageId); // Same logic for content download
 }
 
 function downloadLineAudio($accessToken, $messageId) {

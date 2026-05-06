@@ -48,15 +48,22 @@ function getPostStatusInfo($status) {
   return ['label' => '', 'class' => ''];
 }
 
-$visiblePosts = array_filter($posts, fn($p) => $p['status'] !== '削除済');
-uasort($visiblePosts, function($a, $b) {
-    $timeA = strtotime($a['date'] ?? '1970-01-01');
-    $timeB = strtotime($b['date'] ?? '1970-01-01');
-    if ($timeA === $timeB) {
-        // Fallback to ID which contains timestamp 'job_123456_789'
-        return strcmp($b['id'] ?? '', $a['id'] ?? ''); 
+$sortOrder = $_GET['sort'] ?? 'upload'; // Default to upload order for better UX
+
+$visiblePosts = array_filter($posts, fn($p) => ($p['status'] ?? '') !== '削除済');
+
+uasort($visiblePosts, function($a, $b) use ($sortOrder) {
+    if ($sortOrder === 'date') {
+        $timeA = strtotime($a['date'] ?? '1970-01-01');
+        $timeB = strtotime($b['date'] ?? '1970-01-01');
+        if ($timeA === $timeB) {
+            return strcmp($b['id'] ?? '', $a['id'] ?? ''); 
+        }
+        return $timeB <=> $timeA;
+    } else {
+        // Upload order (using ID which contains timestamp)
+        return strcmp($b['id'] ?? '', $a['id'] ?? '');
     }
-    return $timeB <=> $timeA;
 });
 $postLimit = $plan_limits[$userPlan]['post_limit'] ?? 100;
 $remainingPosts = max(0, $postLimit - count($visiblePosts));
@@ -172,6 +179,47 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
       </button>
     </div>
     
+    <style>
+      .post-title a {
+        text-decoration: none;
+        transition: all 0.3s ease;
+        position: relative;
+        padding-right: 25px;
+        display: block;
+      }
+      .post-title a:hover {
+        color: var(--primary-neon);
+        padding-left: 5px;
+      }
+      .post-title a::after {
+        content: '\f105';
+        font-family: 'Font Awesome 6 Free';
+        font-weight: 900;
+        position: absolute;
+        right: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        opacity: 0.5;
+        transition: all 0.3s ease;
+      }
+      .post-title a:hover::after {
+        opacity: 1;
+        right: -5px;
+      }
+    </style>
+    
+    <div class="sort-controls animate-fadeup delay-200" style="margin-bottom: 25px; display: flex; justify-content: flex-end; align-items: center; gap: 15px;">
+      <span style="font-size: 0.9rem; color: var(--text-muted);"><i class="fas fa-sort"></i> 並び替え:</span>
+      <div class="glass-card" style="padding: 5px; display: flex; gap: 5px; border-radius: 20px;">
+        <a href="?sort=upload" class="btn <?= $sortOrder === 'upload' ? 'btn-primary' : '' ?>" style="padding: 5px 15px; border-radius: 15px; font-size: 0.8rem; text-decoration: none;">
+          アップロード順
+        </a>
+        <a href="?sort=date" class="btn <?= $sortOrder === 'date' ? 'btn-primary' : '' ?>" style="padding: 5px 15px; border-radius: 15px; font-size: 0.8rem; text-decoration: none;">
+          収録日順
+        </a>
+      </div>
+    </div>
+
     <?php if (count($visiblePosts) === 0): ?>
       <div class="glass-card animate-fadeup delay-300" style="text-align: center; padding: 60px;">
         <i class="fas fa-ghost text-muted" style="font-size: 4rem; margin-bottom: 20px;"></i>
@@ -199,6 +247,8 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
                   <span id="retry-badge-<?= $i ?>" style="background: rgba(255, 68, 68, 0.2); color: #ff4444; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem; cursor: pointer;" onclick="handlePostAction(<?= $i ?>, 'retry')">
                     <i class="fas fa-redo"></i> <?= $isRawTitle && $postStatus !== 'エラー' ? '解析する' : '❌ 解析エラー (再試行)' ?>
                   </span>
+                <?php elseif ($postStatus === 'Inbox'): ?>
+                  <span style="background: rgba(0, 164, 216, 0.2); color: var(--accent-teal); padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;"><i class="fas fa-check-double"></i> 解析完了</span>
                 <?php elseif ($postStatus === 'My Udastack追加済'): ?>
                   <span id="stack-badge-<?= $i ?>" style="background: rgba(252, 200, 0, 0.1); color: var(--primary-neon); padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;"><i class="fas fa-check"></i> Stacked</span>
                 <?php endif; ?>
@@ -217,6 +267,15 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
               <?php if ($hasSummary): ?>
                 <div id="summary-box-<?= $i ?>" class="post-summary" style="margin: 10px 0; font-size: 0.85rem; color: var(--text-white); line-height: 1.6; background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; border-left: 3px solid var(--primary-neon);">
                   <?= nl2br(htmlspecialchars($post['summary'])) ?>
+                </div>
+              <?php elseif (!empty($post['text']) && $postStatus !== '解析中'): ?>
+                <div id="summary-box-<?= $i ?>" class="post-summary" style="margin: 10px 0; font-size: 0.85rem; color: var(--text-muted); line-height: 1.6; background: rgba(255,255,255,0.02); padding: 12px; border-radius: 8px;">
+                  <?= nl2br(htmlspecialchars(mb_strimwidth(strip_tags($post['text']), 0, 160, '...'))) ?>
+                  <div style="margin-top: 8px;">
+                    <button type="button" onclick="regenSummary(<?= $i ?>)" class="btn btn-secondary" style="padding: 3px 10px; font-size: 0.7rem; border-color: #f59e0b; color: #f59e0b;">
+                      <i class="fas fa-magic"></i> 要約を生成
+                    </button>
+                  </div>
                 </div>
               <?php elseif ($hasTranscription): ?>
                 <div id="summary-box-<?= $i ?>" style="margin: 10px 0;">

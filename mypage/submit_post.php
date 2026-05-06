@@ -1,5 +1,6 @@
 <?php
 include_once __DIR__ . '/../config/plan_limits.php';
+require_once __DIR__ . '/../core/GeminiService.php';
 
 session_start();
 
@@ -34,10 +35,8 @@ if (!isset($posts[$index])) {
 // OpenAIを使って整文・要約・キーワードを取得
 // Geminiを使って整文・要約・キーワードを取得
 function callGeminiForRefinement(string $originalText): array {
-  require __DIR__ . '/../config/gemini_key.php';
-  $apiKey = $geminiApiKey;
-
-  $prompt = "以下の文章を整文して、思考資産として保存できるように構造化してください。\n\n"
+  $prompt = "以下の文章を整文して、思考資産として保存できるように構造化してください。\n"
+          . "【重要指示】記述は必ず一人称（自分視点）で行ってください。「ユーザーは〜」ではなく「私は〜」「〜だと考えた」といった、本人の独白・思考ログとして整理してください。\n\n"
           . "【原文】\n$originalText\n\n"
           . "出力形式はJSONで以下のようにお願いします：\n"
           . "{\n"
@@ -46,53 +45,30 @@ function callGeminiForRefinement(string $originalText): array {
           . "  \"keywords\": [\"...\", \"...\", \"...\"]\n"
           . "}";
 
-  $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=$apiKey";
+  try {
+    $gemini = new GeminiService();
+    $text = $gemini->generateText($prompt, true);
+    
+    // Clean up potential markdown formatting if Gemini didn't return pure JSON
+    $text = preg_replace('/^```(?:json)?\s*/i', '', trim($text));
+    $text = preg_replace('/\s*```$/i', '', $text);
+    
+    $data = json_decode($text, true);
+    
+    // If json_decode fails, try harder to find JSON within the text
+    if ($data === null && preg_match('/\{.*\}/s', $text, $matches)) {
+        $data = json_decode($matches[0], true);
+    }
 
-  $postData = [
-    "contents" => [
-      [
-        "parts" => [
-          ["text" => $prompt]
-        ]
-      ]
-    ],
-    "generationConfig" => [
-        "temperature" => 0.7,
-        "response_mime_type" => "application/json"
-    ]
-  ];
-
-  $headers = [
-    "Content-Type: application/json"
-  ];
-
-  $ch = curl_init($url);
-  curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-  curl_setopt($ch, CURLOPT_POST, true);
-  curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-  curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postData));
-  
-  $result = curl_exec($ch);
-
-  if (curl_errno($ch)) {
-    $error_msg = curl_error($ch);
-    curl_close($ch);
-    return [
-      'refined_text' => '（整文取得失敗：' . $error_msg . '）',
-      'summary' => '(要約解析失敗)',
-      'keywords' => []
-    ];
+    if (is_array($data)) {
+        return $data;
+    }
+  } catch (Exception $e) {
+    // Fallback on error
   }
 
-  curl_close($ch);
-
-  $json = json_decode($result, true);
-  $text = $json['candidates'][0]['content']['parts'][0]['text'] ?? '';
-  
-  $data = json_decode($text, true);
-
-  return is_array($data) ? $data : [
-    'refined_text' => $text,
+  return [
+    'refined_text' => $originalText,
     'summary' => '(要約解析失敗)',
     'keywords' => []
   ];
