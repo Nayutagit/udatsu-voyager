@@ -256,6 +256,12 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
                   <span style="background: rgba(168, 85, 247, 0.1); color: #a855f7; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;"><i class="fas fa-share-alt"></i> Shared</span>
                 <?php endif; ?>
               </div>
+              <?php if (!empty($post['thumbnail'])): ?>
+                <div class="post-eyecatch" style="margin: -15px -15px 15px -15px; overflow: hidden; border-radius: 12px 12px 0 0; height: 180px;">
+                  <img src="../<?= htmlspecialchars($post['thumbnail']) ?>" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                </div>
+              <?php endif; ?>
+
               <h3 class="post-title" style="min-height: auto; margin-bottom: 10px;">
                 <a href="view_post.php?index=<?= $i ?>"><?= htmlspecialchars(mb_strimwidth($post['title'], 0, 50, '...')) ?></a>
               </h3>
