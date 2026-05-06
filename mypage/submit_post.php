@@ -157,6 +157,16 @@ switch ($action) {
     $posts[$index]['is_shared'] = 0;
     break;
 
+  case 'update_date':
+    $newDate = $_POST['date'] ?? '';
+    if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $newDate)) {
+        $posts[$index]['date'] = $newDate;
+    } else {
+        echo json_encode(['status' => 'error', 'message' => 'Invalid date format']);
+        exit();
+    }
+    break;
+
   default:
     header("Location: mypage.php");
     exit();

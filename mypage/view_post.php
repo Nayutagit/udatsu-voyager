@@ -299,7 +299,7 @@ $thumbnail = $post['thumbnail'] ?? '';
       <div class="post-meta"><?php echo htmlspecialchars($date); ?></div>
       
       <?php if ($thumbnail): ?>
-        <img class="thumbnail" src="../users/<?php echo $uid; ?>/posts/<?php echo $thumbnail; ?>" alt="アイキャッチ画像">
+        <img class="thumbnail" src="../<?php echo htmlspecialchars($thumbnail); ?>" alt="アイキャッチ画像">
       <?php endif; ?>
       
       <?php if ($audio): ?>

@@ -48,21 +48,25 @@ function getPostStatusInfo($status) {
   return ['label' => '', 'class' => ''];
 }
 
-$sortOrder = $_GET['sort'] ?? 'upload'; // Default to upload order for better UX
+$sortOrder = $_GET['sort'] ?? 'upload';
 
 $visiblePosts = array_filter($posts, fn($p) => ($p['status'] ?? '') !== '削除済');
 
 uasort($visiblePosts, function($a, $b) use ($sortOrder) {
+    // Numeric extraction for IDs starting with job_TIMESTAMP
+    $idA = (int)preg_replace('/[^0-9]/', '', $a['id'] ?? '0');
+    $idB = (int)preg_replace('/[^0-9]/', '', $b['id'] ?? '0');
+
     if ($sortOrder === 'date') {
         $timeA = strtotime($a['date'] ?? '1970-01-01');
         $timeB = strtotime($b['date'] ?? '1970-01-01');
         if ($timeA === $timeB) {
-            return strcmp($b['id'] ?? '', $a['id'] ?? ''); 
+            return $idB <=> $idA;
         }
         return $timeB <=> $timeA;
     } else {
-        // Upload order (using ID which contains timestamp)
-        return strcmp($b['id'] ?? '', $a['id'] ?? '');
+        // Upload order
+        return $idB <=> $idA;
     }
 });
 $postLimit = $plan_limits[$userPlan]['post_limit'] ?? 100;
@@ -147,33 +151,8 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
       <a href="thought_quiz.php" class="user-badge" style="text-decoration: none; border-color: #a855f7; color: #a855f7; background: rgba(168, 85, 247, 0.1);"><i class="fas fa-sliders-h"></i> 思考チューニング</a>
       <a href="javascript:void(0)" onclick="checkPostLimit()" class="user-badge" style="text-decoration: none; border-color: var(--text-muted); color: var(--text-gray);"><i class="fas fa-keyboard"></i> 手入力作成</a>
     </div>
-
-    <!-- Thought Core -->
-    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 15px;" class="animate-fadeup delay-100">
-      <h2 class="section-title" style="font-size: 1.4rem; margin-bottom: 0;"><i class="fas fa-brain" style="color: var(--primary-neon);"></i> Thought Core</h2>
-      <button onclick="updateBrain()" class="btn btn-secondary" style="padding: 5px 15px; font-size: 0.8rem; height: fit-content;" id="updateBrainBtn">
-        <i class="fas fa-sync-alt"></i> 分析を更新
-      </button>
-    </div>
-
-    <div class="glass-card animate-fadeup delay-100" style="margin-bottom: 40px; padding: 20px;">
-      <?php if (empty($thoughtDict)): ?>
-        <p class="text-muted" style="text-align: center; margin: 20px 0;">まだ脳内分析データがありません。「分析を更新」ボタンを押すとAIがあなたの傾向を分析します。</p>
-      <?php else: ?>
-        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px;">
-        <?php foreach ($thoughtDict as $keyword => $description): ?>
-          <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 15px;">
-            <h4 style="color: var(--primary-neon); margin-bottom: 5px; font-size: 1rem;">#<?= htmlspecialchars($keyword) ?></h4>
-            <p style="color: var(--text-white); font-size: 0.85rem; line-height: 1.5; margin: 0;"><?= htmlspecialchars($description) ?></p>
-          </div>
-        <?php endforeach; ?>
-        </div>
-      <?php endif; ?>
-    </div>
-
-    <!-- Recent Posts -->
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;" class="animate-fadeup delay-200">
-      <h2 class="section-title" style="font-size: 1.8rem; margin: 0;">Recent Posts</h2>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;" class="animate-fadeup delay-100">
+      <h2 class="section-title" style="font-size: 1.5rem; margin: 0; color: #fff;">Recent Posts</h2>
       <button onclick="location.reload()" class="btn btn-secondary" style="padding: 6px 16px; font-size: 0.8rem;">
         <i class="fas fa-sync-alt"></i> 更新
       </button>
@@ -186,29 +165,17 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
         position: relative;
         padding-right: 25px;
         display: block;
+        font-size: 1.1rem;
+        font-weight: bold;
+        color: var(--text-white);
       }
       .post-title a:hover {
         color: var(--primary-neon);
-        padding-left: 5px;
-      }
-      .post-title a::after {
-        content: '\f105';
-        font-family: 'Font Awesome 6 Free';
-        font-weight: 900;
-        position: absolute;
-        right: 0;
-        top: 50%;
-        transform: translateY(-50%);
-        opacity: 0.5;
-        transition: all 0.3s ease;
-      }
-      .post-title a:hover::after {
-        opacity: 1;
-        right: -5px;
+        text-decoration: underline;
       }
     </style>
     
-    <div class="sort-controls animate-fadeup delay-200" style="margin-bottom: 25px; display: flex; justify-content: flex-end; align-items: center; gap: 15px;">
+    <div class="sort-controls animate-fadeup delay-100" style="margin-bottom: 25px; display: flex; justify-content: flex-end; align-items: center; gap: 15px;">
       <span style="font-size: 0.9rem; color: var(--text-muted);"><i class="fas fa-sort"></i> 並び替え:</span>
       <div class="glass-card" style="padding: 5px; display: flex; gap: 5px; border-radius: 20px;">
         <a href="?sort=upload" class="btn <?= $sortOrder === 'upload' ? 'btn-primary' : '' ?>" style="padding: 5px 15px; border-radius: 15px; font-size: 0.8rem; text-decoration: none;">
@@ -235,7 +202,12 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
           <div class="post-card" id="post-card-<?= $i ?>">
             <div class="post-content">
               <div class="post-meta" style="margin-bottom: 10px; display: flex; align-items: center; gap: 10px;" id="post-meta-<?= $i ?>">
-                <span><i class="far fa-calendar-alt"></i> <?= htmlspecialchars($post['date']) ?></span>
+                <span style="display: flex; align-items: center; gap: 5px;">
+                  <i class="far fa-calendar-alt"></i> 
+                  <span id="date-text-<?= $i ?>" onclick="editPostDate(<?= $i ?>, '<?= htmlspecialchars($post['date']) ?>')" style="cursor: pointer; border-bottom: 1px dashed rgba(255,255,255,0.3);">
+                    <?= htmlspecialchars($post['date']) ?>
+                  </span>
+                </span>
                 <?php
                   $postStatus = $post['status'] ?? '';
                   $postTitle = $post['title'] ?? '';
@@ -294,8 +266,6 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
               <?php if (!empty($post['audio_file'])): ?>
                 <?php 
                   $af = $post['audio_file'];
-                  // Firebase Storage path (audio/uid/...) => go through proxy
-                  // Legacy local path (uploads/...) => also go through proxy which handles both
                   $audioSrc = '../audio_proxy.php?target_uid=' . urlencode($uid) . '&path=' . urlencode($af);
                 ?>
                 <div style="margin-top: 10px; margin-bottom: 10px;">
@@ -312,7 +282,6 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
                   <i class="fas fa-trash"></i> Delete
                 </button>
                 
-                <!-- Stack/Unstack Button -->
                 <div id="stack-btn-container-<?= $i ?>" style="display: flex;">
                   <?php if (($post['status'] ?? '') === 'My Udastack追加済'): ?>
                     <button type="button" onclick="handlePostAction(<?= $i ?>, 'unstack')" class="btn btn-primary" style="padding: 5px 10px; font-size: 0.8rem; flex: 1; border-color: var(--primary-neon); background: rgba(252, 200, 0, 0.1); color: var(--primary-neon);">
@@ -325,7 +294,6 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
                   <?php endif; ?>
                 </div>
                 
-                <!-- Share Button -->
                 <div id="share-btn-container-<?= $i ?>" style="display: flex;">
                   <?php if (!empty($post['is_shared'])): ?>
                     <button type="button" onclick="handlePostAction(<?= $i ?>, 'unshare')" class="btn btn-secondary" style="padding: 5px 10px; font-size: 0.8rem; width: 100%; border-color: #a855f7; color: #a855f7;">
@@ -343,6 +311,29 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
         <?php endforeach; ?>
       </div>
     <?php endif; ?>
+
+    <!-- Thought Core -->
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 15px; margin-top: 60px;" class="animate-fadeup delay-100">
+      <h2 class="section-title" style="font-size: 1.4rem; margin-bottom: 0;"><i class="fas fa-brain" style="color: var(--primary-neon);"></i> Thought Core</h2>
+      <button onclick="updateBrain()" class="btn btn-secondary" style="padding: 5px 15px; font-size: 0.8rem; height: fit-content;" id="updateBrainBtn">
+        <i class="fas fa-sync-alt"></i> 分析を更新
+      </button>
+    </div>
+
+    <div class="glass-card animate-fadeup delay-100" style="margin-bottom: 40px; padding: 20px;">
+      <?php if (empty($thoughtDict)): ?>
+        <p class="text-muted" style="text-align: center; margin: 20px 0;">まだ脳内分析データがありません。「分析を更新」ボタンを押すとAIがあなたの傾向を分析します。</p>
+      <?php else: ?>
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px;">
+        <?php foreach ($thoughtDict as $keyword => $description): ?>
+          <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 15px;">
+            <h4 style="color: var(--primary-neon); margin-bottom: 5px; font-size: 1rem;">#<?= htmlspecialchars($keyword) ?></h4>
+            <p style="color: var(--text-white); font-size: 0.85rem; line-height: 1.5; margin: 0;"><?= htmlspecialchars($description) ?></p>
+          </div>
+        <?php endforeach; ?>
+        </div>
+      <?php endif; ?>
+    </div>
 
     <div style="text-align: center; margin-top: 60px;">
       <a href="logout.php" style="color: var(--text-muted); font-size: 0.9rem;">
@@ -393,7 +384,35 @@ function updateBrain() {
     });
 }
 
-function handlePostAction(index, action) {
+function editPostDate(index, currentDate) {
+  const newDate = prompt("収録日を編集 (YYYY-MM-DD)", currentDate);
+  if (newDate === null || newDate === currentDate) return;
+  
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(newDate)) {
+    alert("形式が正しくありません (YYYY-MM-DD)");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append('index', index);
+  formData.append('date', newDate);
+  formData.append('action', 'update_date');
+
+  fetch('submit_post.php', {
+    method: 'POST',
+    body: formData,
+    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.status === 'ok' || data.status === 'success') {
+      document.getElementById('date-text-' + index).textContent = newDate;
+    } else {
+      alert(data.message || "更新に失敗しました");
+    }
+  })
+  .catch(() => alert("通信エラーが発生しました"));
+}
   if (action === 'delete') {
     if (!confirm('本当にこの投稿を削除しますか？')) return;
   }
