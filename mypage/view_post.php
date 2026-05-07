@@ -4,12 +4,15 @@ if (!isset($_SESSION['uid'])) {
   header("Location: login.php");
   exit();
 }
-$uid = $_SESSION['uid'];
+$myUid = $_SESSION['uid'];
+$targetUid = isset($_GET['uid']) ? $_GET['uid'] : $myUid;
+$isOwner = ($myUid === $targetUid);
+
 $userDir = __DIR__ . '/../users/';
-$uploadDir = $userDir . $uid . '/posts/';
-$postsFile = $userDir . $uid . '_posts.json';
+$postsFile = $userDir . $targetUid . '_posts.json';
 $index = isset($_GET['index']) ? intval($_GET['index']) : -1;
 $posts = file_exists($postsFile) ? json_decode(file_get_contents($postsFile), true) : [];
+
 if ($index < 0 || !isset($posts[$index])) {
   die("投稿が見つかりません。");
 }
@@ -277,7 +280,7 @@ $thumbnail = $post['thumbnail'] ?? '';
     
     <div class="post-container">
       <!-- アクションバー -->
-      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 25px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; flex-wrap: wrap;">
+      <div style="display: <?= $isOwner ? 'flex' : 'none' ?>; justify-content: flex-end; gap: 10px; margin-bottom: 25px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; flex-wrap: wrap;">
         <button onclick="copyContent(this)" id="btn-copy" class="btn-small" style="background: rgba(0,255,204,0.05); color: var(--primary-neon); border: 1px solid rgba(0,255,204,0.4); border-radius: 8px; padding: 8px 14px; cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: 0.3s; display: flex; align-items: center; gap: 6px;">
           <i class="far fa-copy"></i> コピー
         </button>
@@ -292,6 +295,14 @@ $thumbnail = $post['thumbnail'] ?? '';
         </button>
       </div>
 
+      <?php if (!$isOwner): ?>
+      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 25px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; flex-wrap: wrap;">
+        <button onclick="copyContent(this)" id="btn-copy" class="btn-small" style="background: rgba(0,255,204,0.05); color: var(--primary-neon); border: 1px solid rgba(0,255,204,0.4); border-radius: 8px; padding: 8px 14px; cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: 0.3s; display: flex; align-items: center; gap: 6px;">
+          <i class="far fa-copy"></i> コピー
+        </button>
+      </div>
+      <?php endif; ?>
+
       <!-- タイトル（表示/編集切り替え） -->
       <div id="view-title" class="post-title"><?php echo htmlspecialchars($title); ?></div>
       <input id="edit-title" type="text" value="<?php echo htmlspecialchars($title); ?>" style="display:none; width:100%; font-size:1.4rem; font-weight:700; background:rgba(255,255,255,0.08); border:1px solid rgba(252,200,0,0.5); border-radius:10px; padding:10px 14px; color:#fff; margin-bottom:1rem; box-sizing:border-box;">
@@ -304,7 +315,7 @@ $thumbnail = $post['thumbnail'] ?? '';
       
       <?php if ($audio): ?>
         <audio controls>
-          <source src="../users/<?php echo $uid; ?>/posts/<?php echo $audio; ?>" type="audio/mpeg">
+          <source src="<?= htmlspecialchars($isOwner ? "../users/{$targetUid}/posts/{$audio}" : "../audio_proxy.php?target_uid={$targetUid}&path={$audio}") ?>" type="audio/mpeg">
           お使いのブラウザは音声再生に対応していません。
         </audio>
       <?php endif; ?>

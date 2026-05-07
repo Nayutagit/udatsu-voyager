@@ -413,6 +413,7 @@ function editPostDate(index, currentDate) {
   })
   .catch(() => alert("通信エラーが発生しました"));
 }
+function handlePostAction(index, action) {
   if (action === 'delete') {
     if (!confirm('本当にこの投稿を削除しますか？')) return;
   }

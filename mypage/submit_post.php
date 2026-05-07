@@ -129,10 +129,17 @@ switch ($action) {
             
             $pushMessage = "📢 {$myName}さんが新しい音声をタイムラインに共有しました！\n\nタイトル：{$title}\n\n▼タイムラインを開いて確認する\nhttps://udatsu-voyager.com/mypage/timeline.php?openExternalBrowser=1";
             
+            // 自分自身も通知対象に含める
+            $myLineId = $lineMap[$uid] ?? '';
+            $finalTargetUids = $targetUids;
+            if ($myLineId && !in_array($uid, $finalTargetUids)) {
+                $finalTargetUids[] = $uid;
+            }
+
             $lineConfig = file_exists(__DIR__ . '/../config/line_config.php') ? require __DIR__ . '/../config/line_config.php' : null;
             if ($lineConfig && !empty($lineConfig['channel_access_token'])) {
                 $accessToken = $lineConfig['channel_access_token'];
-                foreach ($targetUids as $targetUid) {
+                foreach ($finalTargetUids as $targetUid) {
                     if (isset($uidToLineId[$targetUid])) {
                         $targetLineId = $uidToLineId[$targetUid];
                         $url = 'https://api.line.me/v2/bot/message/push';

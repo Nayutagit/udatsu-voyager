@@ -229,11 +229,15 @@ usort($timelinePosts, function($a, $b) {
                 </div>
 
                 <?php if (!empty($post['thumbnail'])): ?>
-                    <img src="../<?= htmlspecialchars($post['thumbnail']) ?>" class="post-eyecatch" alt="Eyecatch">
+                    <a href="view_post.php?uid=<?= urlencode($post['author_uid']) ?>&index=<?= $post['original_index'] ?>">
+                        <img src="../<?= htmlspecialchars($post['thumbnail']) ?>" class="post-eyecatch" alt="Eyecatch">
+                    </a>
                 <?php endif; ?>
                 
                 <div class="post-body">
-                    <div class="post-title"><?= htmlspecialchars($post['title']) ?></div>
+                    <a href="view_post.php?uid=<?= urlencode($post['author_uid']) ?>&index=<?= $post['original_index'] ?>" style="text-decoration: none; color: inherit; display: block;">
+                        <div class="post-title"><?= htmlspecialchars($post['title']) ?></div>
+                    </a>
                     
                     <?php 
                         $fullText = $post['text'] ?? '';
@@ -267,9 +271,17 @@ usort($timelinePosts, function($a, $b) {
                 </div>
 
                 <div class="social-actions">
-                    <div class="action-btn"><i class="far fa-heart"></i> Like</div>
-                    <div class="action-btn"><i class="far fa-comment"></i> Comment</div>
-                    <div class="action-btn"><i class="fas fa-share-nodes"></i> Share</div>
+                    <?php 
+                        $likes = $post['likes'] ?? [];
+                        $likeCount = count($likes);
+                        $isLiked = in_array($uid, $likes);
+                    ?>
+                    <div class="action-btn" onclick="handleLike('<?= $post['author_uid'] ?>', <?= $post['original_index'] ?>, this)">
+                        <i class="<?= $isLiked ? 'fas' : 'far' ?> fa-heart" style="<?= $isLiked ? 'color: #ff4444;' : '' ?>"></i> 
+                        <span class="like-count"><?= $likeCount ?></span>
+                    </div>
+                    <div class="action-btn" onclick="alert('コメント機能は現在準備中です！')"><i class="far fa-comment"></i> Comment</div>
+                    <div class="action-btn" onclick="copyPostLink('<?= $post['author_uid'] ?>', <?= $post['original_index'] ?>)"><i class="fas fa-share-nodes"></i> Share</div>
                 </div>
 
                 <?php if ((($post['status'] ?? '') === 'エラー' || strpos($post['title'], '解析エラー') !== false) && $userPlan === 'admin'): ?>
@@ -289,5 +301,44 @@ usort($timelinePosts, function($a, $b) {
 
 </div>
 
+<script>
+function handleLike(authorUid, postIndex, btn) {
+    const icon = btn.querySelector('i');
+    const countSpan = btn.querySelector('.like-count');
+    
+    const formData = new FormData();
+    formData.append('action', 'like');
+    formData.append('target_uid', authorUid);
+    formData.append('post_index', postIndex);
+
+    fetch('submit_interaction.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'ok') {
+            if (data.interaction === 'liked') {
+                icon.classList.remove('far');
+                icon.classList.add('fas');
+                icon.style.color = '#ff4444';
+            } else {
+                icon.classList.remove('fas');
+                icon.classList.add('far');
+                icon.style.color = '';
+            }
+            countSpan.textContent = data.count;
+        }
+    })
+    .catch(e => console.error(e));
+}
+
+function copyPostLink(uid, index) {
+    const url = window.location.origin + '/mypage/view_post.php?uid=' + uid + '&index=' + index;
+    navigator.clipboard.writeText(url).then(() => {
+        alert('投稿のリンクをコピーしました！');
+    });
+}
+</script>
 </body>
 </html>
