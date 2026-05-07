@@ -24,25 +24,20 @@ function getUserProfile($targetUid, $userDir) {
 }
 
 $myFollowing = getList($userDir . $uid . '_following.json');
-$myFollowers = getList($userDir . $uid . '_followers.json');
 
-// Mutuals
-$mutualUids = array_intersect($myFollowing, $myFollowers);
-
-// Collect shared posts
+// Collect shared posts from people I follow
 $timelinePosts = [];
 
-foreach ($mutualUids as $mutualUid) {
-    $postsFile = $userDir . $mutualUid . '_posts.json';
+foreach ($myFollowing as $followUid) {
+    $postsFile = $userDir . $followUid . '_posts.json';
     if (file_exists($postsFile)) {
-        $mutualPosts = json_decode(file_get_contents($postsFile), true) ?: [];
-        $profile = getUserProfile($mutualUid, $userDir);
+        $followPosts = json_decode(file_get_contents($postsFile), true) ?: [];
+        $profile = getUserProfile($followUid, $userDir);
         
-        foreach ($mutualPosts as $idx => $post) {
+        foreach ($followPosts as $idx => $post) {
             $status = $post['status'] ?? '';
-            // 削除済、解析中、エラーの投稿はタイムラインに表示しない
             if (!empty($post['is_shared']) && !in_array($status, ['削除済', '解析中', 'エラー'])) {
-                $post['author_uid'] = $mutualUid;
+                $post['author_uid'] = $followUid;
                 $post['author_profile'] = $profile;
                 $post['original_index'] = $idx;
                 $timelinePosts[] = $post;
@@ -51,9 +46,31 @@ foreach ($mutualUids as $mutualUid) {
     }
 }
 
-// Sort by date descending
+// Also include my own shared posts
+$myPostsFile = $userDir . $uid . '_posts.json';
+if (file_exists($myPostsFile)) {
+    $myPosts = json_decode(file_get_contents($myPostsFile), true) ?: [];
+    $myProfile = getUserProfile($uid, $userDir);
+    foreach ($myPosts as $idx => $post) {
+        if (!empty($post['is_shared']) && !in_array($post['status'] ?? '', ['削除済', '解析中', 'エラー'])) {
+            $post['author_uid'] = $uid;
+            $post['author_profile'] = $myProfile;
+            $post['original_index'] = $idx;
+            $timelinePosts[] = $post;
+        }
+    }
+}
+
+// Sort by date descending (using ID timestamp as secondary)
 usort($timelinePosts, function($a, $b) {
-    return strtotime($b['date']) - strtotime($a['date']);
+    $timeA = strtotime($a['date'] ?? '1970-01-01');
+    $timeB = strtotime($b['date'] ?? '1970-01-01');
+    if ($timeA === $timeB) {
+        $idA = (int)preg_replace('/[^0-9]/', '', $a['id'] ?? '0');
+        $idB = (int)preg_replace('/[^0-9]/', '', $b['id'] ?? '0');
+        return $idB <=> $idA;
+    }
+    return $timeB <=> $timeA;
 });
 
 ?>
@@ -68,69 +85,102 @@ usort($timelinePosts, function($a, $b) {
     <link rel="stylesheet" href="../css/style.css?v=<?= time() ?>">
     <style>
         .timeline-post {
-            background: rgba(255, 255, 255, 0.05);
+            background: var(--bg-panel);
+            backdrop-filter: blur(25px);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 30px;
-            transition: all 0.3s ease;
+            border-radius: 20px;
+            padding: 0;
+            margin-bottom: 35px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease, border-color 0.3s ease;
+            animation: fadeInUp 0.8s ease both;
         }
         .timeline-post:hover {
-            border-color: rgba(0, 255, 204, 0.5);
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+            transform: translateY(-5px);
+            border-color: var(--primary-neon);
         }
-        .author-info {
+        .post-header {
+            padding: 20px;
             display: flex;
             align-items: center;
             gap: 15px;
-            margin-bottom: 15px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            padding-bottom: 15px;
         }
-        .author-info img {
-            width: 45px;
-            height: 45px;
+        .post-header img {
+            width: 50px;
+            height: 50px;
             border-radius: 50%;
             object-fit: cover;
             border: 2px solid var(--primary-neon);
+            box-shadow: 0 0 10px rgba(252, 200, 0, 0.3);
         }
-        .post-title {
-            font-size: 1.4rem;
+        .author-name {
+            font-weight: 800;
+            font-size: 1.1rem;
             color: var(--text-white);
-            margin-bottom: 10px;
-            font-weight: bold;
         }
-        .post-meta {
+        .author-meta {
             font-size: 0.8rem;
             color: var(--text-muted);
-            margin-bottom: 15px;
         }
-        .post-content {
-            font-size: 0.95rem;
+        .post-eyecatch {
+            width: 100%;
+            height: auto;
+            max-height: 400px;
+            object-fit: cover;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .post-body {
+            padding: 20px;
+        }
+        .post-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 12px;
+            line-height: 1.3;
+            color: var(--text-white);
+        }
+        .post-text {
+            font-size: 1rem;
             line-height: 1.7;
             color: #ddd;
-            background: rgba(0,0,0,0.3);
-            padding: 15px;
-            border-radius: 8px;
-            border-left: 3px solid var(--primary-neon);
-            white-space: pre-wrap;
+            margin-bottom: 20px;
         }
-        .post-summary {
-            font-size: 0.95rem;
-            color: #ccc;
-            line-height: 1.6;
-            margin-bottom: 5px;
-        }
-        .audio-player-container {
-            margin-top: 15px;
-            background: rgba(0,0,0,0.4);
-            padding: 10px;
+        .audio-player {
+            background: rgba(255, 255, 255, 0.05);
             border-radius: 50px;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
         }
-        .audio-player-container audio {
-            width: 100%;
-            height: 40px;
-            outline: none;
+        .audio-player audio {
+            flex: 1;
+            height: 35px;
+        }
+        .social-actions {
+            display: flex;
+            gap: 25px;
+            padding: 15px 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.02);
+        }
+        .action-btn {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .action-btn:hover {
+            color: var(--primary-neon);
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
@@ -146,11 +196,14 @@ usort($timelinePosts, function($a, $b) {
     </div>
 
     <?php if (empty($timelinePosts)): ?>
-        <div class="glass-card" style="text-align: center; padding: 50px;">
-            <i class="fas fa-inbox" style="font-size: 3rem; color: var(--text-muted); margin-bottom: 20px;"></i>
-            <h3 style="color: var(--text-muted);">まだ投稿がありません</h3>
-            <p style="font-size: 0.9rem; color: var(--text-muted); margin-top: 10px;">ネットワークから友達を検索して相互フォローになりましょう！</p>
-            <a href="network.php" class="btn btn-primary" style="margin-top: 20px; display: inline-block;">ネットワークを開く</a>
+        <div class="glass-card animate-fadeup" style="text-align: center; padding: 60px; border-radius: 20px;">
+            <i class="fas fa-users-slash" style="font-size: 4rem; color: var(--text-muted); margin-bottom: 20px;"></i>
+            <h3 style="color: var(--text-white);">タイムラインはまだ空です</h3>
+            <p style="font-size: 1rem; color: var(--text-muted); margin-top: 15px; line-height: 1.6;">
+                あなたがフォローしているユーザーが音声をシェアするとここに表示されます。<br>
+                まずはネットワークから気になるユーザーをフォローしてみましょう！
+            </p>
+            <a href="network.php" class="btn btn-primary" style="margin-top: 30px; padding: 12px 30px; border-radius: 50px;">ユーザーを探しに行く</a>
         </div>
     <?php else: ?>
         <?php $timelineIndex = 0; foreach ($timelinePosts as $post): 
@@ -166,51 +219,61 @@ usort($timelinePosts, function($a, $b) {
                 }
             }
         ?>
-            <div class="timeline-post animate-fadeup">
-                <div class="author-info">
+            <div class="timeline-post">
+                <div class="post-header">
                     <img src="<?= htmlspecialchars($authorImg) ?>" alt="Author">
                     <div>
-                        <div style="font-weight: bold; font-size: 1.1rem; color: var(--primary-neon);"><?= htmlspecialchars($post['author_profile']['display_name']) ?></div>
-                        <div style="font-size: 0.8rem; color: var(--text-muted);"><?= htmlspecialchars($post['author_profile']['title']) ?></div>
+                        <div class="author-name"><?= htmlspecialchars($post['author_profile']['display_name']) ?></div>
+                        <div class="author-meta"><?= htmlspecialchars($post['author_profile']['title']) ?> • <?= htmlspecialchars($post['date']) ?></div>
                     </div>
                 </div>
-                
-                <div class="post-title"><?= htmlspecialchars($post['title']) ?></div>
-                
-                <div class="post-meta">
-                    <i class="far fa-calendar-alt"></i> <?= htmlspecialchars($post['date']) ?>
-                </div>
 
-                <?php 
-                    $fullText = $post['text'] ?? '';
-                    $cleanText = str_replace(["\r", "\n"], " ", $fullText);
-                    $snippet = mb_strimwidth($cleanText, 0, 100, '...');
-                ?>
-                <div class="post-summary" id="snippet-<?= $timelineIndex ?>">
-                    <?= htmlspecialchars($snippet) ?>
-                    <?php if (mb_strlen($cleanText) > 100): ?>
-                        <a href="javascript:void(0)" onclick="document.getElementById('snippet-<?= $timelineIndex ?>').style.display='none'; document.getElementById('full-<?= $timelineIndex ?>').style.display='block';" style="color: var(--primary-neon); text-decoration: none; font-size: 0.85rem; margin-left: 10px;">続きを読む <i class="fas fa-chevron-down"></i></a>
+                <?php if (!empty($post['thumbnail'])): ?>
+                    <img src="../<?= htmlspecialchars($post['thumbnail']) ?>" class="post-eyecatch" alt="Eyecatch">
+                <?php endif; ?>
+                
+                <div class="post-body">
+                    <div class="post-title"><?= htmlspecialchars($post['title']) ?></div>
+                    
+                    <?php 
+                        $fullText = $post['text'] ?? '';
+                        $summary = $post['summary'] ?? '';
+                        $displayContent = !empty($summary) ? $summary : $fullText;
+                        $snippet = mb_strimwidth(strip_tags($displayContent), 0, 150, '...');
+                    ?>
+
+                    <div class="post-text" id="snippet-<?= $timelineIndex ?>">
+                        <?= nl2br(htmlspecialchars($snippet)) ?>
+                        <?php if (mb_strlen(strip_tags($displayContent)) > 150): ?>
+                            <a href="javascript:void(0)" onclick="document.getElementById('snippet-<?= $timelineIndex ?>').style.display='none'; document.getElementById('full-<?= $timelineIndex ?>').style.display='block';" style="color: var(--primary-neon); text-decoration: none; font-size: 0.9rem; font-weight: bold;">もっと見る</a>
+                        <?php endif; ?>
+                    </div>
+
+                    <div class="post-text" id="full-<?= $timelineIndex ?>" style="display: none;">
+                        <?= nl2br(htmlspecialchars($displayContent)) ?>
+                        <div style="margin-top: 10px;">
+                            <a href="javascript:void(0)" onclick="document.getElementById('full-<?= $timelineIndex ?>').style.display='none'; document.getElementById('snippet-<?= $timelineIndex ?>').style.display='block';" style="color: var(--text-muted); text-decoration: none; font-size: 0.85rem;">閉じる</a>
+                        </div>
+                    </div>
+
+                    <?php if ($audioUrl): ?>
+                    <div class="audio-player">
+                        <i class="fas fa-play-circle" style="color: var(--primary-neon); font-size: 1.5rem;"></i>
+                        <audio controls controlsList="nodownload">
+                            <source src="<?= htmlspecialchars($audioUrl) ?>" type="audio/mp4">
+                        </audio>
+                    </div>
                     <?php endif; ?>
                 </div>
 
-                <div class="post-content" id="full-<?= $timelineIndex ?>" style="display: none;">
-                    <?= htmlspecialchars($fullText) ?>
-                    <div style="text-align: right; margin-top: 10px;">
-                        <a href="javascript:void(0)" onclick="document.getElementById('full-<?= $timelineIndex ?>').style.display='none'; document.getElementById('snippet-<?= $timelineIndex ?>').style.display='block';" style="color: var(--text-muted); text-decoration: none; font-size: 0.85rem;">閉じる <i class="fas fa-chevron-up"></i></a>
-                    </div>
+                <div class="social-actions">
+                    <div class="action-btn"><i class="far fa-heart"></i> Like</div>
+                    <div class="action-btn"><i class="far fa-comment"></i> Comment</div>
+                    <div class="action-btn"><i class="fas fa-share-nodes"></i> Share</div>
                 </div>
-
-                <?php if ($audioUrl): ?>
-                <div class="audio-player-container">
-                    <audio controls controlsList="nodownload">
-                        <source src="<?= htmlspecialchars($audioUrl) ?>" type="audio/mp4">
-                        Your browser does not support the audio element.
-                    </audio>
-                </div>
-                <?php endif; ?>
 
                 <?php if ((($post['status'] ?? '') === 'エラー' || strpos($post['title'], '解析エラー') !== false) && $userPlan === 'admin'): ?>
-                <div style="margin-top: 15px; text-align: right;">
+                <div style="padding: 15px; text-align: right; border-top: 1px solid rgba(255,255,255,0.05);">
                     <form method="POST" action="retry_analysis.php" style="display: inline;">
                         <input type="hidden" name="index" value="<?= $post['original_index'] ?>">
                         <input type="hidden" name="target_uid" value="<?= htmlspecialchars($post['author_uid']) ?>">

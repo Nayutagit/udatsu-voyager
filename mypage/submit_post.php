@@ -113,30 +113,28 @@ switch ($action) {
     
     if (!$wasSharedBefore) {
         $title = $posts[$index]['title'] ?? '';
-        $myFollowingFile = $userDir . $uid . '_following.json';
         $myFollowersFile = $userDir . $uid . '_followers.json';
         $lineMapFile = $userDir . 'line_map.json';
         
-        $myFollowing = file_exists($myFollowingFile) ? (json_decode(file_get_contents($myFollowingFile), true) ?: []) : [];
         $myFollowers = file_exists($myFollowersFile) ? (json_decode(file_get_contents($myFollowersFile), true) ?: []) : [];
-        $mutualUids = array_intersect($myFollowing, $myFollowers);
+        $targetUids = $myFollowers; // 通知対象をフォロワー全員に変更
         
-        if (!empty($mutualUids)) {
+        if (!empty($targetUids)) {
             $lineMap = file_exists($lineMapFile) ? (json_decode(file_get_contents($lineMapFile), true) ?: []) : [];
             $uidToLineId = array_flip($lineMap); // Map UID => LineUserId
             
             $profileFile = $userDir . $uid . '_profile.json';
             $myProfile = file_exists($profileFile) ? (json_decode(file_get_contents($profileFile), true) ?: []) : [];
-            $myName = $myProfile['display_name'] ?? 'あなたと相互フォローのユーザー';
+            $myName = $myProfile['display_name'] ?? 'ユーザー';
             
             $pushMessage = "📢 {$myName}さんが新しい音声をタイムラインに共有しました！\n\nタイトル：{$title}\n\n▼タイムラインを開いて確認する\nhttps://udatsu-voyager.com/mypage/timeline.php?openExternalBrowser=1";
             
             $lineConfig = file_exists(__DIR__ . '/../config/line_config.php') ? require __DIR__ . '/../config/line_config.php' : null;
             if ($lineConfig && !empty($lineConfig['channel_access_token'])) {
                 $accessToken = $lineConfig['channel_access_token'];
-                foreach ($mutualUids as $mutualUid) {
-                    if (isset($uidToLineId[$mutualUid])) {
-                        $targetLineId = $uidToLineId[$mutualUid];
+                foreach ($targetUids as $targetUid) {
+                    if (isset($uidToLineId[$targetUid])) {
+                        $targetLineId = $uidToLineId[$targetUid];
                         $url = 'https://api.line.me/v2/bot/message/push';
                         $postData = ['to' => $targetLineId, 'messages' => [['type' => 'text', 'text' => $pushMessage]]];
                         $ch = curl_init($url);
