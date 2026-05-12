@@ -13,25 +13,7 @@ $isLocal = (
 );
 $cookieSecure = $isLocal ? false : true;
 
-if (session_name() !== 'UDATSU_SESS_V2') {
-    if (session_status() !== PHP_SESSION_NONE) {
-        session_write_close();
-    }
-    session_name('UDATSU_SESS_V2');
-}
 if (session_status() === PHP_SESSION_NONE) {
-    if (PHP_VERSION_ID >= 70300) {
-        session_set_cookie_params([
-            'lifetime' => 2592000,
-            'path'     => '/',
-            'domain'   => '',
-            'secure'   => $cookieSecure,
-            'httponly' => true,
-            'samesite' => 'Lax'
-        ]);
-    } else {
-        session_set_cookie_params(2592000, '/; SameSite=Lax', '', $cookieSecure, true);
-    }
     session_start();
 }
 

@@ -17,33 +17,9 @@ $isLocal = (
 );
 $cookieSecure = $isLocal ? false : true;
 
-// 🔹 セッション設定の刷新
-if (session_name() !== 'UDATSU_SESS_V2') {
-    if (session_status() !== PHP_SESSION_NONE) {
-        session_write_close();
-    }
-    session_name('UDATSU_SESS_V2');
-}
-
+// 🔹 シンプルなセッション開始
 if (session_status() === PHP_SESSION_NONE) {
-    if (PHP_VERSION_ID >= 70300) {
-        session_set_cookie_params([
-            'lifetime' => 2592000,
-            'path'     => '/',
-            'domain'   => '', // ホストに限定して競合回避
-            'secure'   => $cookieSecure,
-            'httponly' => true,
-            'samesite' => 'Lax'
-        ]);
-    } else {
-        // PHP 7.3未満の互換処理
-        session_set_cookie_params(2592000, '/; SameSite=Lax', '', $cookieSecure, true);
-    }
     session_start();
-    
-    if (empty($_SESSION['initiated'])) {
-        $_SESSION['initiated'] = 1;
-    }
 }
 
 // 🔹 キャッシュ制御 (ログイン状態の誤認防止)

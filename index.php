@@ -177,7 +177,7 @@ if (!empty($uid)) {
           if (saveStatus === 'ok') {
             console.log("セッション保存 OK → mypage へ");
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading Dashboard...';
-            setTimeout(() => { location.href = "mypage/mypage.php"; }, 100);
+            location.href = "mypage/mypage.php";
           } else {
             console.error("セッション保存失敗:", rawText);
             showError("セッション保存失敗 (status=" + saveStatus + ")\nResponse: " + rawText.substring(0, 100));
