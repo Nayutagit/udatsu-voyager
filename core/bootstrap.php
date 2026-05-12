@@ -25,12 +25,17 @@ ini_set('session.cookie_lifetime', 2592000);
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
-
+    // 🔹 セッション再生成が原因でログイン直後にセッションが消えるケースがあるため、一時的に無効化
+    /*
     if (empty($_SESSION['initiated'])) {
         session_regenerate_id(true);
         $_SESSION['initiated'] = 1;
         session_write_close();
         session_start();
+    }
+    */
+    if (empty($_SESSION['initiated'])) {
+        $_SESSION['initiated'] = 1;
     }
 }
 
