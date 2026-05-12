@@ -119,8 +119,9 @@ if (!empty($uid)) {
       try {
         console.log("Checking redirect result...");
         const result = await getRedirectResult(auth);
+        
         if (result) {
-          console.log("Auth success:", result.user.email);
+          alert("【1】Googleログイン成功: " + result.user.email);
           const btn = document.getElementById("login-btn");
           btn.style.opacity = "0.7";
           btn.style.pointerEvents = "none";
@@ -129,12 +130,13 @@ if (!empty($uid)) {
           const user = result.user;
           const userEmail = user.email || (user.uid + "@noemail.com");
           
-          console.log("Accessing Firestore for user:", userEmail);
+          alert("【2】Firestoreへアクセス開始...");
           const docRef = doc(db, "users", userEmail);
           const docSnap = await getDoc(docRef);
 
+          let plan = "trial";
           if (!docSnap.exists()) {
-            console.log("Creating new user doc...");
+            alert("【3】新規ユーザー作成中...");
             await setDoc(docRef, {
               uid: user.uid,
               email: userEmail,
@@ -142,13 +144,12 @@ if (!empty($uid)) {
               plan: "trial",
               createdAt: new Date()
             });
+          } else {
+            plan = docSnap.data().plan || "trial";
           }
+          alert("【4】プラン取得完了: " + plan);
 
-          console.log("Fetching final plan...");
-          const finalSnap = await getDoc(docRef);
-          const plan = finalSnap.exists() ? (finalSnap.data().plan || "trial") : "trial";
-
-          console.log("Calling save_plan.php with plan:", plan);
+          alert("【5】サーバー(save_plan.php)にセッションを保存します...");
           let saveStatus = 'ng';
           let rawText = '';
           try {
@@ -165,29 +166,25 @@ if (!empty($uid)) {
               body: formData.toString()
             });
             rawText = await saveRes.text();
-            console.log("[save_plan] status:", saveRes.status, "raw:", rawText);
+            alert("【6】サーバー保存応答: " + rawText);
             const saveData = JSON.parse(rawText);
-            saveStatus = saveData.status; // 'ok' or 'error'
+            saveStatus = saveData.status;
           } catch (fetchErr) {
-            console.error("[save_plan] fetch/parse error:", fetchErr.message);
-            showError("save_plan エラー: " + fetchErr.message + "\nResponse: " + rawText);
+            alert("【ERROR】サーバー保存失敗: " + fetchErr.message);
             return;
           }
 
           if (saveStatus === 'ok') {
-            console.log("セッション保存 OK → mypage へ");
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading Dashboard...';
+            alert("【7】成功！マイページへ移動します...");
             location.href = "mypage/mypage.php";
           } else {
-            console.error("セッション保存失敗:", rawText);
-            showError("セッション保存失敗 (status=" + saveStatus + ")\nResponse: " + rawText.substring(0, 100));
+            alert("【ERROR】保存ステータス不正: " + rawText);
           }
         } else {
           console.log("No redirect result found.");
         }
       } catch (error) {
-        console.error("[auth] error:", error);
-        showError("ログインエラー: " + error.name + " - " + error.message);
+        alert("【ERROR】リダイレクト処理エラー: " + error.message);
       }
     }
 
