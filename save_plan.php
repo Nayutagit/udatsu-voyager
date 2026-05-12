@@ -24,7 +24,7 @@ ini_set('session.use_only_cookies', '1');
 ini_set('session.gc_maxlifetime',   2592000);
 ini_set('session.cookie_lifetime',  2592000);
 
-session_name('UDATSU_SESS');
+session_name('UDATSU_SESS_V2');
 session_start();
 
 if (!is_writable(session_save_path())) {

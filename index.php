@@ -1,6 +1,11 @@
 <?php
 require_once __DIR__ . '/core/bootstrap.php';
 
+// キャッシュ無効化
+header("Cache-Control: no-cache, no-store, must-revalidate");
+header("Pragma: no-cache");
+header("Expires: 0");
+
 if ($userPlan !== 'guest') {
   header("Location: mypage/mypage.php");
   exit();

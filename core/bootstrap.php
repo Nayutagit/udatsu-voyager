@@ -16,37 +16,34 @@ $isLocal = (
     strpos($_SERVER['HTTP_HOST'] ?? '', '192.168.') === 0
 );
 
-// 🔹 Cookie設定 (Lax の方が互換性が高い)
-$cookieSecure = $isLocal ? false : true;
-$cookieDomain = $isLocal ? '' : '.udatsu-voyager.com';
+// 🔹 セッション設定の刷新
+session_name('UDATSU_SESS_V2');
 
-ini_set('session.cookie_samesite', 'Lax');
-ini_set('session.cookie_secure',   $cookieSecure ? '1' : '0');
-if ($cookieDomain) {
-    ini_set('session.cookie_domain', $cookieDomain);
-}
-ini_set('session.use_cookies',    '1');
-ini_set('session.use_only_cookies','1');
-// 🔹 30日間のセッション寿命を設定
-ini_set('session.gc_maxlifetime', 2592000);
-ini_set('session.cookie_lifetime', 2592000);
-
-session_name('UDATSU_SESS');
 if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-    // 🔹 セッション再生成が原因でログイン直後にセッションが消えるケースがあるため、一時的に無効化
-    /*
-    if (empty($_SESSION['initiated'])) {
-        session_regenerate_id(true);
-        $_SESSION['initiated'] = 1;
-        session_write_close();
-        session_start();
+    if (PHP_VERSION_ID >= 70300) {
+        session_set_cookie_params([
+            'lifetime' => 2592000,
+            'path'     => '/',
+            'domain'   => '', // ホストに限定して競合回避
+            'secure'   => $cookieSecure,
+            'httponly' => true,
+            'samesite' => 'Lax'
+        ]);
+    } else {
+        // PHP 7.3未満の互換処理
+        session_set_cookie_params(2592000, '/; SameSite=Lax', '', $cookieSecure, true);
     }
-    */
+    session_start();
+    
     if (empty($_SESSION['initiated'])) {
         $_SESSION['initiated'] = 1;
     }
 }
+
+// 🔹 キャッシュ制御 (ログイン状態の誤認防止)
+header("Cache-Control: no-cache, no-store, must-revalidate");
+header("Pragma: no-cache");
+header("Expires: 0");
 
 // 🔹 永続的ログイン(Cookie)の復元
 if (empty($_SESSION['uid']) && !empty($_COOKIE['udatsu_auth'])) {
@@ -77,7 +74,7 @@ require_once __DIR__ . '/functions.php';               // Firestore 関数など
 ──────────────── */
 $uid       = $_SESSION['uid']        ?? null;
 $userName  = $_SESSION['user_name']  ?? 'ゲストさん';
-$userPlan  = $_SESSION['user_plan']  ?? 'guest';
+$userPlan  = (isset($_SESSION['user_plan']) && $_SESSION['user_plan'] !== '') ? $_SESSION['user_plan'] : 'guest';
 
 /**
  * 🚫 Firestore は set_session.php 内で行うべき！
