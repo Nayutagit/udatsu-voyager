@@ -205,6 +205,11 @@ if ($userPlan !== 'guest') {
     // ページ読み込み時にリダイレクト結果を確認
     handleRedirect();
 
+    window.onerror = function(msg, url, lineNo, columnNo, error) {
+      showError("JS Error: " + msg + " at " + url + ":" + lineNo);
+      return false;
+    };
+
     document.getElementById("login-btn").addEventListener("click", () => {
       const btn = document.getElementById("login-btn");
       btn.style.opacity = "0.7";
@@ -215,14 +220,14 @@ if ($userPlan !== 'guest') {
       signInWithRedirect(auth, provider);
     });
     // Debug info
-    function showDebug() {
+    window.showDebug = function() {
       const debugInfo = {
         cookies: document.cookie,
         href: location.href,
         userAgent: navigator.userAgent
       };
       alert("Debug Info:\n" + JSON.stringify(debugInfo, null, 2));
-    }
+    };
   </script>
 
   <!-- Debug Trigger (Hidden) -->
