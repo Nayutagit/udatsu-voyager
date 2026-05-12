@@ -31,6 +31,7 @@ ini_set('session.use_only_cookies','1');
 ini_set('session.gc_maxlifetime', 2592000);
 ini_set('session.cookie_lifetime', 2592000);
 
+session_name('UDATSU_SESS');
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
     // 🔹 セッション再生成が原因でログイン直後にセッションが消えるケースがあるため、一時的に無効化

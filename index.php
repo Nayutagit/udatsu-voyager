@@ -147,11 +147,17 @@ if ($userPlan !== 'guest') {
           let saveStatus = 'ng';
           let rawText = '';
           try {
+            const formData = new URLSearchParams();
+            formData.append('email', userEmail);
+            formData.append('plan', plan);
+            formData.append('name', user.displayName || 'ゲストさん');
+            formData.append('uid', user.uid);
+
             const saveRes = await fetch("save_plan.php", {
               method: "POST",
-              headers: { "Content-Type": "application/json" },
+              headers: { "Content-Type": "application/x-www-form-urlencoded" },
               credentials: "include",
-              body: JSON.stringify({ email: userEmail, plan, name: user.displayName || 'ゲストさん', uid: user.uid })
+              body: formData.toString()
             });
             rawText = await saveRes.text();
             console.log("[save_plan] status:", saveRes.status, "raw:", rawText);
@@ -203,7 +209,19 @@ if ($userPlan !== 'guest') {
       // アプリ内ブラウザ（LINE等）でのポップアップブロックを回避するためリダイレクトを使用
       signInWithRedirect(auth, provider);
     });
+    // Debug info
+    function showDebug() {
+      const debugInfo = {
+        cookies: document.cookie,
+        href: location.href,
+        userAgent: navigator.userAgent
+      };
+      alert("Debug Info:\n" + JSON.stringify(debugInfo, null, 2));
+    }
   </script>
+
+  <!-- Debug Trigger (Hidden) -->
+  <div style="position:fixed; bottom:10px; right:10px; opacity:0.1; cursor:pointer;" onclick="showDebug()">.</div>
 
 </body>
 </html>

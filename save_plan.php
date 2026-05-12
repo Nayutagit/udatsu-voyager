@@ -24,6 +24,7 @@ ini_set('session.use_only_cookies', '1');
 ini_set('session.gc_maxlifetime',   2592000);
 ini_set('session.cookie_lifetime',  2592000);
 
+session_name('UDATSU_SESS');
 session_start();
 
 if (!is_writable(session_save_path())) {
@@ -53,7 +54,19 @@ $diagInfo = [
 @file_put_contents($logFile, '[START] ' . json_encode($diagInfo, JSON_UNESCAPED_UNICODE) . PHP_EOL, FILE_APPEND);
 
 // ─── 4. バリデーション ────────────────────────────────────────────────────
-$data  = json_decode(file_get_contents('php://input'), true);
+$rawInput = file_get_contents('php://input');
+$data     = json_decode($rawInput, true);
+
+if ($data === null) {
+    // JSONでない場合は通常の $_POST から取得
+    $data = [
+        'email' => $_POST['email'] ?? '',
+        'plan'  => $_POST['plan']  ?? '',
+        'name'  => $_POST['name']  ?? '',
+        'uid'   => $_POST['uid']   ?? ''
+    ];
+}
+
 $email = trim($data['email'] ?? '');
 $plan  = trim($data['plan']  ?? 'guest');
 $name  = trim($data['name']  ?? 'ゲストさん');
