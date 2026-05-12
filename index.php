@@ -90,6 +90,7 @@ if (!empty($uid)) {
     import {
       getAuth,
       signInWithRedirect,
+      signInWithPopup,
       getRedirectResult,
       GoogleAuthProvider
     } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
@@ -117,7 +118,7 @@ if (!empty($uid)) {
     // リダイレクト後の処理
     async function handleRedirect() {
       try {
-        console.log("Checking redirect result...");
+        alert("【0】検知処理スタート");
         const result = await getRedirectResult(auth);
         
         if (result) {
@@ -207,14 +208,25 @@ if (!empty($uid)) {
       return false;
     };
 
-    document.getElementById("login-btn").addEventListener("click", () => {
+    document.getElementById("login-btn").addEventListener("click", async () => {
       const btn = document.getElementById("login-btn");
       btn.style.opacity = "0.7";
       btn.style.pointerEvents = "none";
-      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Redirecting...';
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
       
-      // アプリ内ブラウザ（LINE等）でのポップアップブロックを回避するためリダイレクトを使用
-      signInWithRedirect(auth, provider);
+      try {
+        const result = await signInWithPopup(auth, provider);
+        alert("【Popup】ログイン成功: " + result.user.email);
+        
+        // Popup成功時もsave_planを呼ぶ必要があるが、まずはリダイレクト版のhandleRedirectを流用するか検討
+        // ここでは簡単に再読み込みしてhandleRedirectに任せるか、直接処理を書く
+        location.reload(); 
+      } catch (err) {
+        alert("【Popup ERROR】" + err.message);
+        btn.style.opacity = "1";
+        btn.style.pointerEvents = "auto";
+        btn.innerHTML = 'Googleでログイン';
+      }
     });
     // Debug info
     window.showDebug = function() {
