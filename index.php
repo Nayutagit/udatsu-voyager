@@ -84,7 +84,8 @@ if ($userPlan !== 'guest') {
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import {
       getAuth,
-      signInWithPopup,
+      signInWithRedirect,
+      getRedirectResult,
       GoogleAuthProvider
     } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import {
@@ -108,60 +109,70 @@ if ($userPlan !== 'guest') {
     const db = getFirestore(app);
     const provider = new GoogleAuthProvider();
 
-    document.getElementById("login-btn").addEventListener("click", async () => {
+    // リダイレクト後の処理（LINE等のアプリ内ブラウザ対策）
+    async function handleRedirect() {
       try {
-        // ローディング状態開始
-        const btn = document.getElementById("login-btn");
-        btn.style.opacity = "0.7";
-        btn.style.pointerEvents = "none";
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 認証中...';
-        
-        const result = await signInWithPopup(auth, provider);
-        const user = result.user;
-        const userName = user.displayName;
-        const userEmail = user.email;
-        const uid = user.uid;
+        const result = await getRedirectResult(auth);
+        if (result) {
+          const btn = document.getElementById("login-btn");
+          btn.style.opacity = "0.7";
+          btn.style.pointerEvents = "none";
+          btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 認証完了を待機中...';
 
-        const docRef = doc(db, "users", userEmail);
-        const docSnap = await getDoc(docRef);
+          const user = result.user;
+          const userName = user.displayName || "ゲストさん";
+          const userEmail = user.email || (user.uid + "@noemail.com");
+          const uid = user.uid;
 
-        // 初めての人なら Firestore に登録
-        if (!docSnap.exists()) {
-          await setDoc(docRef, {
-            uid: uid,
-            email: userEmail,
-            name: userName,
-            plan: "trial",
-            createdAt: new Date()
+          const docRef = doc(db, "users", userEmail);
+          const docSnap = await getDoc(docRef);
+
+          // 初めての人なら Firestore に登録
+          if (!docSnap.exists()) {
+            await setDoc(docRef, {
+              uid: uid,
+              email: userEmail,
+              name: userName,
+              plan: "trial",
+              createdAt: new Date()
+            });
+          }
+
+          // プラン取得
+          let plan = "trial";
+          const finalSnap = await getDoc(docRef);
+          if (finalSnap.exists() && finalSnap.data().plan) {
+            plan = finalSnap.data().plan;
+          }
+
+          // PHP にも送信してセッション保存
+          await fetch("save_plan.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: userEmail, plan, name: userName, uid })
           });
+
+          // マイページへリダイレクト
+          setTimeout(() => {
+            location.href = "mypage/mypage.php";
+          }, 500);
         }
-
-        // プラン取得
-        let plan = "trial";
-        const finalSnap = await getDoc(docRef);
-        if (finalSnap.exists() && finalSnap.data().plan) {
-          plan = finalSnap.data().plan;
-        }
-
-        // PHP にも送信してセッション保存
-        await fetch("save_plan.php", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: userEmail, plan, name: userName, uid })
-        });
-
-        // 少し待ってからリダイレクト
-        setTimeout(() => {
-          location.href = "mypage/mypage.php";
-        }, 500);
-
       } catch (error) {
-        const btn = document.getElementById("login-btn");
-        btn.style.opacity = "1";
-        btn.style.pointerEvents = "auto";
-        btn.innerHTML = '<i class="fab fa-google"></i> Googleでログイン';
-        alert("ログイン失敗: " + error.message);
+        alert("ログイン処理エラー: " + error.message);
       }
+    }
+
+    // ページ読み込み時にリダイレクト結果を確認
+    handleRedirect();
+
+    document.getElementById("login-btn").addEventListener("click", () => {
+      const btn = document.getElementById("login-btn");
+      btn.style.opacity = "0.7";
+      btn.style.pointerEvents = "none";
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 遷移中...';
+      
+      // アプリ内ブラウザ（LINE等）でのポップアップブロックを回避するためリダイレクトを使用
+      signInWithRedirect(auth, provider);
     });
   </script>
 
