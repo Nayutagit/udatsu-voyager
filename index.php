@@ -6,7 +6,7 @@ header("Cache-Control: no-cache, no-store, must-revalidate");
 header("Pragma: no-cache");
 header("Expires: 0");
 
-if ($userPlan !== 'guest') {
+if (!empty($uid)) {
   header("Location: mypage/mypage.php");
   exit();
 }
