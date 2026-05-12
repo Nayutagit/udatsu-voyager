@@ -149,17 +149,20 @@ if (!empty($uid)) {
           body: formData.toString()
         });
         const rawText = await saveRes.text();
-        alert("【B】サーバー保存応答: " + rawText);
-        const saveData = JSON.parse(rawText);
+        let saveData;
+        try {
+          saveData = JSON.parse(rawText);
+        } catch (e) {
+          throw new Error("サーバー応答がJSONではありません: " + rawText);
+        }
         
         if (saveData.status === 'ok') {
-          alert("【C】成功！マイページへ移動します");
           location.href = "mypage/mypage.php";
         } else {
-          alert("【ERROR】保存失敗: " + rawText);
+          throw new Error(saveData.message || "不明なエラー");
         }
       } catch (err) {
-        alert("【ERROR】通信失敗: " + err.message);
+        showError("ログイン処理エラー: " + err.message);
       }
     }
 

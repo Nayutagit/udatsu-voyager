@@ -1,6 +1,8 @@
 <?php
+error_reporting(0);
+ob_start();
 /**
- * save_plan.php  ─ 緊急修正版 (PHP 5.6+ 互換)
+ * save_plan.php  ─ 緊急修正版
  * Firebase 認証後にPHPセッションを確立するエンドポイント
  */
 
@@ -108,4 +110,6 @@ session_write_close();
 
 @file_put_contents($logFile, '[DONE] ok' . PHP_EOL, FILE_APPEND);
 
+ob_clean();
 echo json_encode(['status' => 'ok', 'plan' => $plan]);
+exit();
