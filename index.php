@@ -117,7 +117,6 @@ if (!empty($uid)) {
 
     // 共通のログイン完了処理
     async function completeLogin(user) {
-      alert("【A】セッション保存開始: " + user.email);
       const userEmail = user.email || (user.uid + "@noemail.com");
       
       const docRef = doc(db, "users", userEmail);
@@ -174,7 +173,7 @@ if (!empty($uid)) {
           await completeLogin(result.user);
         }
       } catch (error) {
-        alert("【Redirect ERROR】" + error.message);
+        alert("ログインエラーが発生しました: " + error.message);
       }
     }
 
@@ -207,25 +206,12 @@ if (!empty($uid)) {
         const result = await signInWithPopup(auth, provider);
         await completeLogin(result.user);
       } catch (err) {
-        alert("【Popup ERROR】" + err.message);
+        alert("ログインがキャンセルされたか、エラーが発生しました: " + err.message);
         btn.style.opacity = "1";
         btn.style.pointerEvents = "auto";
         btn.innerHTML = 'Googleでログイン';
       }
     });
-    // Debug info
-    window.showDebug = function() {
-      const debugInfo = {
-        cookies: document.cookie,
-        href: location.href,
-        userAgent: navigator.userAgent
-      };
-      alert("Debug Info:\n" + JSON.stringify(debugInfo, null, 2));
-    };
   </script>
-
-  <!-- Debug Trigger (Hidden) -->
-  <div style="position:fixed; bottom:10px; right:10px; opacity:0.1; cursor:pointer;" onclick="showDebug()">.</div>
-
 </body>
 </html>
