@@ -145,12 +145,15 @@ if ($userPlan !== 'guest') {
             plan = finalSnap.data().plan;
           }
 
-          // PHP にも送信してセッション保存
-          await fetch("save_plan.php", {
+          // PHP にも送信してセッション保存（credentials: 'include' で Cookie を送受信）
+          const saveRes = await fetch("save_plan.php", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
+            credentials: "include",
             body: JSON.stringify({ email: userEmail, plan, name: userName, uid })
           });
+          const saveData = await saveRes.json();
+          console.log("[save_plan] response:", saveData);
 
           // マイページへリダイレクト
           setTimeout(() => {
