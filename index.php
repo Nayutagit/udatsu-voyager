@@ -81,19 +81,19 @@ if ($userPlan !== 'guest') {
   </div>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
     import {
       getAuth,
       signInWithRedirect,
       getRedirectResult,
       GoogleAuthProvider
-    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
     import {
       getFirestore,
       doc,
       getDoc,
       setDoc
-    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
     // Firebase初期化
     const app = initializeApp({
@@ -119,12 +119,12 @@ if ($userPlan !== 'guest') {
           const btn = document.getElementById("login-btn");
           btn.style.opacity = "0.7";
           btn.style.pointerEvents = "none";
-          btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 認証完了を待機中...';
+          btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Authenticating...';
 
           const user = result.user;
           const userEmail = user.email || (user.uid + "@noemail.com");
           
-          console.log("Accessing Firestore...");
+          console.log("Accessing Firestore for user:", userEmail);
           const docRef = doc(db, "users", userEmail);
           const docSnap = await getDoc(docRef);
 
@@ -143,8 +143,9 @@ if ($userPlan !== 'guest') {
           const finalSnap = await getDoc(docRef);
           const plan = finalSnap.exists() ? (finalSnap.data().plan || "trial") : "trial";
 
-          console.log("Calling save_plan.php...");
+          console.log("Calling save_plan.php with plan:", plan);
           let saveStatus = 'ng';
+          let rawText = '';
           try {
             const saveRes = await fetch("save_plan.php", {
               method: "POST",
@@ -152,26 +153,30 @@ if ($userPlan !== 'guest') {
               credentials: "include",
               body: JSON.stringify({ email: userEmail, plan, name: user.displayName || 'ゲストさん', uid: user.uid })
             });
-            const rawText = await saveRes.text();
+            rawText = await saveRes.text();
             console.log("[save_plan] status:", saveRes.status, "raw:", rawText);
             const saveData = JSON.parse(rawText);
             saveStatus = saveData.status; // 'ok' or 'error'
           } catch (fetchErr) {
             console.error("[save_plan] fetch/parse error:", fetchErr.message);
-            showError("save_plan エラー: " + fetchErr.message);
+            showError("save_plan エラー: " + fetchErr.message + "\nResponse: " + rawText);
             return;
           }
 
           if (saveStatus === 'ok') {
             console.log("セッション保存 OK → mypage へ");
-            setTimeout(() => { location.href = "mypage/mypage.php"; }, 500);
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading Dashboard...';
+            setTimeout(() => { location.href = "mypage/mypage.php"; }, 100);
           } else {
-            showError("セッション保存失敗 (status=" + saveStatus + ") → リロードして再試行してください");
+            console.error("セッション保存失敗:", rawText);
+            showError("セッション保存失敗 (status=" + saveStatus + ")\nResponse: " + rawText.substring(0, 100));
           }
+        } else {
+          console.log("No redirect result found.");
         }
       } catch (error) {
         console.error("[auth] error:", error);
-        showError("ログインエラー: " + error.message);
+        showError("ログインエラー: " + error.name + " - " + error.message);
       }
     }
 
@@ -193,7 +198,7 @@ if ($userPlan !== 'guest') {
       const btn = document.getElementById("login-btn");
       btn.style.opacity = "0.7";
       btn.style.pointerEvents = "none";
-      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 遷移中...';
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Redirecting...';
       
       // アプリ内ブラウザ（LINE等）でのポップアップブロックを回避するためリダイレクトを使用
       signInWithRedirect(auth, provider);

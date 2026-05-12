@@ -5,12 +5,17 @@
  */
 
 // ─── 1. セッション設定（bootstrap.php と完全同一）─────────────────────────
-$isLocal      = (isset($_SERVER['HTTP_HOST']) && in_array($_SERVER['HTTP_HOST'], ['127.0.0.1:8000','localhost:8000']));
+$isLocal = (
+    $_SERVER['HTTP_HOST'] === '127.0.0.1:8000' || 
+    $_SERVER['HTTP_HOST'] === 'localhost:8000' || 
+    $_SERVER['HTTP_HOST'] === 'localhost' ||
+    strpos($_SERVER['HTTP_HOST'] ?? '', '192.168.') === 0
+);
 $cookieDomain = $isLocal ? '' : '.udatsu-voyager.com';
-$cookieSecure = $isLocal ? '0' : '1';
+$cookieSecure = $isLocal ? false : true;
 
-ini_set('session.cookie_samesite',  'None');
-ini_set('session.cookie_secure',    $cookieSecure);
+ini_set('session.cookie_samesite',  'Lax');
+ini_set('session.cookie_secure',    $cookieSecure ? '1' : '0');
 if ($cookieDomain) {
     ini_set('session.cookie_domain', $cookieDomain);
 }
@@ -20,6 +25,10 @@ ini_set('session.gc_maxlifetime',   2592000);
 ini_set('session.cookie_lifetime',  2592000);
 
 session_start();
+
+if (!is_writable(session_save_path())) {
+    @file_put_contents(__DIR__ . '/session_error.log', date('Y-m-d H:i:s') . ' Session path not writable: ' . session_save_path() . PHP_EOL, FILE_APPEND);
+}
 
 // ─── 2. レスポンスヘッダー ──────────────────────────────────────────────────
 header('Content-Type: application/json');
@@ -64,7 +73,8 @@ $_SESSION['user_plan'] = $plan;
 $_SESSION['user_name'] = $name;
 $_SESSION['initiated'] = 1;
 
-@file_put_contents($logFile, '[SESSION_SET] session_id=' . session_id() . ' uid=' . $uid . PHP_EOL, FILE_APPEND);
+@file_put_contents($logFile, '[SESSION_SET] session_id=' . session_id() . ' uid=' . $uid . ' plan=' . $plan . PHP_EOL, FILE_APPEND);
+@file_put_contents($logFile, '[SERVER_INFO] HTTPS=' . ($_SERVER['HTTPS'] ?? 'off') . ' HOST=' . ($_SERVER['HTTP_HOST'] ?? 'none') . PHP_EOL, FILE_APPEND);
 
 // ─── 6. 永続Cookie（PHP互換のheader()方式）──────────────────────────────
 $secret      = 'udatsu_secret_2026_voyager';
@@ -73,7 +83,7 @@ $cookieValue = base64_encode(json_encode(['uid' => $uid, 'name' => $name, 'plan'
 $expires     = gmdate('D, d M Y H:i:s T', time() + 2592000);
 $domainPart  = $cookieDomain ? '; Domain=' . $cookieDomain : '';
 $securePart  = $cookieSecure ? '; Secure' : '';
-header('Set-Cookie: udatsu_auth=' . urlencode($cookieValue) . '; Expires=' . $expires . '; Path=/' . $domainPart . $securePart . '; HttpOnly; SameSite=None');
+header('Set-Cookie: udatsu_auth=' . urlencode($cookieValue) . '; Expires=' . $expires . '; Path=/' . $domainPart . $securePart . '; HttpOnly; SameSite=Lax');
 
 @file_put_contents($logFile, '[COOKIE_SET] ok' . PHP_EOL, FILE_APPEND);
 

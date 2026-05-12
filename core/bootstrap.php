@@ -8,12 +8,20 @@
 /* ───────────────
    セッション & Cookie
 ──────────────── */
-$isLocal = ($_SERVER['HTTP_HOST'] === '127.0.0.1:8000' || $_SERVER['HTTP_HOST'] === 'localhost:8000');
-$cookieDomain = $isLocal ? '' : '.udatsu-voyager.com';
-$cookieSecure = $isLocal ? '0' : '1';
+// 🔹 開発環境判定の強化
+$isLocal = (
+    $_SERVER['HTTP_HOST'] === '127.0.0.1:8000' || 
+    $_SERVER['HTTP_HOST'] === 'localhost:8000' || 
+    $_SERVER['HTTP_HOST'] === 'localhost' ||
+    strpos($_SERVER['HTTP_HOST'] ?? '', '192.168.') === 0
+);
 
-ini_set('session.cookie_samesite', 'None');
-ini_set('session.cookie_secure',  $cookieSecure);
+// 🔹 Cookie設定 (Lax の方が互換性が高い)
+$cookieSecure = $isLocal ? false : true;
+$cookieDomain = $isLocal ? '' : '.udatsu-voyager.com';
+
+ini_set('session.cookie_samesite', 'Lax');
+ini_set('session.cookie_secure',   $cookieSecure ? '1' : '0');
 if ($cookieDomain) {
     ini_set('session.cookie_domain', $cookieDomain);
 }

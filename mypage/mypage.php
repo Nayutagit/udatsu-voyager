@@ -3,7 +3,7 @@ require_once __DIR__ . '/../core/bootstrap.php';
 require_once __DIR__ . '/../plan_limits.php';
 
 if (empty($uid) || empty($userName) || empty($userPlan)) {
-  header('Location: index.php');
+  header('Location: /index.php'); // ルートへリダイレクト
   exit();
 }
 

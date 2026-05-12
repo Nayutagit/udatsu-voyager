@@ -1,4 +1,25 @@
 <?php
+// 🔹 開発環境判定の強化
+$isLocal = (
+    $_SERVER['HTTP_HOST'] === '127.0.0.1:8000' || 
+    $_SERVER['HTTP_HOST'] === 'localhost:8000' || 
+    $_SERVER['HTTP_HOST'] === 'localhost' ||
+    strpos($_SERVER['HTTP_HOST'] ?? '', '192.168.') === 0
+);
+$cookieDomain = $isLocal ? '' : '.udatsu-voyager.com';
+$cookieSecure = $isLocal ? false : true;
+
+// 🔹 セッション設定（bootstrap.php と同期）
+ini_set('session.cookie_samesite', 'Lax');
+ini_set('session.cookie_secure',   $cookieSecure ? '1' : '0');
+if ($cookieDomain) {
+    ini_set('session.cookie_domain', $cookieDomain);
+}
+ini_set('session.use_cookies',    '1');
+ini_set('session.use_only_cookies','1');
+ini_set('session.gc_maxlifetime', 2592000);
+ini_set('session.cookie_lifetime', 2592000);
+
 session_start();
 
 // ✅ JSONで応答する明示
@@ -16,15 +37,24 @@ set_error_handler(function($errno, $errstr) {
   exit;
 });
 
-// 🔹 POSTデータを取得（JSON）
-$input = json_decode(file_get_contents('php://input'), true);
-$uid   = isset($input['uid']) ? trim((string)$input['uid']) : '';
-$email = isset($input['email']) ? trim((string)$input['email']) : '';
-$name  = isset($input['name']) ? trim((string)$input['name']) : '';
+// 🔹 POSTデータを取得 (JSON or Form-encoded)
+$rawInput = file_get_contents('php://input');
+$input = json_decode($rawInput, true);
+
+if ($input === null) {
+    // JSONでない場合は通常の $_POST から取得
+    $uid   = isset($_POST['uid']) ? trim((string)$_POST['uid']) : '';
+    $email = isset($_POST['email']) ? trim((string)$_POST['email']) : '';
+    $name  = isset($_POST['name']) ? trim((string)$_POST['name']) : '';
+} else {
+    $uid   = isset($input['uid']) ? trim((string)$input['uid']) : '';
+    $email = isset($input['email']) ? trim((string)$input['email']) : '';
+    $name  = isset($input['name']) ? trim((string)$input['name']) : '';
+}
 
 // 🔹 入力チェック
 if (!$uid || !$email || !$name) {
-  echo json_encode(['status' => 'error', 'message' => '必要な情報が不足しています']);
+  echo json_encode(['status' => 'error', 'message' => '必要な情報が不足しています', 'debug_received' => $rawInput]);
   exit;
 }
 
@@ -45,18 +75,18 @@ if (!in_array($plan, $allowedPlans, true)) {
 $_SESSION['uid']        = $uid;
 $_SESSION['user_name']  = $name;
 $_SESSION['user_plan']  = $plan;
+$_SESSION['initiated']  = 1;
 
 // 🔹 永続ログイン(30日間)用のCookie設定
 $secret = 'udatsu_secret_2026_voyager';
 $hash = hash_hmac('sha256', $uid . $name . $plan, $secret);
 $cookiePayload = base64_encode(json_encode(['uid' => $uid, 'name' => $name, 'plan' => $plan, 'hash' => $hash]));
 
-// Secure属性などはbootstrapの条件と同じように
-$isLocal = ($_SERVER['HTTP_HOST'] === '127.0.0.1:8000' || $_SERVER['HTTP_HOST'] === 'localhost:8000');
-$cookieDomain = $isLocal ? '' : '.udatsu-voyager.com';
-$cookieSecure = $isLocal ? false : true;
-
-setcookie('udatsu_auth', $cookiePayload, time() + (86400 * 30), "/", $cookieDomain, $cookieSecure, true);
+// 手動Set-CookieでLaxを確実に指定
+$expires = gmdate('D, d M Y H:i:s T', time() + 2592000);
+$domainPart = $cookieDomain ? '; Domain=' . $cookieDomain : '';
+$securePart = $cookieSecure ? '; Secure' : '';
+header('Set-Cookie: udatsu_auth=' . urlencode($cookiePayload) . '; Expires=' . $expires . '; Path=/' . $domainPart . $securePart . '; HttpOnly; SameSite=Lax');
 
 // ✅ 成功レスポンス
 echo json_encode(['status' => 'ok']);
