@@ -115,77 +115,63 @@ if (!empty($uid)) {
     const db = getFirestore(app);
     const provider = new GoogleAuthProvider();
 
+    // 共通のログイン完了処理
+    async function completeLogin(user) {
+      alert("【A】セッション保存開始: " + user.email);
+      const userEmail = user.email || (user.uid + "@noemail.com");
+      
+      const docRef = doc(db, "users", userEmail);
+      const docSnap = await getDoc(docRef);
+      let plan = "trial";
+      if (!docSnap.exists()) {
+        await setDoc(docRef, {
+          uid: user.uid,
+          email: userEmail,
+          name: user.displayName || "ゲストさん",
+          plan: "trial",
+          createdAt: new Date()
+        });
+      } else {
+        plan = docSnap.data().plan || "trial";
+      }
+
+      const formData = new URLSearchParams();
+      formData.append('email', userEmail);
+      formData.append('plan', plan);
+      formData.append('name', user.displayName || 'ゲストさん');
+      formData.append('uid', user.uid);
+
+      try {
+        const saveRes = await fetch("save_plan.php", {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          credentials: "include",
+          body: formData.toString()
+        });
+        const rawText = await saveRes.text();
+        alert("【B】サーバー保存応答: " + rawText);
+        const saveData = JSON.parse(rawText);
+        
+        if (saveData.status === 'ok') {
+          alert("【C】成功！マイページへ移動します");
+          location.href = "mypage/mypage.php";
+        } else {
+          alert("【ERROR】保存失敗: " + rawText);
+        }
+      } catch (err) {
+        alert("【ERROR】通信失敗: " + err.message);
+      }
+    }
+
     // リダイレクト後の処理
     async function handleRedirect() {
       try {
-        alert("【0】検知処理スタート");
         const result = await getRedirectResult(auth);
-        
         if (result) {
-          alert("【1】Googleログイン成功: " + result.user.email);
-          const btn = document.getElementById("login-btn");
-          btn.style.opacity = "0.7";
-          btn.style.pointerEvents = "none";
-          btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Authenticating...';
-
-          const user = result.user;
-          const userEmail = user.email || (user.uid + "@noemail.com");
-          
-          alert("【2】Firestoreへアクセス開始...");
-          const docRef = doc(db, "users", userEmail);
-          const docSnap = await getDoc(docRef);
-
-          let plan = "trial";
-          if (!docSnap.exists()) {
-            alert("【3】新規ユーザー作成中...");
-            await setDoc(docRef, {
-              uid: user.uid,
-              email: userEmail,
-              name: user.displayName || "ゲストさん",
-              plan: "trial",
-              createdAt: new Date()
-            });
-          } else {
-            plan = docSnap.data().plan || "trial";
-          }
-          alert("【4】プラン取得完了: " + plan);
-
-          alert("【5】サーバー(save_plan.php)にセッションを保存します...");
-          let saveStatus = 'ng';
-          let rawText = '';
-          try {
-            const formData = new URLSearchParams();
-            formData.append('email', userEmail);
-            formData.append('plan', plan);
-            formData.append('name', user.displayName || 'ゲストさん');
-            formData.append('uid', user.uid);
-
-            const saveRes = await fetch("save_plan.php", {
-              method: "POST",
-              headers: { "Content-Type": "application/x-www-form-urlencoded" },
-              credentials: "include",
-              body: formData.toString()
-            });
-            rawText = await saveRes.text();
-            alert("【6】サーバー保存応答: " + rawText);
-            const saveData = JSON.parse(rawText);
-            saveStatus = saveData.status;
-          } catch (fetchErr) {
-            alert("【ERROR】サーバー保存失敗: " + fetchErr.message);
-            return;
-          }
-
-          if (saveStatus === 'ok') {
-            alert("【7】成功！マイページへ移動します...");
-            location.href = "mypage/mypage.php";
-          } else {
-            alert("【ERROR】保存ステータス不正: " + rawText);
-          }
-        } else {
-          console.log("No redirect result found.");
+          await completeLogin(result.user);
         }
       } catch (error) {
-        alert("【ERROR】リダイレクト処理エラー: " + error.message);
+        alert("【Redirect ERROR】" + error.message);
       }
     }
 
@@ -216,11 +202,7 @@ if (!empty($uid)) {
       
       try {
         const result = await signInWithPopup(auth, provider);
-        alert("【Popup】ログイン成功: " + result.user.email);
-        
-        // Popup成功時もsave_planを呼ぶ必要があるが、まずはリダイレクト版のhandleRedirectを流用するか検討
-        // ここでは簡単に再読み込みしてhandleRedirectに任せるか、直接処理を書く
-        location.reload(); 
+        await completeLogin(result.user);
       } catch (err) {
         alert("【Popup ERROR】" + err.message);
         btn.style.opacity = "1";
