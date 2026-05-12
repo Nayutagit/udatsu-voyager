@@ -108,61 +108,83 @@ if ($userPlan !== 'guest') {
     const auth = getAuth(app);
     const db = getFirestore(app);
     const provider = new GoogleAuthProvider();
+    const statusMsg = document.getElementById("status-msg");
 
-    // リダイレクト後の処理（LINE等のアプリ内ブラウザ対策）
+    // リダイレクト後の処理
     async function handleRedirect() {
       try {
+        console.log("Checking redirect result...");
         const result = await getRedirectResult(auth);
         if (result) {
+          console.log("Auth success:", result.user.email);
           const btn = document.getElementById("login-btn");
           btn.style.opacity = "0.7";
           btn.style.pointerEvents = "none";
           btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 認証完了を待機中...';
 
           const user = result.user;
-          const userName = user.displayName || "ゲストさん";
           const userEmail = user.email || (user.uid + "@noemail.com");
-          const uid = user.uid;
-
+          
+          console.log("Accessing Firestore...");
           const docRef = doc(db, "users", userEmail);
           const docSnap = await getDoc(docRef);
 
-          // 初めての人なら Firestore に登録
           if (!docSnap.exists()) {
+            console.log("Creating new user doc...");
             await setDoc(docRef, {
-              uid: uid,
+              uid: user.uid,
               email: userEmail,
-              name: userName,
+              name: user.displayName || "ゲストさん",
               plan: "trial",
               createdAt: new Date()
             });
           }
 
-          // プラン取得
-          let plan = "trial";
+          console.log("Fetching final plan...");
           const finalSnap = await getDoc(docRef);
-          if (finalSnap.exists() && finalSnap.data().plan) {
-            plan = finalSnap.data().plan;
+          const plan = finalSnap.exists() ? (finalSnap.data().plan || "trial") : "trial";
+
+          console.log("Calling save_plan.php...");
+          let saveStatus = 'ng';
+          try {
+            const saveRes = await fetch("save_plan.php", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              credentials: "include",
+              body: JSON.stringify({ email: userEmail, plan, name: user.displayName || 'ゲストさん', uid: user.uid })
+            });
+            const rawText = await saveRes.text();
+            console.log("[save_plan] status:", saveRes.status, "raw:", rawText);
+            const saveData = JSON.parse(rawText);
+            saveStatus = saveData.status; // 'ok' or 'error'
+          } catch (fetchErr) {
+            console.error("[save_plan] fetch/parse error:", fetchErr.message);
+            showError("save_plan エラー: " + fetchErr.message);
+            return;
           }
 
-          // PHP にも送信してセッション保存（credentials: 'include' で Cookie を送受信）
-          const saveRes = await fetch("save_plan.php", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-            body: JSON.stringify({ email: userEmail, plan, name: userName, uid })
-          });
-          const saveData = await saveRes.json();
-          console.log("[save_plan] response:", saveData);
-
-          // マイページへリダイレクト
-          setTimeout(() => {
-            location.href = "mypage/mypage.php";
-          }, 500);
+          if (saveStatus === 'ok') {
+            console.log("セッション保存 OK → mypage へ");
+            setTimeout(() => { location.href = "mypage/mypage.php"; }, 500);
+          } else {
+            showError("セッション保存失敗 (status=" + saveStatus + ") → リロードして再試行してください");
+          }
         }
       } catch (error) {
-        alert("ログイン処理エラー: " + error.message);
+        console.error("[auth] error:", error);
+        showError("ログインエラー: " + error.message);
       }
+    }
+
+    function showError(msg) {
+      let box = document.getElementById("err-box");
+      if (!box) {
+        box = document.createElement("div");
+        box.id = "err-box";
+        box.style.cssText = "position:fixed;top:0;left:0;right:0;background:#c00;color:#fff;padding:15px 20px;font-size:0.85rem;z-index:9999;white-space:pre-wrap;word-break:break-all;";
+        document.body.prepend(box);
+      }
+      box.textContent = "⚠️ " + msg;
     }
 
     // ページ読み込み時にリダイレクト結果を確認
