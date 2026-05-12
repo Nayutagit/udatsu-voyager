@@ -108,7 +108,6 @@ if ($userPlan !== 'guest') {
     const auth = getAuth(app);
     const db = getFirestore(app);
     const provider = new GoogleAuthProvider();
-    const statusMsg = document.getElementById("status-msg");
 
     // リダイレクト後の処理
     async function handleRedirect() {

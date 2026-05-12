@@ -25,9 +25,13 @@ session_start();
 header('Content-Type: application/json');
 
 // ─── 3. 診断ログ ──────────────────────────────────────────────────────────
-$logDir = __DIR__ . '/logs/';
-if (!file_exists($logDir)) @mkdir($logDir, 0755, true);
-$logFile = $logDir . 'auth_debug_' . date('Ymd') . '.log';
+// ─── 3. 診断ログ ──────────────────────────────────────────────────────────
+$logDir = __DIR__ . '/logs';
+if (!is_dir($logDir)) {
+    @mkdir($logDir, 0777, true);
+    @chmod($logDir, 0777);
+}
+$logFile = $logDir . '/auth_debug_' . date('Ymd') . '.log';
 
 $diagInfo = [
     'timestamp'   => date('Y-m-d H:i:s'),
