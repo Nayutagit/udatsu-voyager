@@ -15,6 +15,7 @@ $isLocal = (
     $_SERVER['HTTP_HOST'] === 'localhost' ||
     strpos($_SERVER['HTTP_HOST'] ?? '', '192.168.') === 0
 );
+$cookieSecure = $isLocal ? false : true;
 
 // 🔹 セッション設定の刷新
 session_name('UDATSU_SESS_V2');

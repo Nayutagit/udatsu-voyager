@@ -11,21 +11,24 @@ $isLocal = (
     $_SERVER['HTTP_HOST'] === 'localhost' ||
     strpos($_SERVER['HTTP_HOST'] ?? '', '192.168.') === 0
 );
-$cookieDomain = $isLocal ? '' : '.udatsu-voyager.com';
 $cookieSecure = $isLocal ? false : true;
 
-ini_set('session.cookie_samesite',  'Lax');
-ini_set('session.cookie_secure',    $cookieSecure ? '1' : '0');
-if ($cookieDomain) {
-    ini_set('session.cookie_domain', $cookieDomain);
-}
-ini_set('session.use_cookies',      '1');
-ini_set('session.use_only_cookies', '1');
-ini_set('session.gc_maxlifetime',   2592000);
-ini_set('session.cookie_lifetime',  2592000);
-
 session_name('UDATSU_SESS_V2');
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    if (PHP_VERSION_ID >= 70300) {
+        session_set_cookie_params([
+            'lifetime' => 2592000,
+            'path'     => '/',
+            'domain'   => '',
+            'secure'   => $cookieSecure,
+            'httponly' => true,
+            'samesite' => 'Lax'
+        ]);
+    } else {
+        session_set_cookie_params(2592000, '/; SameSite=Lax', '', $cookieSecure, true);
+    }
+    session_start();
+}
 
 if (!is_writable(session_save_path())) {
     @file_put_contents(__DIR__ . '/session_error.log', date('Y-m-d H:i:s') . ' Session path not writable: ' . session_save_path() . PHP_EOL, FILE_APPEND);
