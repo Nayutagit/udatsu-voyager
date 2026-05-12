@@ -18,7 +18,12 @@ $isLocal = (
 $cookieSecure = $isLocal ? false : true;
 
 // 🔹 セッション設定の刷新
-session_name('UDATSU_SESS_V2');
+if (session_name() !== 'UDATSU_SESS_V2') {
+    if (session_status() !== PHP_SESSION_NONE) {
+        session_write_close();
+    }
+    session_name('UDATSU_SESS_V2');
+}
 
 if (session_status() === PHP_SESSION_NONE) {
     if (PHP_VERSION_ID >= 70300) {
