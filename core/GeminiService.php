@@ -134,7 +134,7 @@ class GeminiService {
     }
 
     private function generateContent($fileUri, $mimeType) {
-        $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key={$this->apiKey}";
+        $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={$this->apiKey}";
         
         $postData = [
             "contents" => [

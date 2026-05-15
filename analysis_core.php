@@ -13,7 +13,10 @@ function run_analysis_for_post(string $uid, string $audioPath, string $jobId, st
     $logFile       = $root . '/log/analysis_log.txt';
     $userPostsFile = $userDir . $uid . '_posts.json';
 
-    if (!file_exists($root . '/log')) mkdir($root . '/log', 0775, true);
+    if (!file_exists($root . '/log')) {
+        mkdir($root . '/log', 0777, true);
+        chmod($root . '/log', 0777);
+    }
     file_put_contents($logFile, date('Y-m-d H:i:s') . " - [run_analysis_for_post] uid=$uid audioPath=$audioPath jobId=$jobId\n", FILE_APPEND);
 
     $posts = file_exists($userPostsFile) ? json_decode(file_get_contents($userPostsFile), true) : [];

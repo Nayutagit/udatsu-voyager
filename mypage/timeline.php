@@ -25,18 +25,34 @@ function getUserProfile($targetUid, $userDir) {
 
 $myFollowing = getList($userDir . $uid . '_following.json');
 
-// Collect shared posts from people I follow
+// profiles cache to speed up loading
+$profilesCache = [];
+
+// Collect shared posts
 $timelinePosts = [];
 
+// 1. Collect from following
 foreach ($myFollowing as $followUid) {
     $postsFile = $userDir . $followUid . '_posts.json';
     if (file_exists($postsFile)) {
         $followPosts = json_decode(file_get_contents($postsFile), true) ?: [];
-        $profile = getUserProfile($followUid, $userDir);
+        
+        if (!isset($profilesCache[$followUid])) {
+            $profilesCache[$followUid] = getUserProfile($followUid, $userDir);
+        }
+        $profile = $profilesCache[$followUid];
         
         foreach ($followPosts as $idx => $post) {
             $status = $post['status'] ?? '';
-            if (!empty($post['is_shared']) && !in_array($status, ['削除済', '解析中', 'エラー'])) {
+            $isShared = !empty($post['is_shared']);
+            
+            // Allow 'エラー' only for Admin
+            $allowedStatus = ['My Udastack追加済', ''];
+            if ($userPlan === 'admin') {
+                $allowedStatus[] = 'エラー';
+            }
+            
+            if ($isShared && (in_array($status, $allowedStatus) || $status === '')) {
                 $post['author_uid'] = $followUid;
                 $post['author_profile'] = $profile;
                 $post['original_index'] = $idx;
@@ -46,13 +62,21 @@ foreach ($myFollowing as $followUid) {
     }
 }
 
-// Also include my own shared posts
+// 2. Include my own posts
 $myPostsFile = $userDir . $uid . '_posts.json';
 if (file_exists($myPostsFile)) {
     $myPosts = json_decode(file_get_contents($myPostsFile), true) ?: [];
-    $myProfile = getUserProfile($uid, $userDir);
+    if (!isset($profilesCache[$uid])) {
+        $profilesCache[$uid] = getUserProfile($uid, $userDir);
+    }
+    $myProfile = $profilesCache[$uid];
+    
     foreach ($myPosts as $idx => $post) {
-        if (!empty($post['is_shared']) && !in_array($post['status'] ?? '', ['削除済', '解析中', 'エラー'])) {
+        $status = $post['status'] ?? '';
+        $allowedStatus = ['My Udastack追加済', ''];
+        if ($userPlan === 'admin') $allowedStatus[] = 'エラー';
+
+        if (!empty($post['is_shared']) && (in_array($status, $allowedStatus) || $status === '')) {
             $post['author_uid'] = $uid;
             $post['author_profile'] = $myProfile;
             $post['original_index'] = $idx;
@@ -61,7 +85,7 @@ if (file_exists($myPostsFile)) {
     }
 }
 
-// Sort by date descending (using ID timestamp as secondary)
+// 3. Sort by date descending
 usort($timelinePosts, function($a, $b) {
     $timeA = strtotime($a['date'] ?? '1970-01-01');
     $timeB = strtotime($b['date'] ?? '1970-01-01');
@@ -72,6 +96,9 @@ usort($timelinePosts, function($a, $b) {
     }
     return $timeB <=> $timeA;
 });
+
+// 4. Limit to latest 50 to improve loading speed
+$timelinePosts = array_slice($timelinePosts, 0, 50);
 
 ?>
 <!DOCTYPE html>
@@ -262,8 +289,7 @@ usort($timelinePosts, function($a, $b) {
 
                     <?php if ($audioUrl): ?>
                     <div class="audio-player">
-                        <i class="fas fa-play-circle" style="color: var(--primary-neon); font-size: 1.5rem;"></i>
-                        <audio controls controlsList="nodownload">
+                        <audio controls <?= ($userPlan === 'admin') ? '' : 'controlsList="nodownload"' ?>>
                             <source src="<?= htmlspecialchars($audioUrl) ?>" type="audio/mp4">
                         </audio>
                     </div>
@@ -284,15 +310,11 @@ usort($timelinePosts, function($a, $b) {
                     <div class="action-btn" onclick="copyPostLink('<?= $post['author_uid'] ?>', <?= $post['original_index'] ?>)"><i class="fas fa-share-nodes"></i> Share</div>
                 </div>
 
-                <?php if ((($post['status'] ?? '') === 'エラー' || strpos($post['title'], '解析エラー') !== false) && $userPlan === 'admin'): ?>
+                <?php if ((($post['status'] ?? '') === 'エラー' || strpos($post['title'] ?? '', '解析エラー') !== false) && $userPlan === 'admin'): ?>
                 <div style="padding: 15px; text-align: right; border-top: 1px solid rgba(255,255,255,0.05);">
-                    <form method="POST" action="retry_analysis.php" style="display: inline;">
-                        <input type="hidden" name="index" value="<?= $post['original_index'] ?>">
-                        <input type="hidden" name="target_uid" value="<?= htmlspecialchars($post['author_uid']) ?>">
-                        <button type="submit" class="btn btn-primary" style="padding: 5px 15px; font-size: 0.85rem; background: var(--warning-red); color: white; border-color: var(--warning-red);">
-                            <i class="fas fa-sync-alt"></i> 管理者として再試行
-                        </button>
-                    </form>
+                    <button type="button" class="btn btn-primary" onclick="handleRetry('<?= htmlspecialchars($post['author_uid']) ?>', <?= $post['original_index'] ?>, this)" style="padding: 5px 15px; font-size: 0.85rem; background: var(--warning-red); color: white; border-color: var(--warning-red);">
+                        <i class="fas fa-sync-alt"></i> 管理者として再試行
+                    </button>
                 </div>
                 <?php endif; ?>
             </div>
@@ -337,6 +359,39 @@ function copyPostLink(uid, index) {
     const url = window.location.origin + '/mypage/view_post.php?uid=' + uid + '&index=' + index;
     navigator.clipboard.writeText(url).then(() => {
         alert('投稿のリンクをコピーしました！');
+    });
+}
+function handleRetry(authorUid, postIndex, btn) {
+    if (!confirm('管理者としてこの投稿の解析を再試行しますか？')) return;
+    
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 実行中...';
+
+    const formData = new FormData();
+    formData.append('target_uid', authorUid);
+    formData.append('index', postIndex);
+
+    fetch('retry_analysis.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'success') {
+            alert('解析をバックグラウンドで開始しました。完了まで数分かかる場合があります。');
+            btn.innerHTML = '<i class="fas fa-check"></i> 開始済み';
+        } else {
+            alert('エラー: ' + data.message);
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+    })
+    .catch(e => {
+        console.error(e);
+        alert('通信エラーが発生しました');
+        btn.disabled = false;
+        btn.innerHTML = originalText;
     });
 }
 </script>

@@ -30,7 +30,7 @@ $storagePath = $_GET['path'] ?? '';
         }
     }
     
-    if (!$isOwner) {
+    if (!$isOwner && $userPlan !== 'admin') {
     
     $isMutual = false;
     if ($targetUid) {
