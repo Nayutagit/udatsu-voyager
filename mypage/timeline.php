@@ -24,6 +24,7 @@ function getUserProfile($targetUid, $userDir) {
 }
 
 $myFollowing = getList($userDir . $uid . '_following.json');
+$myFollowers = getList($userDir . $uid . '_followers.json');
 
 // profiles cache to speed up loading
 $profilesCache = [];
@@ -31,8 +32,12 @@ $profilesCache = [];
 // Collect shared posts
 $timelinePosts = [];
 
-// 1. Collect from following
+// 1. Collect from mutual followers
 foreach ($myFollowing as $followUid) {
+    if (!in_array($followUid, $myFollowers)) {
+        continue; // Only mutual followers
+    }
+
     $postsFile = $userDir . $followUid . '_posts.json';
     if (file_exists($postsFile)) {
         $followPosts = json_decode(file_get_contents($postsFile), true) ?: [];
@@ -47,7 +52,7 @@ foreach ($myFollowing as $followUid) {
             $isShared = !empty($post['is_shared']);
             
             // Allow 'エラー' only for Admin
-            $allowedStatus = ['My Udastack追加済', ''];
+            $allowedStatus = ['My Udastack追加済', '', 'Inbox'];
             if ($userPlan === 'admin') {
                 $allowedStatus[] = 'エラー';
             }
@@ -73,7 +78,7 @@ if (file_exists($myPostsFile)) {
     
     foreach ($myPosts as $idx => $post) {
         $status = $post['status'] ?? '';
-        $allowedStatus = ['My Udastack追加済', ''];
+        $allowedStatus = ['My Udastack追加済', '', 'Inbox'];
         if ($userPlan === 'admin') $allowedStatus[] = 'エラー';
 
         if (!empty($post['is_shared']) && (in_array($status, $allowedStatus) || $status === '')) {

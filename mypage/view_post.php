@@ -314,8 +314,16 @@ $thumbnail = $post['thumbnail'] ?? '';
       <?php endif; ?>
       
       <?php if ($audio): ?>
+        <?php
+          $audioSrc = "";
+          if (strpos($audio, 'audio/') === 0 || strpos($audio, 'uploads/') === 0) {
+              $audioSrc = "../audio_proxy.php?target_uid=" . urlencode($targetUid) . "&path=" . urlencode($audio);
+          } else {
+              $audioSrc = "../users/" . urlencode($targetUid) . "/posts/" . urlencode($audio);
+          }
+        ?>
         <audio controls>
-          <source src="<?= htmlspecialchars($isOwner ? "../users/{$targetUid}/posts/{$audio}" : "../audio_proxy.php?target_uid={$targetUid}&path={$audio}") ?>" type="audio/mpeg">
+          <source src="<?= htmlspecialchars($audioSrc) ?>" type="audio/mpeg">
           お使いのブラウザは音声再生に対応していません。
         </audio>
       <?php endif; ?>
