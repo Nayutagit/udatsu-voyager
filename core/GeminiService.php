@@ -134,7 +134,7 @@ class GeminiService {
     }
 
     private function generateContent($fileUri, $mimeType) {
-        $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={$this->apiKey}";
+        $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={$this->apiKey}";
         
         $postData = [
             "contents" => [
@@ -170,7 +170,7 @@ class GeminiService {
             curl_close($ch);
             
             if ($curlError) {
-                return "文字起こし中に通信エラーが発生しました: " . $curlError;
+                throw new Exception("文字起こし中に通信エラーが発生しました: " . $curlError);
             }
             
             $data = json_decode($response, true);
@@ -190,15 +190,15 @@ class GeminiService {
                         sleep(15 * $attempt); // 15s, 30s, 45s (Rate limits usually need 20s+)
                         continue;
                     }
-                    return "AIサーバーが混雑しています（" . $errorMsg . "）。時間をおいて再度アップロードしてください。";
+                    throw new Exception("AIサーバーが混雑しています（" . $errorMsg . "）。時間をおいて再度アップロードしてください。");
                 }
-                return "APIエラーが発生しました: " . $errorMsg;
+                throw new Exception("APIエラーが発生しました: " . $errorMsg);
             }
             
-            return "予期せぬレスポンスが返されました。";
+            throw new Exception("予期せぬレスポンスが返されました。");
         }
         
-        return "サーバー混雑により文字起こしを完了できませんでした。後ほど再試行してください。";
+        throw new Exception("サーバー混雑により文字起こしを完了できませんでした。後ほど再試行してください。");
     }
 
     /**
