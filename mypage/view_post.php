@@ -21,7 +21,7 @@ $title = $post['title'] ?? '';
 $text = $post['text'] ?? '';
 $date = $post['date'] ?? '';
 $category = $post['category'] ?? '';
-$audio = $post['audio'] ?? '';
+$audio = $post['audio_file'] ?? $post['audio'] ?? '';
 $thumbnail = $post['thumbnail'] ?? '';
 ?>
 <!DOCTYPE html>
@@ -307,7 +307,11 @@ $thumbnail = $post['thumbnail'] ?? '';
       <div id="view-title" class="post-title"><?php echo htmlspecialchars($title); ?></div>
       <input id="edit-title" type="text" value="<?php echo htmlspecialchars($title); ?>" style="display:none; width:100%; font-size:1.4rem; font-weight:700; background:rgba(255,255,255,0.08); border:1px solid rgba(252,200,0,0.5); border-radius:10px; padding:10px 14px; color:#fff; margin-bottom:1rem; box-sizing:border-box;">
 
-      <div class="post-meta"><?php echo htmlspecialchars($date); ?></div>
+      <div id="view-date" class="post-meta"><?php echo htmlspecialchars($date); ?></div>
+      <div id="edit-date-container" style="display:none; margin-bottom:1.5rem;">
+        <label style="color:var(--text-muted); font-size:0.9rem; font-weight:600; display:block; margin-bottom:6px;">収録日:</label>
+        <input id="edit-date" type="date" value="<?php echo htmlspecialchars($date); ?>" style="width:100%; max-width:250px; font-size:1rem; background:rgba(255,255,255,0.08); border:1px solid rgba(252,200,0,0.4); border-radius:10px; padding:8px 12px; color:#fff; box-sizing:border-box;">
+      </div>
       
       <?php if ($thumbnail): ?>
         <img class="thumbnail" src="../<?php echo htmlspecialchars($thumbnail); ?>" alt="アイキャッチ画像">
@@ -316,16 +320,24 @@ $thumbnail = $post['thumbnail'] ?? '';
       <?php if ($audio): ?>
         <?php
           $audioSrc = "";
+          $downloadSrc = "";
           if (strpos($audio, 'audio/') === 0 || strpos($audio, 'uploads/') === 0) {
-              $audioSrc = "../audio_proxy.php?target_uid=" . urlencode($targetUid) . "&path=" . urlencode($audio);
+              $audioSrc    = "../audio_proxy.php?target_uid=" . urlencode($targetUid) . "&path=" . urlencode($audio);
+              $downloadSrc = "../audio_proxy.php?target_uid=" . urlencode($targetUid) . "&path=" . urlencode($audio) . "&download=1";
           } else {
-              $audioSrc = "../users/" . urlencode($targetUid) . "/posts/" . urlencode($audio);
+              $audioSrc    = "../users/" . urlencode($targetUid) . "/posts/" . urlencode($audio);
+              $downloadSrc = "../users/" . urlencode($targetUid) . "/posts/" . urlencode($audio);
           }
         ?>
-        <audio controls>
+        <audio controls style="margin-bottom: 1rem;">
           <source src="<?= htmlspecialchars($audioSrc) ?>" type="audio/mpeg">
           お使いのブラウザは音声再生に対応していません。
         </audio>
+        <div style="margin-top: -5px; margin-bottom: 2.5rem; display: flex; justify-content: flex-end;">
+          <a href="<?= htmlspecialchars($downloadSrc) ?>" class="btn-small" style="background: rgba(0,255,204,0.05); color: var(--primary-neon); border: 1px solid rgba(0,255,204,0.4); border-radius: 8px; padding: 8px 14px; cursor: pointer; font-size: 0.85rem; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; transition: 0.3s;">
+            <i class="fas fa-download"></i> 音声をダウンロード
+          </a>
+        </div>
       <?php endif; ?>
       
       <?php if (!empty($post['summary'])): ?>
@@ -367,6 +379,8 @@ $thumbnail = $post['thumbnail'] ?? '';
       isEditing = true;
       document.getElementById('view-title').style.display = 'none';
       document.getElementById('edit-title').style.display = 'block';
+      document.getElementById('view-date').style.display  = 'none';
+      document.getElementById('edit-date-container').style.display = 'block';
       document.getElementById('view-text').style.display  = 'none';
       document.getElementById('edit-text').style.display  = 'block';
       document.getElementById('btn-edit').style.display   = 'none';
@@ -380,6 +394,8 @@ $thumbnail = $post['thumbnail'] ?? '';
       isEditing = false;
       document.getElementById('view-title').style.display = 'block';
       document.getElementById('edit-title').style.display = 'none';
+      document.getElementById('view-date').style.display  = 'block';
+      document.getElementById('edit-date-container').style.display = 'none';
       document.getElementById('view-text').style.display  = 'block';
       document.getElementById('edit-text').style.display  = 'none';
       document.getElementById('btn-edit').style.display   = 'flex';
@@ -394,11 +410,13 @@ $thumbnail = $post['thumbnail'] ?? '';
       saveBtn.disabled = true;
 
       const newTitle = document.getElementById('edit-title').value.trim();
+      const newDate  = document.getElementById('edit-date').value.trim();
       const newText  = document.getElementById('edit-text').value.trim();
 
       const fd = new FormData();
       fd.append('index', postIndex);
       fd.append('title', newTitle);
+      fd.append('date',  newDate);
       fd.append('text',  newText);
 
       try {
@@ -407,6 +425,7 @@ $thumbnail = $post['thumbnail'] ?? '';
         if (data.status === 'ok') {
           // 表示を更新してビューモードに戻る
           document.getElementById('view-title').textContent = newTitle;
+          document.getElementById('view-date').textContent = newDate;
           document.getElementById('view-text').innerHTML = marked.parse(newText);
           document.title = newTitle + ' | Udatsu投稿詳細';
           cancelEdit();

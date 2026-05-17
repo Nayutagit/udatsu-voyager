@@ -43,11 +43,11 @@ class FirebaseService {
     /**
      * Generate a short-lived signed URL (1 week) for a storage path.
      */
-    public function getSignedUrl(string $storagePath, int $expiryMinutes = 10080): string {
+    public function getSignedUrl(string $storagePath, int $expiryMinutes = 10080, array $options = []): string {
         $bucket = $this->getBucket();
         $object = $bucket->object($storagePath);
 
-        $signedUrl = $object->signedUrl(new \DateTime("+{$expiryMinutes} minutes"));
+        $signedUrl = $object->signedUrl(new \DateTime("+{$expiryMinutes} minutes"), $options);
         return (string) $signedUrl;
     }
 

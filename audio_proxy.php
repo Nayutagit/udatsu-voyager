@@ -52,8 +52,22 @@ $storagePath = $_GET['path'] ?? '';
     }
 }
 
+$download = isset($_GET['download']) && $_GET['download'] === '1';
+
 // Serve local fallback if needed
 if (strpos($storagePath, 'uploads/') === 0 && file_exists(__DIR__ . '/' . $storagePath)) {
+    if ($download) {
+        $filename = basename($storagePath);
+        header('Content-Description: File Transfer');
+        header('Content-Type: application/octet-stream');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Expires: 0');
+        header('Cache-Control: must-revalidate');
+        header('Pragma: public');
+        header('Content-Length: ' . filesize(__DIR__ . '/' . $storagePath));
+        readfile(__DIR__ . '/' . $storagePath);
+        exit();
+    }
     header("Location: /" . $storagePath, true, 302);
     exit();
 }
@@ -61,7 +75,16 @@ if (strpos($storagePath, 'uploads/') === 0 && file_exists(__DIR__ . '/' . $stora
 try {
     require_once __DIR__ . '/core/FirebaseService.php';
     $firebase = new FirebaseService();
-    $signedUrl = $firebase->getSignedUrl($storagePath, 60); // 60 minute signed URL
+    
+    $options = [];
+    if ($download) {
+        $filename = basename($storagePath);
+        $options['queryParams'] = [
+            'responseContentDisposition' => 'attachment; filename="' . rawurlencode($filename) . '"'
+        ];
+    }
+    
+    $signedUrl = $firebase->getSignedUrl($storagePath, 60, $options); // 60 minute signed URL
     header("Location: {$signedUrl}", true, 302);
 } catch (Exception $e) {
     http_response_code(500);
