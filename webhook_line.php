@@ -94,17 +94,18 @@ foreach ($events['events'] as $event) {
             $posts        = file_exists($postsFile) ? json_decode(file_get_contents($postsFile), true) : [];
             if (!is_array($posts)) $posts = [];
             array_unshift($posts, [
-                'id'         => $jobId,
-                'title'      => $originalTitle ?: '音声メモ',
-                'text'       => '',
-                'summary'    => '',
-                'date'       => date('Y-m-d'),
-                'category'   => 'ボイスジャーナル',
-                'audio_file' => $targetPath,
-                'audio'      => '',
-                'thumbnail'  => '',
-                'status'     => '解析中',
-                'is_shared'  => 0,
+                'id'             => $jobId,
+                'title'          => $originalTitle ?: '音声メモ',
+                'original_title' => $originalTitle ?: '音声メモ',
+                'text'           => '',
+                'summary'        => '',
+                'date'           => date('Y-m-d'),
+                'category'       => 'ボイスジャーナル',
+                'audio_file'     => $targetPath,
+                'audio'          => '',
+                'thumbnail'      => '',
+                'status'         => '解析中',
+                'is_shared'      => 0,
             ]);
             file_put_contents($postsFile, json_encode($posts, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
             file_put_contents(__DIR__ . '/webhook_debug.txt', date('Y-m-d H:i:s') . " - Pending post created: $jobId\n", FILE_APPEND);

@@ -307,6 +307,16 @@ $thumbnail = $post['thumbnail'] ?? '';
       <div id="view-title" class="post-title"><?php echo htmlspecialchars($title); ?></div>
       <input id="edit-title" type="text" value="<?php echo htmlspecialchars($title); ?>" style="display:none; width:100%; font-size:1.4rem; font-weight:700; background:rgba(255,255,255,0.08); border:1px solid rgba(252,200,0,0.5); border-radius:10px; padding:10px 14px; color:#fff; margin-bottom:1rem; box-sizing:border-box;">
 
+      <?php $originalTitle = $post['original_title'] ?? ''; ?>
+      <!-- 元ファイル名（表示/編集切り替え） -->
+      <div id="view-original-title" style="font-size: 1.1rem; color: var(--text-muted); margin-top: -5px; margin-bottom: 1.5rem; display: <?php echo !empty($originalTitle) ? 'block' : 'none'; ?>;">
+        <i class="fas fa-file-audio"></i> 元ファイル名: <span id="view-original-title-text"><?php echo htmlspecialchars($originalTitle); ?></span>
+      </div>
+      <div id="edit-original-title-container" style="display:none; margin-bottom:1.5rem;">
+        <label style="color:var(--text-muted); font-size:0.9rem; font-weight:600; display:block; margin-bottom:6px;">元ファイル名:</label>
+        <input id="edit-original-title" type="text" value="<?php echo htmlspecialchars($originalTitle); ?>" style="width:100%; font-size:1.1rem; background:rgba(255,255,255,0.08); border:1px solid rgba(252,200,0,0.4); border-radius:10px; padding:8px 12px; color:#fff; box-sizing:border-box;">
+      </div>
+
       <div id="view-date" class="post-meta"><?php echo htmlspecialchars($date); ?></div>
       <div id="edit-date-container" style="display:none; margin-bottom:1.5rem;">
         <label style="color:var(--text-muted); font-size:0.9rem; font-weight:600; display:block; margin-bottom:6px;">収録日:</label>
@@ -379,6 +389,8 @@ $thumbnail = $post['thumbnail'] ?? '';
       isEditing = true;
       document.getElementById('view-title').style.display = 'none';
       document.getElementById('edit-title').style.display = 'block';
+      document.getElementById('view-original-title').style.display = 'none';
+      document.getElementById('edit-original-title-container').style.display = 'block';
       document.getElementById('view-date').style.display  = 'none';
       document.getElementById('edit-date-container').style.display = 'block';
       document.getElementById('view-text').style.display  = 'none';
@@ -394,6 +406,9 @@ $thumbnail = $post['thumbnail'] ?? '';
       isEditing = false;
       document.getElementById('view-title').style.display = 'block';
       document.getElementById('edit-title').style.display = 'none';
+      const origTitleVal = document.getElementById('edit-original-title').value.trim();
+      document.getElementById('view-original-title').style.display = origTitleVal ? 'block' : 'none';
+      document.getElementById('edit-original-title-container').style.display = 'none';
       document.getElementById('view-date').style.display  = 'block';
       document.getElementById('edit-date-container').style.display = 'none';
       document.getElementById('view-text').style.display  = 'block';
@@ -410,12 +425,14 @@ $thumbnail = $post['thumbnail'] ?? '';
       saveBtn.disabled = true;
 
       const newTitle = document.getElementById('edit-title').value.trim();
+      const newOriginalTitle = document.getElementById('edit-original-title').value.trim();
       const newDate  = document.getElementById('edit-date').value.trim();
       const newText  = document.getElementById('edit-text').value.trim();
 
       const fd = new FormData();
       fd.append('index', postIndex);
       fd.append('title', newTitle);
+      fd.append('original_title', newOriginalTitle);
       fd.append('date',  newDate);
       fd.append('text',  newText);
 
@@ -425,6 +442,7 @@ $thumbnail = $post['thumbnail'] ?? '';
         if (data.status === 'ok') {
           // 表示を更新してビューモードに戻る
           document.getElementById('view-title').textContent = newTitle;
+          document.getElementById('view-original-title-text').textContent = newOriginalTitle;
           document.getElementById('view-date').textContent = newDate;
           document.getElementById('view-text').innerHTML = marked.parse(newText);
           document.title = newTitle + ' | Udatsu投稿詳細';

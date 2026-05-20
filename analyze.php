@@ -23,9 +23,11 @@ $posts = file_exists($userPostsFile) ? json_decode(file_get_contents($userPostsF
 if (!is_array($posts)) $posts = [];
 
 $jobId = 'job_' . time() . '_' . rand(1000, 9999);
+$originalTitle = $_SESSION["original_name"] ?? '';
 $newPost = [
     'id'            => $jobId,
     'title'         => '🎙 ' . date('H:i') . 'の音声を解析中...',
+    'original_title'=> $originalTitle ?: '音声メモ',
     'text'          => "AIが文字起こしならびに文脈をインデックスしています。\nバックグラウンドで処理中のため、完了までしばらくお待ちください。\n（60分の音声の場合、数分〜10分程度かかることがあります）\n\n完了すると自動的に Inbox に入ります。",
     'original_text' => '',
     'content'       => '',
@@ -63,6 +65,6 @@ require_once __DIR__ . '/core/FirebaseService.php';
 require_once __DIR__ . '/analysis_core.php';
 
 // Execute using the core function
-run_analysis_for_post($uid, $audioPath, $jobId);
+run_analysis_for_post($uid, $audioPath, $jobId, $originalTitle);
 
 exit();

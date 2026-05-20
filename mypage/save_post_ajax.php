@@ -28,21 +28,23 @@ if (!isset($posts[$index])) {
     exit;
 }
 
-$title = trim($_POST['title'] ?? '');
-$text  = trim($_POST['text']  ?? '');
-$date  = trim($_POST['date']  ?? '');
+$title         = trim($_POST['title'] ?? '');
+$originalTitle = trim($_POST['original_title'] ?? '');
+$text          = trim($_POST['text']  ?? '');
+$date          = trim($_POST['date']  ?? '');
 
 if (empty($title)) {
     echo json_encode(['status' => 'error', 'message' => 'タイトルは必須です']);
     exit;
 }
 
-$posts[$index]['title'] = $title;
-$posts[$index]['text']  = $text;
+$posts[$index]['title']          = $title;
+$posts[$index]['original_title'] = $originalTitle;
+$posts[$index]['text']           = $text;
 if (!empty($date)) {
     $posts[$index]['date'] = $date;
 }
 
 file_put_contents($postsFile, json_encode($posts, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 
-echo json_encode(['status' => 'ok', 'title' => $title, 'text' => $text, 'date' => $date]);
+echo json_encode(['status' => 'ok', 'title' => $title, 'original_title' => $originalTitle, 'text' => $text, 'date' => $date]);

@@ -43,6 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $posts[$index] = [
     'id' => $post['id'] ?? uniqid('job_'),
     'title' => $title,
+    'original_title' => htmlspecialchars($_POST['original_title'] ?? $post['original_title'] ?? '', ENT_QUOTES, 'UTF-8'),
     'text' => $text,
     'original_text' => $post['original_text'] ?? '',
     'content' => $post['content'] ?? '',
@@ -293,6 +294,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <form method="POST" enctype="multipart/form-data">
       <label>タイトル</label>
       <input type="text" name="title" value="<?php echo htmlspecialchars($post['title']); ?>" required>
+
+      <label>元ファイル名</label>
+      <input type="text" name="original_title" value="<?php echo htmlspecialchars($post['original_title'] ?? ''); ?>">
 
       <label>本文</label>
       <textarea name="text" required><?php echo htmlspecialchars($post['text']); ?></textarea>

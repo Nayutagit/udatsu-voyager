@@ -32,6 +32,7 @@ function run_analysis_for_post(string $uid, string $audioPath, string $jobId, st
         $posts[] = [
             'id'            => $jobId,
             'title'         => '🎙 ' . date('H:i') . 'の音声を解析中...',
+            'original_title'=> $originalTitle ?: '音声メモ',
             'text'          => "音声を解析中です。数分後にマイページをリロードしてください。",
             'original_text' => '',
             'date'          => date('Y-m-d'),
@@ -43,6 +44,7 @@ function run_analysis_for_post(string $uid, string $audioPath, string $jobId, st
         foreach ($posts as &$p) {
             if (($p['id'] ?? '') === $jobId) {
                 $p['status']  = '解析中';
+                $p['original_title'] = !empty($originalTitle) ? $originalTitle : ($p['original_title'] ?? '音声メモ');
                 $existingText = $p['original_text'] ?? ($p['text'] ?? '');
                 $existingAudio = $p['audio_file'] ?? '';
                 break;
@@ -52,6 +54,8 @@ function run_analysis_for_post(string $uid, string $audioPath, string $jobId, st
         file_put_contents($userPostsFile, json_encode($posts, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
     }
 
+    $tempLocalPath = null;
+
     try {
         // --- 文字起こし or テキスト再利用 ---
         if ($isTextOnlyRetry) {
@@ -59,18 +63,65 @@ function run_analysis_for_post(string $uid, string $audioPath, string $jobId, st
             $storagePath = $existingAudio;
         } else {
             $localPath = $root . '/' . $audioPath;
+            $isTemporaryLocal = false;
+
+            // Check if local file is missing but exists on Firebase
+            if (!file_exists($localPath)) {
+                file_put_contents($logFile, date('Y-m-d H:i:s') . " - Local file missing: $localPath. Checking Firebase...\n", FILE_APPEND);
+                try {
+                    $firebase = new FirebaseService();
+                    if ($firebase->audioExists($audioPath)) {
+                        file_put_contents($logFile, date('Y-m-d H:i:s') . " - Audio exists on Firebase. Downloading...\n", FILE_APPEND);
+                        $signedUrl = $firebase->getSignedUrl($audioPath);
+                        $tempDir = $root . '/uploads/temp/';
+                        if (!file_exists($tempDir)) {
+                            mkdir($tempDir, 0777, true);
+                            chmod($tempDir, 0777);
+                        }
+                        
+                        $ext = strtolower(pathinfo($audioPath, PATHINFO_EXTENSION)) ?: 'm4a';
+                        $tempLocalPath = $tempDir . 'download_' . $jobId . '_' . time() . '.' . $ext;
+                        
+                        // Download using curl
+                        $ch = curl_init($signedUrl);
+                        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+                        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+                        curl_setopt($ch, CURLOPT_TIMEOUT, 300);
+                        $audioData = curl_exec($ch);
+                        curl_close($ch);
+                        
+                        if ($audioData) {
+                            file_put_contents($tempLocalPath, $audioData);
+                            $localPath = $tempLocalPath;
+                            $isTemporaryLocal = true;
+                            file_put_contents($logFile, date('Y-m-d H:i:s') . " - Downloaded to temp path: $localPath\n", FILE_APPEND);
+                        } else {
+                            throw new Exception("Firebaseからの音声データのダウンロードに失敗しました。");
+                        }
+                    } else {
+                        throw new Exception("ローカルファイルもFirebase上の音声ファイルも見つかりません。");
+                    }
+                } catch (Throwable $fe) {
+                    file_put_contents($logFile, date('Y-m-d H:i:s') . " - Firebase recovery failed: " . $fe->getMessage() . "\n", FILE_APPEND);
+                    throw new Exception("音声ファイルが見つかりません: " . $fe->getMessage());
+                }
+            }
+
             $ext       = strtolower(pathinfo($audioPath, PATHINFO_EXTENSION));
             $mimeMap   = ['m4a' => 'audio/mp4', 'mp4' => 'audio/mp4', 'mp3' => 'audio/mpeg', 'wav' => 'audio/wav', 'ogg' => 'audio/ogg'];
             $mimeType  = $mimeMap[$ext] ?? 'audio/mp4';
 
-            // Firebase アップロード（失敗してもローカルパスで継続）
+            // Firebase アップロード（一時ローカルファイルでない場合のみアップロード実行）
             $storagePath = $audioPath;
-            try {
-                $firebase    = new FirebaseService();
-                $storagePath = $firebase->uploadAudio($localPath, $uid);
-                file_put_contents($logFile, date('Y-m-d H:i:s') . " - Firebase upload OK: $storagePath\n", FILE_APPEND);
-            } catch (Throwable $fe) {
-                file_put_contents($logFile, date('Y-m-d H:i:s') . " - Firebase upload failed (continuing): " . $fe->getMessage() . "\n", FILE_APPEND);
+            if (!$isTemporaryLocal) {
+                try {
+                    $firebase    = new FirebaseService();
+                    $storagePath = $firebase->uploadAudio($localPath, $uid);
+                    file_put_contents($logFile, date('Y-m-d H:i:s') . " - Firebase upload OK: $storagePath\n", FILE_APPEND);
+                } catch (Throwable $fe) {
+                    file_put_contents($logFile, date('Y-m-d H:i:s') . " - Firebase upload failed (continuing): " . $fe->getMessage() . "\n", FILE_APPEND);
+                }
             }
 
             // 文字起こし
@@ -128,12 +179,13 @@ function run_analysis_for_post(string $uid, string $audioPath, string $jobId, st
         $found = false;
         foreach ($posts as &$p) {
             if (($p['id'] ?? '') === $jobId) {
-                $p['title']         = $finalTitle;
-                $p['text']          = $article;
-                $p['summary']       = $summary;
-                $p['original_text'] = $raw;
-                $p['date']          = $postDateStr;
-                $p['status']        = 'Inbox';
+                $p['title']          = $finalTitle;
+                $p['original_title'] = !empty($originalTitle) ? $originalTitle : ($p['original_title'] ?? '音声メモ');
+                $p['text']           = $article;
+                $p['summary']        = $summary;
+                $p['original_text']  = $raw;
+                $p['date']           = $postDateStr;
+                $p['status']         = 'Inbox';
                 if (!empty($storagePath)) $p['audio_file'] = $storagePath;
                 unset($p['local_path']);
                 $found = true;
@@ -143,16 +195,17 @@ function run_analysis_for_post(string $uid, string $audioPath, string $jobId, st
         if (!$found) {
             // 投稿が見つからない場合は、新規作成（これが無いとマイページに現れない）
             array_unshift($posts, [
-                'id'         => $jobId,
-                'title'      => $finalTitle,
-                'text'       => $article,
-                'summary'    => $summary,
-                'date'       => $postDateStr,
-                'category'   => 'ボイスジャーナル',
-                'audio_file' => $storagePath,
-                'status'     => 'Inbox',
-                'original_text' => $raw,
-                'is_shared'  => 0,
+                'id'             => $jobId,
+                'title'          => $finalTitle,
+                'original_title' => $originalTitle ?: '音声メモ',
+                'text'           => $article,
+                'summary'        => $summary,
+                'date'           => $postDateStr,
+                'category'       => 'ボイスジャーナル',
+                'audio_file'     => $storagePath,
+                'status'         => 'Inbox',
+                'original_text'  => $raw,
+                'is_shared'      => 0,
             ]);
         }
         unset($p);
@@ -180,6 +233,11 @@ function run_analysis_for_post(string $uid, string $audioPath, string $jobId, st
         }
         unset($p);
         file_put_contents($userPostsFile, json_encode($posts, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+    } finally {
+        if (!empty($tempLocalPath) && file_exists($tempLocalPath)) {
+            @unlink($tempLocalPath);
+            file_put_contents($logFile, date('Y-m-d H:i:s') . " - Cleaned up temp local file: $tempLocalPath\n", FILE_APPEND);
+        }
     }
 }
 

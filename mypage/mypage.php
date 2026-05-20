@@ -212,12 +212,13 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
                   $postStatus = $post['status'] ?? '';
                   $postTitle = $post['title'] ?? '';
                   $isRawTitle = preg_match('/^新規録音/', $postTitle) || $postTitle === '🎙';
+                  $isFailed = ($postStatus === 'エラー' || strpos($postTitle, '解析エラー') !== false || $isRawTitle || (empty($post['summary']) && empty($post['text']) && (!empty($post['audio_file']) || !empty($post['audio'])) && $postStatus !== '解析中'));
                 ?>
                 <?php if ($postStatus === '解析中'): ?>
                   <span style="background: rgba(0, 255, 204, 0.2); color: var(--primary-neon); padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;"><i class="fas fa-spinner fa-spin"></i> 解析中...</span>
                 <?php elseif ($postStatus === 'エラー' || strpos($postTitle, '解析エラー') !== false || $isRawTitle): ?>
-                  <span id="retry-badge-<?= $i ?>" style="background: rgba(255, 68, 68, 0.2); color: #ff4444; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem; cursor: pointer;" onclick="handlePostAction(<?= $i ?>, 'retry')">
-                    <i class="fas fa-redo"></i> <?= $isRawTitle && $postStatus !== 'エラー' ? '解析する' : '❌ 解析エラー (再試行)' ?>
+                  <span id="retry-badge-<?= $i ?>" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem; cursor: pointer; border: 1px solid rgba(245, 158, 11, 0.3);" onclick="handlePostAction(<?= $i ?>, 'retry')">
+                    <i class="fas fa-redo"></i> <?= $isRawTitle && $postStatus !== 'エラー' ? '🔄 AI解析する' : '🔄 AI解析を再試行' ?>
                   </span>
                 <?php elseif ($postStatus === 'Inbox'): ?>
                   <span style="background: rgba(0, 164, 216, 0.2); color: var(--accent-teal); padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;"><i class="fas fa-check-double"></i> 解析完了</span>
@@ -237,6 +238,12 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
               <h3 class="post-title" style="min-height: auto; margin-bottom: 10px;">
                 <a href="view_post.php?index=<?= $i ?>"><?= htmlspecialchars(mb_strimwidth($post['title'], 0, 50, '...')) ?></a>
               </h3>
+              
+              <?php if (!empty($post['original_title'])): ?>
+                <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px; display: flex; align-items: center; gap: 5px;">
+                  <i class="fas fa-file-audio"></i> 元ファイル名: <span><?= htmlspecialchars(mb_strimwidth($post['original_title'], 0, 50, '...')) ?></span>
+                </div>
+              <?php endif; ?>
               
               <?php
                 $hasSummary = !empty($post['summary']) && $post['summary'] !== '(要約解析失敗)';
@@ -282,29 +289,44 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
                   <i class="fas fa-trash"></i> Delete
                 </button>
                 
-                <div id="stack-btn-container-<?= $i ?>" style="display: flex;">
-                  <?php if (($post['status'] ?? '') === 'My Udastack追加済'): ?>
-                    <button type="button" onclick="handlePostAction(<?= $i ?>, 'unstack')" class="btn btn-primary" style="padding: 5px 10px; font-size: 0.8rem; flex: 1; border-color: var(--primary-neon); background: rgba(252, 200, 0, 0.1); color: var(--primary-neon);">
-                      <i class="fas fa-check"></i> Stacked
+                <?php if ($isFailed): ?>
+                  <div id="retry-btn-container-<?= $i ?>" style="grid-column: span 2; display: flex; margin-top: 5px;">
+                    <button type="button" onclick="handlePostAction(<?= $i ?>, 'retry')" class="btn btn-primary" style="padding: 8px 15px; font-size: 0.85rem; width: 100%; background: #ffda44; color: #000; font-weight: bold; border-radius: 8px; border: none; box-shadow: 0 0 10px rgba(255, 218, 68, 0.4); cursor: pointer; transition: 0.3s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                      <i class="fas fa-redo"></i> AI解析を再試行する
                     </button>
-                  <?php else: ?>
-                    <button type="button" onclick="handlePostAction(<?= $i ?>, 'stack')" class="btn btn-primary" style="padding: 5px 10px; font-size: 0.8rem; width: 100%;">
-                      <i class="fas fa-plus"></i> Stack
-                    </button>
+                  </div>
+                <?php else: ?>
+                  <div id="stack-btn-container-<?= $i ?>" style="display: flex;">
+                    <?php if (($post['status'] ?? '') === 'My Udastack追加済'): ?>
+                      <button type="button" onclick="handlePostAction(<?= $i ?>, 'unstack')" class="btn btn-primary" style="padding: 5px 10px; font-size: 0.8rem; flex: 1; border-color: var(--primary-neon); background: rgba(252, 200, 0, 0.1); color: var(--primary-neon);">
+                        <i class="fas fa-check"></i> Stacked
+                      </button>
+                    <?php else: ?>
+                      <button type="button" onclick="handlePostAction(<?= $i ?>, 'stack')" class="btn btn-primary" style="padding: 5px 10px; font-size: 0.8rem; width: 100%;">
+                        <i class="fas fa-plus"></i> Stack
+                      </button>
+                    <?php endif; ?>
+                  </div>
+                  
+                  <div id="share-btn-container-<?= $i ?>" style="display: flex;">
+                    <?php if (!empty($post['is_shared'])): ?>
+                      <button type="button" onclick="handlePostAction(<?= $i ?>, 'unshare')" class="btn btn-secondary" style="padding: 5px 10px; font-size: 0.8rem; width: 100%; border-color: #a855f7; color: #a855f7;">
+                        <i class="fas fa-share-alt"></i> Shared
+                      </button>
+                    <?php else: ?>
+                      <button type="button" onclick="handlePostAction(<?= $i ?>, 'share')" class="btn btn-secondary" style="padding: 5px 10px; font-size: 0.8rem; width: 100%;">
+                        <i class="fas fa-share-alt"></i> Share
+                      </button>
+                    <?php endif; ?>
+                  </div>
+                  <?php if (!empty($post['audio_file']) || !empty($post['audio'])): ?>
+                    <div id="retry-btn-container-<?= $i ?>" style="grid-column: span 2; display: flex; margin-top: 6px;">
+                      <button type="button" onclick="handlePostAction(<?= $i ?>, 'retry')" class="btn btn-secondary" style="padding: 5px 10px; font-size: 0.75rem; width: 100%; border-color: rgba(245,158,11,0.4); color: #f59e0b; background: rgba(245,158,11,0.05); border-radius: 8px; transition: 0.3s;" onmouseover="this.style.background='rgba(245,158,11,0.12)'" onmouseout="this.style.background='rgba(245,158,11,0.05)'">
+                        <i class="fas fa-redo"></i> 音声から再解析する
+                      </button>
+                    </div>
                   <?php endif; ?>
-                </div>
-                
-                <div id="share-btn-container-<?= $i ?>" style="display: flex;">
-                  <?php if (!empty($post['is_shared'])): ?>
-                    <button type="button" onclick="handlePostAction(<?= $i ?>, 'unshare')" class="btn btn-secondary" style="padding: 5px 10px; font-size: 0.8rem; width: 100%; border-color: #a855f7; color: #a855f7;">
-                      <i class="fas fa-share-alt"></i> Shared
-                    </button>
-                  <?php else: ?>
-                    <button type="button" onclick="handlePostAction(<?= $i ?>, 'share')" class="btn btn-secondary" style="padding: 5px 10px; font-size: 0.8rem; width: 100%;">
-                      <i class="fas fa-share-alt"></i> Share
-                    </button>
-                  <?php endif; ?>
-                </div>
+                <?php endif; ?>
               </div>
             </div>
           </div>
@@ -491,14 +513,25 @@ function handlePostAction(index, action) {
       } else if (action === 'retry') {
         const meta = document.getElementById('post-meta-' + index);
         // Find the retry badge and update it
-        const retryBadge = meta.querySelector('[onclick*="retry"]');
+        const retryBadge = meta ? meta.querySelector('[onclick*="retry"]') : null;
         if (retryBadge) {
           retryBadge.style.background = 'rgba(0, 255, 204, 0.2)';
           retryBadge.style.color = 'var(--primary-neon)';
           retryBadge.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 解析中...';
           retryBadge.onclick = null;
         }
+        
+        // Also update the big Retry button
+        const retryBtn = document.querySelector(`#retry-btn-container-${index} button`);
+        if (retryBtn) {
+          retryBtn.style.background = 'rgba(0, 255, 204, 0.2)';
+          retryBtn.style.color = 'var(--primary-neon)';
+          retryBtn.style.boxShadow = 'none';
+          retryBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 解析を開始しました...';
+          retryBtn.disabled = true;
+        }
         alert("再試行を開始しました。数分後に自動で反映されます。");
+        startPolling();
       }
     } else {
       alert(data.message || 'エラーが発生しました');
@@ -549,17 +582,22 @@ function regenSummary(index) {
   });
 }
 
-// Auto-poll: 解析中の投稿があれば5秒ごとに確認
-(function() {
-  const hasProcessing = <?php echo (isset($posts) && count(array_filter($posts, fn($p) => ($p['status'] ?? '') === '解析中')) > 0) ? 'true' : 'false'; ?>;
-  if (!hasProcessing) return;
-  let poll = setInterval(function() {
+let pollInterval = null;
+function startPolling() {
+  if (pollInterval) return;
+  pollInterval = setInterval(function() {
     fetch('poll_status.php')
       .then(r => r.json())
-      .then(d => { if (!d.has_processing) { clearInterval(poll); location.reload(); } })
+      .then(d => { if (!d.has_processing) { clearInterval(pollInterval); location.reload(); } })
       .catch(() => {});
   }, 5000);
-})();
+}
+
+// Auto-poll: 解析中の投稿があれば5秒ごとに確認
+const hasProcessing = <?php echo (isset($posts) && count(array_filter($posts, fn($p) => ($p['status'] ?? '') === '解析中')) > 0) ? 'true' : 'false'; ?>;
+if (hasProcessing) {
+  startPolling();
+}
 </script>
 </body>
 </html>

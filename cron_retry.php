@@ -50,7 +50,8 @@ foreach ($postFiles as $file) {
         if ($shouldRetry) {
             // audio_file or local_path
             $audioPath = $post['audio_file'] ?? $post['local_path'] ?? '';
-            if (!empty($audioPath) && file_exists($root . '/' . $audioPath)) {
+            $isFirebasePath = (strpos($audioPath, 'audio/') === 0);
+            if (!empty($audioPath) && (file_exists($root . '/' . $audioPath) || $isFirebasePath)) {
                 file_put_contents($logFile, date('Y-m-d H:i:s') . " - Retrying with AUDIO: uid=$uid, jobId=$jobId\n", FILE_APPEND);
                 $phpPath = '/usr/bin/php';
                 $cmd = escapeshellarg($phpPath) . ' '
