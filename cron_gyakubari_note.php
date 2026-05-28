@@ -120,51 +120,43 @@ try {
     // 7. 個人note記事一覧から最新記事と関連過去記事の抽出
     $indexLines = explode("\n", file_get_contents($indexFile));
     $articles = [];
-    $latestArticle = null;
+    $currentKeywords = [];
 
     foreach ($indexLines as $line) {
-        // 例: "73. 成功哲学は幻想だ" のような見出し行をパース
-        if (preg_match('/^(\d+)\.\s*(.*)$/', trim($line), $m)) {
-            $id = (int)$m[1];
-            $title = trim($m[2]);
-            $articles[$id] = [
-                'id' => $id,
+        $line = trim($line);
+        // 【キーワード】のキーワードのときは
+        if (preg_match('/^【(.*)】のキーワードのときは/u', $line, $m)) {
+            $currentKeywords = array_map('trim', explode('・', $m[1]));
+        }
+        // 【「タイトル」・URL】を挿入
+        elseif (preg_match('/^【「(.*)」・(https:\/\/note\.com\/mark136\/n\/[a-zA-Z0-9]+)】を挿入/u', $line, $m) && !empty($currentKeywords)) {
+            $title = $m[1];
+            $url = $m[2];
+            $articles[] = [
                 'title' => $title,
-                'keywords' => [],
-                'url' => 'https://note.com/mark136/n/n8e2ac3caecad' // デフォルト（インデックスからパースできない場合のフォールバック）
+                'url' => $url,
+                'keywords' => $currentKeywords
             ];
-            // 直近でパースしたものを最新記事として保持（昇順で書かれている前提）
-            if ($latestArticle === null || $id > $latestArticle['id']) {
-                $latestArticle = &$articles[$id];
-            }
-        }
-        // キーワード行のパース "キーワード: 成功哲学, 幻想, ..."
-        if (preg_match('/^キーワード:\s*(.*)$/u', trim($line), $m) && isset($id)) {
-            $kws = array_map('trim', explode(',', $m[1]));
-            $articles[$id]['keywords'] = $kws;
+            $currentKeywords = []; // リセット
         }
     }
 
-    // 最新記事のURLの補正
-    // Note_Articles.md からURLを特定する
-    $articlesDetail = file_exists($articlesFile) ? file_get_contents($articlesFile) : '';
-    if ($latestArticle !== null && !empty($articlesDetail)) {
-        // 例: `[73. 成功哲学は幻想だ](https://note.com/mark136/n/n8e2ac3caecad)` のようなリンクパターンを探す
-        $pattern = '/\[' . preg_quote($latestArticle['id'], '/') . '\.\s*' . preg_quote($latestArticle['title'], '/') . '\]\((https:\/\/note\.com\/mark136\/n\/[a-zA-Z0-9]+)\)/u';
-        if (preg_match($pattern, $articlesDetail, $m)) {
-            $latestArticle['url'] = $m[1];
-        }
+    if (empty($articles)) {
+        throw new Exception("Failed to parse articles from index file.");
     }
 
-    write_log("Latest article determined: No." . ($latestArticle['id'] ?? 'N/A') . " (" . ($latestArticle['title'] ?? 'N/A') . ")", $logFile);
+    // 最新記事は配列の最後（一番新しい記事）
+    $latestArticle = $articles[count($articles) - 1];
+
+    write_log("Latest article determined: " . ($latestArticle['title'] ?? 'N/A') . " (" . ($latestArticle['url'] ?? 'N/A') . ")", $logFile);
 
     // 関連過去記事の選定（キーワードマッチング）
     $relatedArticle = null;
     $maxMatches = 0;
     
     // エピソードの文字起こしから単語をスキャンしてマッチング
-    foreach ($articles as $id => $art) {
-        if ($latestArticle !== null && $id === $latestArticle['id']) continue; // 最新記事は除外
+    foreach ($articles as $art) {
+        if ($art['title'] === $latestArticle['title']) continue; // 最新記事は除外
         
         $matchesCount = 0;
         foreach ($art['keywords'] as $keyword) {
@@ -180,27 +172,16 @@ try {
         }
     }
 
-    // もしマッチするものがなければ、適当な代表過去記事をフォールバックとして使用（No.42など）
-    if ($relatedArticle === null && isset($articles[42])) {
-        $relatedArticle = $articles[42];
-    } elseif ($relatedArticle === null && !empty($articles)) {
-        // それでもなければ最後の要素の1つ前など
-        $keys = array_keys($articles);
-        $relatedArticle = $articles[$keys[count($keys) - 2]] ?? reset($articles);
-    }
-
-    // 関連過去記事のURLを特定
-    if ($relatedArticle !== null && !empty($articlesDetail)) {
-        $pattern = '/\[' . preg_quote($relatedArticle['id'], '/') . '\.\s*' . preg_quote($relatedArticle['title'], '/') . '\]\((https:\/\/note\.com\/mark136\/n\/[a-zA-Z0-9]+)\)/u';
-        if (preg_match($pattern, $articlesDetail, $m)) {
-            $relatedArticle['url'] = $m[1];
+    // もしマッチするものがなければ、適当な代表過去記事をフォールバックとして使用（最新以外の最後の1つ前など）
+    if ($relatedArticle === null) {
+        if (count($articles) > 1) {
+            $relatedArticle = $articles[count($articles) - 2];
         } else {
-            // URLが詳細ファイルから見つからない場合のフォールバック（代表URLなど、または予測）
-            $relatedArticle['url'] = 'https://note.com/mark136/n/ndde695622033'; // No.42のURL
+            $relatedArticle = $articles[0];
         }
     }
 
-    write_log("Related past article selected: No." . ($relatedArticle['id'] ?? 'N/A') . " (" . ($relatedArticle['title'] ?? 'N/A') . ")", $logFile);
+    write_log("Related past article selected: " . ($relatedArticle['title'] ?? 'N/A') . " (" . ($relatedArticle['url'] ?? 'N/A') . ")", $logFile);
 
     // 8. 過去の生成履歴から被り防止の文脈を作成
     $historyForEpisode = [];
