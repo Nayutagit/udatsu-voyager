@@ -17,6 +17,7 @@ $stateFile = $dataDir . 'state.json';
 $instructionsFile = $dataDir . '勇さん逆張りnote執筆指示文.txt';
 $indexFile = $dataDir . '勇さん個人note記事一覧.txt';
 $articlesFile = $dataDir . 'Isamu_Personal_Note_Articles.md';
+$archiveDir = $dataDir . 'archive/';
 $logFile = $dataDir . 'automation_log.txt';
 
 // ログ出力関数
@@ -256,13 +257,29 @@ try {
 
     write_log("Gemini generation successful. Title: $generatedTitle", $logFile);
 
+    // 10.5. 生成されたテキストをアーカイブ保存
+    if (!file_exists($archiveDir)) {
+        mkdir($archiveDir, 0777, true);
+    }
+    // エピソードのファイル名から.mdを外した名前で保存
+    $archiveFileName = preg_replace('/\.md$/i', '', $currentEpisode);
+    $archiveFile = $archiveDir . $archiveFileName . '.txt';
+    file_put_contents($archiveFile, $generatedText);
+    write_log("Article archived to $archiveFile", $logFile);
+
     // 11. メール送信の実行
     mb_language("Japanese");
     mb_internal_encoding("UTF-8");
 
     $to = "blb@nyct.jp";
     $subject = "【自動配信】今日の逆張りnote記事（" . $episodeNum . "）";
-    $body = $generatedText;
+    
+    // コピーツールへのシークレットURLを付記したメール本文
+    $body = $generatedText . "\n\n"
+          . "-----------------------------------------\n"
+          . "📋 Noteへの入稿用コピーツール（見出し・太字の装飾維持）\n"
+          . "https://udatsu-voyager.com/gyakubari_copy.php?ep=" . urlencode($archiveFileName) . "\n"
+          . "-----------------------------------------\n";
 
     // ヘッダーのエンコード
     $fromName = mb_encode_mimeheader("逆張りマーケラジオ自動配信", "UTF-8", "B");
