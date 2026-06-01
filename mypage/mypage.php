@@ -322,7 +322,7 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
       
       .post-actions-row {
         display: flex;
-        justify-content: space-between;
+        justify-content: flex-start;
         align-items: center;
         margin-top: 6px;
         gap: 6px;
@@ -353,7 +353,7 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
         }
       }
       
-      /* Streamlined Audio Player Styles */
+      /* Streamlined Standard Audio Player Styles */
       .post-audio-col {
         display: flex;
         align-items: center;
@@ -361,9 +361,15 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
         padding: 12px 16px;
         border-left: 1px solid rgba(255, 255, 255, 0.05);
         background: rgba(255, 255, 255, 0.01);
-        width: 260px;
-        min-width: 260px;
+        width: 250px;
+        min-width: 250px;
         flex-shrink: 0;
+      }
+      .post-audio-col audio {
+        width: 220px;
+        height: 28px;
+        border-radius: 14px;
+        outline: none;
       }
       @media (max-width: 768px) {
         .post-audio-col {
@@ -371,127 +377,12 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
           min-width: 0;
           border-left: none;
           border-top: 1px solid rgba(255, 255, 255, 0.05);
-          padding: 10px 12px;
+          padding: 8px 12px;
           background: rgba(255, 255, 255, 0.02);
         }
-      }
-      
-      .mini-player-container {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        width: 100%;
-      }
-      
-      .mini-player-controls {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 16px;
-      }
-      
-      .mini-player-btn {
-        background: none;
-        border: none;
-        color: var(--text-gray);
-        cursor: pointer;
-        font-size: 1rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.2s ease;
-        padding: 4px;
-      }
-      .mini-player-btn:hover {
-        color: var(--primary-neon);
-      }
-      
-      .mini-player-btn.play-pause {
-        width: 36px;
-        height: 36px;
-        border-radius: 50%;
-        background: rgba(252, 200, 0, 0.08);
-        border: 1px solid var(--primary-neon);
-        color: var(--primary-neon);
-        font-size: 0.85rem;
-        box-shadow: 0 0 10px rgba(252, 200, 0, 0.15);
-      }
-      .mini-player-btn.play-pause:hover {
-        background: var(--primary-neon);
-        color: #000;
-        transform: scale(1.08);
-        box-shadow: 0 0 15px rgba(252, 200, 0, 0.4);
-      }
-      .mini-player-btn.play-pause.is-playing {
-        border-color: var(--accent-teal);
-        background: rgba(0, 255, 204, 0.1);
-        color: var(--accent-teal);
-        box-shadow: 0 0 10px rgba(0, 255, 204, 0.25);
-      }
-      .mini-player-btn.play-pause.is-playing:hover {
-        background: var(--accent-teal);
-        color: #000;
-        box-shadow: 0 0 15px rgba(0, 255, 204, 0.5);
-      }
-      
-      .mini-player-btn.skip-back, .mini-player-btn.skip-forward {
-        font-size: 1rem;
-        opacity: 0.85;
-      }
-      .mini-player-btn.skip-back:hover, .mini-player-btn.skip-forward:hover {
-        opacity: 1;
-        transform: scale(1.05);
-      }
-      
-      .mini-player-progress-wrapper {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        width: 100%;
-      }
-      
-      .mini-player-time {
-        font-size: 0.7rem;
-        color: var(--text-muted);
-        min-width: 28px;
-        text-align: center;
-        font-family: var(--font-mono);
-      }
-      
-      .mini-player-slider {
-        flex: 1;
-        -webkit-appearance: none;
-        appearance: none;
-        height: 4px;
-        border-radius: 2px;
-        background: rgba(255, 255, 255, 0.15);
-        outline: none;
-        cursor: pointer;
-        transition: background 0.3s;
-      }
-      .mini-player-slider::-webkit-slider-thumb {
-        -webkit-appearance: none;
-        appearance: none;
-        width: 10px;
-        height: 10px;
-        border-radius: 50%;
-        background: var(--primary-neon);
-        border: none;
-        transition: transform 0.1s;
-      }
-      .mini-player-slider::-webkit-slider-thumb:hover {
-        transform: scale(1.3);
-      }
-      .mini-player-slider::-moz-range-thumb {
-        width: 10px;
-        height: 10px;
-        border-radius: 50%;
-        background: var(--primary-neon);
-        border: none;
-        transition: transform 0.1s;
-      }
-      .mini-player-slider::-moz-range-thumb:hover {
-        transform: scale(1.3);
+        .post-audio-col audio {
+          width: 100% !important;
+        }
       }
     </style>
     
@@ -605,52 +496,48 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
                 
                 <!-- Action Buttons -->
                 <div class="post-actions-row" id="post-actions-<?= htmlspecialchars($post['id'] ?? '') ?>">
-                  <div class="action-buttons-group">
-                    <a href="edit_post.php?id=<?= htmlspecialchars($post['id'] ?? '') ?>" class="btn btn-secondary">
-                      <i class="fas fa-edit"></i> Edit
-                    </a>
-                    <button type="button" onclick="handlePostAction('<?= htmlspecialchars($post['id'] ?? '') ?>', 'delete')" class="btn btn-secondary" style="color: var(--warning-red); border-color: var(--warning-red);">
-                      <i class="fas fa-trash"></i> Delete
-                    </button>
-                  </div>
+                  <a href="edit_post.php?id=<?= htmlspecialchars($post['id'] ?? '') ?>" class="btn btn-secondary">
+                    <i class="fas fa-edit"></i> Edit
+                  </a>
+                  <button type="button" onclick="handlePostAction('<?= htmlspecialchars($post['id'] ?? '') ?>', 'delete')" class="btn btn-secondary" style="color: var(--warning-red); border-color: var(--warning-red);">
+                    <i class="fas fa-trash"></i> Delete
+                  </button>
 
-                  <div class="action-buttons-group">
-                    <div id="stack-btn-container-<?= htmlspecialchars($post['id'] ?? '') ?>" style="display: flex;">
-                      <?php if (($post['status'] ?? '') === 'My Udastack追加済'): ?>
-                        <button type="button" onclick="handlePostAction('<?= htmlspecialchars($post['id'] ?? '') ?>', 'unstack')" class="btn btn-primary" style="border-color: var(--primary-neon); background: rgba(252, 200, 0, 0.1); color: var(--primary-neon);">
-                          <i class="fas fa-check"></i> Stacked
-                        </button>
-                      <?php else: ?>
-                        <button type="button" onclick="handlePostAction('<?= htmlspecialchars($post['id'] ?? '') ?>', 'stack')" class="btn btn-primary">
-                          <i class="fas fa-plus"></i> Stack
-                        </button>
-                      <?php endif; ?>
-                    </div>
-                    
-                    <div id="share-btn-container-<?= htmlspecialchars($post['id'] ?? '') ?>" style="display: flex;">
-                      <?php if (!empty($post['is_shared'])): ?>
-                        <button type="button" onclick="handlePostAction('<?= htmlspecialchars($post['id'] ?? '') ?>', 'unshare')" class="btn btn-secondary" style="border-color: #a855f7; color: #a855f7;">
-                          <i class="fas fa-share-alt"></i> Shared
-                        </button>
-                      <?php else: ?>
-                        <button type="button" onclick="handlePostAction('<?= htmlspecialchars($post['id'] ?? '') ?>', 'share')" class="btn btn-secondary">
-                          <i class="fas fa-share-alt"></i> Share
-                        </button>
-                      <?php endif; ?>
-                    </div>
-                    <?php if (!empty($post['audio_file']) || !empty($post['audio'])): ?>
-                      <div id="retry-btn-container-<?= htmlspecialchars($post['id'] ?? '') ?>" style="display: flex;">
-                        <button type="button" onclick="handlePostAction('<?= htmlspecialchars($post['id'] ?? '') ?>', 'retry')" class="btn btn-secondary" style="border-color: rgba(245,158,11,0.4); color: #f59e0b; background: rgba(245,158,11,0.05);" onmouseover="this.style.background='rgba(245,158,11,0.12)'" onmouseout="this.style.background='rgba(245,158,11,0.05)'">
-                          <i class="fas fa-redo"></i> 再解析
-                        </button>
-                      </div>
+                  <div id="stack-btn-container-<?= htmlspecialchars($post['id'] ?? '') ?>" style="display: inline-flex;">
+                    <?php if (($post['status'] ?? '') === 'My Udastack追加済'): ?>
+                      <button type="button" onclick="handlePostAction('<?= htmlspecialchars($post['id'] ?? '') ?>', 'unstack')" class="btn btn-primary" style="border-color: var(--primary-neon); background: rgba(252, 200, 0, 0.1); color: var(--primary-neon);">
+                        <i class="fas fa-check"></i> Stacked
+                      </button>
+                    <?php else: ?>
+                      <button type="button" onclick="handlePostAction('<?= htmlspecialchars($post['id'] ?? '') ?>', 'stack')" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Stack
+                      </button>
                     <?php endif; ?>
                   </div>
+                  
+                  <div id="share-btn-container-<?= htmlspecialchars($post['id'] ?? '') ?>" style="display: inline-flex;">
+                    <?php if (!empty($post['is_shared'])): ?>
+                      <button type="button" onclick="handlePostAction('<?= htmlspecialchars($post['id'] ?? '') ?>', 'unshare')" class="btn btn-secondary" style="border-color: #a855f7; color: #a855f7;">
+                        <i class="fas fa-share-alt"></i> Shared
+                      </button>
+                    <?php else: ?>
+                      <button type="button" onclick="handlePostAction('<?= htmlspecialchars($post['id'] ?? '') ?>', 'share')" class="btn btn-secondary">
+                        <i class="fas fa-share-alt"></i> Share
+                      </button>
+                    <?php endif; ?>
+                  </div>
+                  <?php if (!empty($post['audio_file']) || !empty($post['audio'])): ?>
+                    <div id="retry-btn-container-<?= htmlspecialchars($post['id'] ?? '') ?>" style="display: inline-flex;">
+                      <button type="button" onclick="handlePostAction('<?= htmlspecialchars($post['id'] ?? '') ?>', 'retry')" class="btn btn-secondary" style="border-color: rgba(245,158,11,0.4); color: #f59e0b; background: rgba(245,158,11,0.05);" onmouseover="this.style.background='rgba(245,158,11,0.12)'" onmouseout="this.style.background='rgba(245,158,11,0.05)'">
+                        <i class="fas fa-redo"></i> 再解析
+                      </button>
+                    </div>
+                  <?php endif; ?>
                 </div>
 
               </div>
               
-              <!-- Streamlined Mini-Player Column (10s Back / Play / 15s Forward / Progress Slider) -->
+              <!-- Standard Slim Audio Player Column (Right Edge) -->
               <?php 
                 $af = $post['audio_file'] ?? $post['audio'] ?? '';
               ?>
@@ -659,25 +546,7 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
                   $audioSrc = '../audio_proxy.php?target_uid=' . urlencode($uid) . '&path=' . urlencode($af);
                 ?>
                 <div class="post-audio-col">
-                  <div class="mini-player-container">
-                    <div class="mini-player-controls">
-                      <button type="button" class="mini-player-btn skip-back" onclick="skipAudio('<?= htmlspecialchars($post['id'] ?? '') ?>', -10)" title="10秒戻る">
-                        <i class="fas fa-undo"></i>
-                      </button>
-                      <button type="button" id="play-btn-<?= htmlspecialchars($post['id'] ?? '') ?>" class="mini-player-btn play-pause" onclick="toggleAudioPlayback(this, '<?= htmlspecialchars($post['id'] ?? '') ?>')" title="再生/一時停止">
-                        <i class="fas fa-play"></i>
-                      </button>
-                      <button type="button" class="mini-player-btn skip-forward" onclick="skipAudio('<?= htmlspecialchars($post['id'] ?? '') ?>', 15)" title="15秒進む">
-                        <i class="fas fa-redo"></i>
-                      </button>
-                    </div>
-                    <div class="mini-player-progress-wrapper">
-                      <span class="mini-player-time" id="time-current-<?= htmlspecialchars($post['id'] ?? '') ?>">0:00</span>
-                      <input type="range" class="mini-player-slider" id="slider-<?= htmlspecialchars($post['id'] ?? '') ?>" value="0" min="0" max="100" step="0.1" oninput="seekAudio('<?= htmlspecialchars($post['id'] ?? '') ?>', this.value)" onmousedown="this.dataset.isDragging = 'true'" onmouseup="delete this.dataset.isDragging" ontouchstart="this.dataset.isDragging = 'true'" ontouchend="delete this.dataset.isDragging">
-                      <span class="mini-player-time" id="time-duration-<?= htmlspecialchars($post['id'] ?? '') ?>">0:00</span>
-                    </div>
-                  </div>
-                  <audio id="audio-player-<?= htmlspecialchars($post['id'] ?? '') ?>" class="dashboard-audio-player" src="<?= htmlspecialchars($audioSrc) ?>" ontimeupdate="updateAudioProgress('<?= htmlspecialchars($post['id'] ?? '') ?>')" onloadedmetadata="initAudioMetadata('<?= htmlspecialchars($post['id'] ?? '') ?>')" onended="resetAudioButton('<?= htmlspecialchars($post['id'] ?? '') ?>')" style="display: none;"></audio>
+                  <audio controls src="<?= htmlspecialchars($audioSrc) ?>"></audio>
                 </div>
               <?php endif; ?>
             </div>
@@ -880,7 +749,7 @@ function handlePostAction(postId, action) {
           retryBtn.style.background = 'rgba(0, 255, 204, 0.2)';
           retryBtn.style.color = 'var(--primary-neon)';
           retryBtn.style.boxShadow = 'none';
-          retryBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 解析を開始しました...';
+          retryBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
           retryBtn.disabled = true;
         }
         alert("再試行を開始しました。数分後に自動で反映されます。");
@@ -935,108 +804,7 @@ function regenSummary(postId) {
   });
 }
 
-function toggleAudioPlayback(btn, postId) {
-  const audio = document.getElementById('audio-player-' + postId);
-  if (!audio) return;
-  
-  // Pause any other playing audio on the page
-  document.querySelectorAll('audio.dashboard-audio-player').forEach(otherAudio => {
-    if (otherAudio !== audio && !otherAudio.paused) {
-      otherAudio.pause();
-      const otherPostId = otherAudio.id.replace('audio-player-', '');
-      const otherBtn = document.getElementById('play-btn-' + otherPostId);
-      if (otherBtn) {
-        otherBtn.innerHTML = '<i class="fas fa-play"></i>';
-        otherBtn.classList.remove('is-playing');
-      }
-    }
-  });
 
-  if (audio.paused) {
-    audio.play()
-      .then(() => {
-        btn.innerHTML = '<i class="fas fa-pause"></i>';
-        btn.classList.add('is-playing');
-      })
-      .catch(e => {
-        console.error("Playback failed:", e);
-        alert("音声の再生に失敗しました。ファイル形式またはネットワークを確認してください。");
-      });
-  } else {
-    audio.pause();
-    btn.innerHTML = '<i class="fas fa-play"></i>';
-    btn.classList.remove('is-playing');
-  }
-}
-
-function resetAudioButton(postId) {
-  const btn = document.getElementById('play-btn-' + postId);
-  const currentLabel = document.getElementById('time-current-' + postId);
-  const slider = document.getElementById('slider-' + postId);
-  if (btn) {
-    btn.innerHTML = '<i class="fas fa-play"></i>';
-    btn.classList.remove('is-playing');
-  }
-  if (currentLabel) {
-    currentLabel.textContent = '0:00';
-  }
-  if (slider) {
-    slider.value = 0;
-  }
-}
-
-function initAudioMetadata(postId) {
-  const audio = document.getElementById('audio-player-' + postId);
-  const slider = document.getElementById('slider-' + postId);
-  const durationLabel = document.getElementById('time-duration-' + postId);
-  if (!audio || !slider || !durationLabel) return;
-  
-  if (audio.duration && !isNaN(audio.duration)) {
-    slider.max = audio.duration;
-    durationLabel.textContent = formatAudioTime(audio.duration);
-  }
-}
-
-function updateAudioProgress(postId) {
-  const audio = document.getElementById('audio-player-' + postId);
-  const slider = document.getElementById('slider-' + postId);
-  const currentLabel = document.getElementById('time-current-' + postId);
-  const durationLabel = document.getElementById('time-duration-' + postId);
-  if (!audio || !slider || !currentLabel) return;
-  
-  currentLabel.textContent = formatAudioTime(audio.currentTime);
-  
-  if (!slider.dataset.isDragging) {
-    slider.value = audio.currentTime;
-  }
-  
-  if (audio.duration && !isNaN(audio.duration) && slider.max !== audio.duration) {
-    slider.max = audio.duration;
-    if (durationLabel) durationLabel.textContent = formatAudioTime(audio.duration);
-  }
-}
-
-function seekAudio(postId, value) {
-  const audio = document.getElementById('audio-player-' + postId);
-  if (!audio) return;
-  audio.currentTime = parseFloat(value);
-}
-
-function skipAudio(postId, seconds) {
-  const audio = document.getElementById('audio-player-' + postId);
-  if (!audio) return;
-  let targetTime = audio.currentTime + seconds;
-  if (targetTime < 0) targetTime = 0;
-  if (targetTime > audio.duration) targetTime = audio.duration;
-  audio.currentTime = targetTime;
-}
-
-function formatAudioTime(secs) {
-  if (isNaN(secs)) return '0:00';
-  const m = Math.floor(secs / 60);
-  const s = Math.floor(secs % 60);
-  return m + ':' + (s < 10 ? '0' : '') + s;
-}
 
 function toggleSummary(postId) {
   const wrapper = document.getElementById('summary-wrapper-' + postId);
