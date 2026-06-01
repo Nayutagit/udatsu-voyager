@@ -153,7 +153,7 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15) !important;
         overflow: hidden;
         /* Custom transitions - keep clean and simple */
-        transition: border-color 0.3s ease, box-shadow 0.3s ease !important;
+        transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.4s ease, box-shadow 0.4s ease, background-color 0.4s ease !important;
       }
       .post-card:hover {
         transform: translateY(-1px) !important;
@@ -161,8 +161,11 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
         border-color: rgba(252, 200, 0, 0.25) !important;
       }
       .post-card.moving-active {
-        border-color: var(--primary-neon) !important;
-        box-shadow: 0 0 15px rgba(252, 200, 0, 0.3) !important;
+        border-color: var(--accent-teal) !important;
+        box-shadow: 0 0 25px rgba(0, 255, 204, 0.45) !important;
+        background: rgba(0, 255, 204, 0.08) !important;
+        transform: scale(1.02) !important;
+        z-index: 100 !important;
       }
       
       .post-card-inner {
@@ -392,10 +395,6 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
                     <div class="meta-right">
                       <?php if ($postStatus === '解析中'): ?>
                         <span class="badge badge-processing"><i class="fas fa-spinner fa-spin"></i> 解析中...</span>
-                      <?php elseif ($postStatus === 'エラー' || strpos($postTitle, '解析エラー') !== false || $isRawTitle): ?>
-                        <span id="retry-badge-<?= htmlspecialchars($post['id'] ?? '') ?>" class="badge badge-failed" onclick="handlePostAction('<?= htmlspecialchars($post['id'] ?? '') ?>', 'retry')">
-                          <i class="fas fa-redo"></i> <?= $isRawTitle && $postStatus !== 'エラー' ? 'AI解析する' : 'AI解析再試行' ?>
-                        </span>
                       <?php elseif ($postStatus === 'My Udastack追加済'): ?>
                         <span id="stack-badge-<?= htmlspecialchars($post['id'] ?? '') ?>" class="badge badge-stacked"><i class="fas fa-check"></i> Stacked</span>
                       <?php endif; ?>
@@ -475,43 +474,35 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
                   </div>
 
                   <div class="action-buttons-group">
-                    <?php if ($isFailed): ?>
+                    <div id="stack-btn-container-<?= htmlspecialchars($post['id'] ?? '') ?>" style="display: flex;">
+                      <?php if (($post['status'] ?? '') === 'My Udastack追加済'): ?>
+                        <button type="button" onclick="handlePostAction('<?= htmlspecialchars($post['id'] ?? '') ?>', 'unstack')" class="btn btn-primary" style="border-color: var(--primary-neon); background: rgba(252, 200, 0, 0.1); color: var(--primary-neon);">
+                          <i class="fas fa-check"></i> Stacked
+                        </button>
+                      <?php else: ?>
+                        <button type="button" onclick="handlePostAction('<?= htmlspecialchars($post['id'] ?? '') ?>', 'stack')" class="btn btn-primary">
+                          <i class="fas fa-plus"></i> Stack
+                        </button>
+                      <?php endif; ?>
+                    </div>
+                    
+                    <div id="share-btn-container-<?= htmlspecialchars($post['id'] ?? '') ?>" style="display: flex;">
+                      <?php if (!empty($post['is_shared'])): ?>
+                        <button type="button" onclick="handlePostAction('<?= htmlspecialchars($post['id'] ?? '') ?>', 'unshare')" class="btn btn-secondary" style="border-color: #a855f7; color: #a855f7;">
+                          <i class="fas fa-share-alt"></i> Shared
+                        </button>
+                      <?php else: ?>
+                        <button type="button" onclick="handlePostAction('<?= htmlspecialchars($post['id'] ?? '') ?>', 'share')" class="btn btn-secondary">
+                          <i class="fas fa-share-alt"></i> Share
+                        </button>
+                      <?php endif; ?>
+                    </div>
+                    <?php if (!empty($post['audio_file']) || !empty($post['audio'])): ?>
                       <div id="retry-btn-container-<?= htmlspecialchars($post['id'] ?? '') ?>" style="display: flex;">
-                        <button type="button" onclick="handlePostAction('<?= htmlspecialchars($post['id'] ?? '') ?>', 'retry')" class="btn btn-primary">
-                          <i class="fas fa-redo"></i> AI解析再試行
+                        <button type="button" onclick="handlePostAction('<?= htmlspecialchars($post['id'] ?? '') ?>', 'retry')" class="btn btn-secondary" style="border-color: rgba(245,158,11,0.4); color: #f59e0b; background: rgba(245,158,11,0.05);" onmouseover="this.style.background='rgba(245,158,11,0.12)'" onmouseout="this.style.background='rgba(245,158,11,0.05)'">
+                          <i class="fas fa-redo"></i> 再解析
                         </button>
                       </div>
-                    <?php else: ?>
-                      <div id="stack-btn-container-<?= htmlspecialchars($post['id'] ?? '') ?>" style="display: flex;">
-                        <?php if (($post['status'] ?? '') === 'My Udastack追加済'): ?>
-                          <button type="button" onclick="handlePostAction('<?= htmlspecialchars($post['id'] ?? '') ?>', 'unstack')" class="btn btn-primary" style="border-color: var(--primary-neon); background: rgba(252, 200, 0, 0.1); color: var(--primary-neon);">
-                            <i class="fas fa-check"></i> Stacked
-                          </button>
-                        <?php else: ?>
-                          <button type="button" onclick="handlePostAction('<?= htmlspecialchars($post['id'] ?? '') ?>', 'stack')" class="btn btn-primary">
-                            <i class="fas fa-plus"></i> Stack
-                          </button>
-                        <?php endif; ?>
-                      </div>
-                      
-                      <div id="share-btn-container-<?= htmlspecialchars($post['id'] ?? '') ?>" style="display: flex;">
-                        <?php if (!empty($post['is_shared'])): ?>
-                          <button type="button" onclick="handlePostAction('<?= htmlspecialchars($post['id'] ?? '') ?>', 'unshare')" class="btn btn-secondary" style="border-color: #a855f7; color: #a855f7;">
-                            <i class="fas fa-share-alt"></i> Shared
-                          </button>
-                        <?php else: ?>
-                          <button type="button" onclick="handlePostAction('<?= htmlspecialchars($post['id'] ?? '') ?>', 'share')" class="btn btn-secondary">
-                            <i class="fas fa-share-alt"></i> Share
-                          </button>
-                        <?php endif; ?>
-                      </div>
-                      <?php if (!empty($post['audio_file']) || !empty($post['audio'])): ?>
-                        <div id="retry-btn-container-<?= htmlspecialchars($post['id'] ?? '') ?>" style="display: flex;">
-                          <button type="button" onclick="handlePostAction('<?= htmlspecialchars($post['id'] ?? '') ?>', 'retry')" class="btn btn-secondary" style="border-color: rgba(245,158,11,0.4); color: #f59e0b; background: rgba(245,158,11,0.05);" onmouseover="this.style.background='rgba(245,158,11,0.12)'" onmouseout="this.style.background='rgba(245,158,11,0.05)'">
-                            <i class="fas fa-redo"></i> 再解析
-                          </button>
-                        </div>
-                      <?php endif; ?>
                     <?php endif; ?>
                   </div>
                 </div>
@@ -797,63 +788,63 @@ function movePost(btn, direction) {
     target = card.nextElementSibling;
   }
   
-  if (target && target.classList.contains('post-card')) {
-    const heightCard = card.offsetHeight;
-    const heightTarget = target.offsetHeight;
-    const gap = 16; // gap between flex items is 16px
-    
-    // Enable GPU hardware acceleration and set correct rendering layer
-    card.style.willChange = 'transform';
-    target.style.willChange = 'transform';
-    card.style.zIndex = '10';
-    target.style.zIndex = '1';
-    
-    // Temporarily make backgrounds opaque/solid to prevent glass-translucent text overlap
-    const isLightMode = document.body.classList.contains('light-mode');
-    const solidBg = isLightMode ? '#ffffff' : '#121212';
-    card.style.setProperty('background', solidBg, 'important');
-    target.style.setProperty('background', solidBg, 'important');
-    
-    // Set explicit smooth transition duration (250ms for snappiness)
-    card.style.transition = 'transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1)';
-    target.style.transition = 'transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1)';
-    
-    if (direction === 'up') {
-      card.style.transform = `translateY(-${heightTarget + gap}px)`;
-      target.style.transform = `translateY(${heightCard + gap}px)`;
-    } else {
-      card.style.transform = `translateY(${heightTarget + gap}px)`;
-      target.style.transform = `translateY(-${heightCard + gap}px)`;
-    }
-    
-    // After transition finishes, swap DOM elements and reset inline styles
-    setTimeout(() => {
-      card.style.transition = 'none';
-      target.style.transition = 'none';
-      card.style.transform = '';
-      target.style.transform = '';
-      card.style.willChange = '';
-      target.style.willChange = '';
-      card.style.zIndex = '';
-      target.style.zIndex = '';
-      card.style.background = '';
-      target.style.background = '';
-      
-      if (direction === 'up') {
-        parent.insertBefore(card, target);
-      } else {
-        parent.insertBefore(target, card);
-      }
-      
-      // Highlight moved card
-      card.classList.add('moving-active');
-      setTimeout(() => {
-        card.classList.remove('moving-active');
-      }, 500);
-      
-      saveNewOrder();
-    }, 250);
+  if (!target || !target.classList.contains('post-card')) return;
+  
+  // 1. FIRST: Record starting bounding boxes
+  const cards = Array.from(parent.querySelectorAll('.post-card'));
+  const firstPositions = cards.map(c => ({
+    el: c,
+    rect: c.getBoundingClientRect()
+  }));
+  
+  // Apply visual lift state to the active moving card
+  card.classList.add('moving-active');
+  
+  // 2. DOM CHANGE: Perform the DOM swap immediately
+  if (direction === 'up') {
+    parent.insertBefore(card, target);
+  } else {
+    parent.insertBefore(target, card);
   }
+  
+  // 3. LAST & INVERT: Measure new positions and invert them
+  const lastPositions = firstPositions.map(pos => ({
+    el: pos.el,
+    firstRect: pos.rect,
+    lastRect: pos.el.getBoundingClientRect()
+  }));
+  
+  lastPositions.forEach(pos => {
+    const deltaY = pos.firstRect.top - pos.lastRect.top;
+    if (deltaY !== 0) {
+      pos.el.style.transition = 'none';
+      pos.el.style.transform = `translateY(${deltaY}px)`;
+    }
+  });
+  
+  // Force a synchronous reflow to register the invert positions
+  document.body.offsetHeight;
+  
+  // 4. PLAY: Animate smoothly to their natural locations (translateY = 0)
+  lastPositions.forEach(pos => {
+    const deltaY = pos.firstRect.top - pos.lastRect.top;
+    if (deltaY !== 0) {
+      pos.el.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.4s, box-shadow 0.4s, background-color 0.4s';
+      pos.el.style.transform = '';
+    }
+  });
+  
+  // Save order in background
+  saveNewOrder();
+  
+  // 5. CLEAN UP style overrides after transition finishes
+  setTimeout(() => {
+    card.classList.remove('moving-active');
+    lastPositions.forEach(pos => {
+      pos.el.style.transition = '';
+      pos.el.style.transform = '';
+    });
+  }, 400);
 }
 
 function saveNewOrder() {
