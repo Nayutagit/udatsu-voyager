@@ -150,52 +150,50 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
         -webkit-backdrop-filter: blur(var(--glass-blur)) !important;
         border: 1px solid var(--glass-border) !important;
         border-radius: 12px !important;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25) !important;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15) !important;
         overflow: hidden;
-        transition: opacity 0.15s ease, transform 0.15s ease, border-color 0.3s ease, box-shadow 0.3s ease !important;
+        /* Custom transitions - keep clean and simple */
+        transition: border-color 0.3s ease, box-shadow 0.3s ease !important;
       }
       .post-card:hover {
-        transform: translateY(-2px) !important;
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.35) !important;
-        border-color: rgba(252, 200, 0, 0.3) !important;
+        transform: translateY(-1px) !important;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22) !important;
+        border-color: rgba(252, 200, 0, 0.25) !important;
       }
       .post-card.moving-active {
         border-color: var(--primary-neon) !important;
         box-shadow: 0 0 15px rgba(252, 200, 0, 0.3) !important;
-      }
-      .post-card-swapping {
-        opacity: 0 !important;
-        transform: scale(0.98) !important;
       }
       
       .post-card-inner {
         display: flex;
         flex-direction: row;
         width: 100%;
-      }
-      @media (max-width: 768px) {
-        .post-card-inner {
-          flex-direction: column;
-        }
-        .post-eyecatch-wrapper {
-          width: 100% !important;
-          height: 140px !important;
-          border-right: none !important;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
-        }
+        align-items: stretch;
       }
       
       .post-eyecatch-wrapper {
-        width: 150px;
-        min-width: 150px;
-        height: 150px;
+        width: 110px;
+        min-width: 110px;
+        height: 110px;
         overflow: hidden;
-        background: rgba(255, 255, 255, 0.03);
+        margin: 16px 0 16px 16px;
+        border-radius: 8px;
         display: flex;
         align-items: center;
         justify-content: center;
-        border-right: 1px solid rgba(255, 255, 255, 0.05);
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.05);
       }
+      @media (max-width: 768px) {
+        .post-eyecatch-wrapper {
+          width: 70px !important;
+          min-width: 70px !important;
+          height: 70px !important;
+          margin: 12px 0 12px 12px !important;
+        }
+      }
+      
       .post-eyecatch-img {
         width: 100%;
         height: 100%;
@@ -203,11 +201,7 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
         transition: transform 0.3s ease;
       }
       .post-card:hover .post-eyecatch-img {
-        transform: scale(1.05);
-      }
-      .placeholder-icon {
-        font-size: 2.2rem;
-        color: rgba(255, 255, 255, 0.12);
+        transform: scale(1.04);
       }
       
       .post-info {
@@ -217,26 +211,31 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
         flex-direction: column;
         justify-content: space-between;
       }
+      @media (max-width: 768px) {
+        .post-info {
+          padding: 12px !important;
+        }
+      }
       
       .post-meta-row {
         display: flex;
         justify-content: space-between;
         align-items: center;
         margin-bottom: 6px;
-        font-size: 0.8rem;
+        font-size: 0.78rem;
       }
       .meta-left {
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 10px;
       }
       .sort-actions {
         display: inline-flex;
-        gap: 6px;
+        gap: 4px;
       }
       .sort-btn {
         color: var(--text-muted);
-        font-size: 0.85rem;
+        font-size: 0.8rem;
         padding: 2px 4px;
         border-radius: 4px;
         background: rgba(255,255,255,0.03);
@@ -251,7 +250,7 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
         color: var(--text-muted);
         display: flex;
         align-items: center;
-        gap: 5px;
+        gap: 4px;
       }
       .editable-date {
         cursor: pointer;
@@ -259,45 +258,50 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
       }
       
       .badge {
-        padding: 2px 8px;
-        border-radius: 12px;
-        font-size: 0.72rem;
+        padding: 1px 6px;
+        border-radius: 10px;
+        font-size: 0.68rem;
         font-weight: 500;
         display: inline-flex;
         align-items: center;
-        gap: 4px;
+        gap: 3px;
       }
       .badge-processing {
-        background: rgba(0, 255, 204, 0.15);
+        background: rgba(0, 255, 204, 0.12);
         color: var(--primary-neon);
       }
       .badge-failed {
-        background: rgba(245, 158, 11, 0.15);
+        background: rgba(245, 158, 11, 0.12);
         color: #f59e0b;
-        border: 1px solid rgba(245, 158, 11, 0.3);
+        border: 1px solid rgba(245, 158, 11, 0.25);
         cursor: pointer;
       }
       .badge-stacked {
-        background: rgba(252, 200, 0, 0.1);
+        background: rgba(252, 200, 0, 0.08);
         color: var(--primary-neon);
       }
       .badge-shared {
-        background: rgba(168, 85, 247, 0.1);
+        background: rgba(168, 85, 247, 0.08);
         color: #a855f7;
       }
       
       .post-title {
         margin: 0 0 6px 0 !important;
-        line-height: 1.4;
+        line-height: 1.35 !important;
       }
       .post-title a {
         text-decoration: none;
         transition: all 0.3s ease;
         display: inline-block;
-        font-size: 1.08rem !important;
-        font-weight: bold;
+        font-size: 1.05rem !important;
+        font-weight: 700;
         color: var(--text-white);
         padding-right: 0 !important;
+      }
+      @media (max-width: 768px) {
+        .post-title a {
+          font-size: 0.95rem !important;
+        }
       }
       .post-title a:hover {
         color: var(--primary-neon) !important;
@@ -305,9 +309,9 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
       }
       
       .original-title-lbl {
-        font-size: 0.78rem;
+        font-size: 0.75rem;
         color: var(--text-muted);
-        margin-bottom: 8px;
+        margin-bottom: 6px;
       }
       
       .post-actions-row {
@@ -315,21 +319,22 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
         justify-content: space-between;
         align-items: center;
         margin-top: 10px;
-        gap: 12px;
+        gap: 8px;
         flex-wrap: wrap;
       }
       .action-buttons-group {
         display: flex;
-        gap: 8px;
+        gap: 6px;
       }
       
       .post-card .btn {
-        padding: 4px 10px !important;
-        font-size: 0.72rem !important;
+        padding: 3px 8px !important;
+        font-size: 0.7rem !important;
         border-radius: 6px !important;
-        gap: 4px !important;
-        font-weight: 600;
-        height: 26px;
+        gap: 3px !important;
+        font-weight: 500;
+        height: 24px !important;
+        line-height: 1 !important;
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -361,10 +366,6 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
               <?php if (!empty($post['thumbnail'])): ?>
                 <div class="post-eyecatch-wrapper">
                   <img src="../<?= htmlspecialchars($post['thumbnail']) ?>" class="post-eyecatch-img">
-                </div>
-              <?php else: ?>
-                <div class="post-eyecatch-wrapper placeholder-icon">
-                  <i class="fas fa-microphone-alt"></i>
                 </div>
               <?php endif; ?>
 
@@ -796,21 +797,34 @@ function movePost(cardId, direction) {
   }
   
   if (target && target.classList.contains('post-card')) {
-    // Add swapping class to fade out both elements
-    card.classList.add('post-card-swapping');
-    target.classList.add('post-card-swapping');
+    const heightCard = card.offsetHeight;
+    const heightTarget = target.offsetHeight;
+    const gap = 16; // gap between flex items is 16px
     
+    // Set explicit smooth transition duration and easing
+    card.style.transition = 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)';
+    target.style.transition = 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)';
+    
+    if (direction === 'up') {
+      card.style.transform = `translateY(-${heightTarget + gap}px)`;
+      target.style.transform = `translateY(${heightCard + gap}px)`;
+    } else {
+      card.style.transform = `translateY(${heightTarget + gap}px)`;
+      target.style.transform = `translateY(-${heightCard + gap}px)`;
+    }
+    
+    // After transition finishes, swap DOM elements and reset translates
     setTimeout(() => {
-      // Swap DOM nodes
+      card.style.transition = 'none';
+      target.style.transition = 'none';
+      card.style.transform = '';
+      target.style.transform = '';
+      
       if (direction === 'up') {
         parent.insertBefore(card, target);
       } else {
         parent.insertBefore(target, card);
       }
-      
-      // Remove class to fade back in
-      card.classList.remove('post-card-swapping');
-      target.classList.remove('post-card-swapping');
       
       // Highlight moved card
       card.classList.add('moving-active');
@@ -819,7 +833,7 @@ function movePost(cardId, direction) {
       }, 600);
       
       saveNewOrder();
-    }, 150); // Matches the 0.15s CSS transition
+    }, 300);
   }
 }
 
