@@ -21,7 +21,7 @@ if (!file_exists($postsFile)) {
 
 $posts = json_decode(file_get_contents($postsFile), true);
 $triggered = [];
-$phpPath = PHP_BINARY ?: '/usr/bin/php';
+$phpPath = getBestPhpCliPath();
 $runAnalysis = __DIR__ . '/../run_analysis.php';
 
 foreach ($posts as &$post) {

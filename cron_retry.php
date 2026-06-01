@@ -52,8 +52,8 @@ foreach ($postFiles as $file) {
             $audioPath = $post['audio_file'] ?? $post['local_path'] ?? '';
             $isFirebasePath = (strpos($audioPath, 'audio/') === 0);
             if (!empty($audioPath) && (file_exists($root . '/' . $audioPath) || $isFirebasePath)) {
-                file_put_contents($logFile, date('Y-m-d H:i:s') . " - Retrying with AUDIO: uid=$uid, jobId=$jobId\n", FILE_APPEND);
-                $phpPath = '/usr/bin/php';
+                 file_put_contents($logFile, date('Y-m-d H:i:s') . " - Retrying with AUDIO: uid=$uid, jobId=$jobId\n", FILE_APPEND);
+                $phpPath = getBestPhpCliPath();
                 $cmd = escapeshellarg($phpPath) . ' '
                      . escapeshellarg("{$root}/run_analysis.php") . ' '
                      . escapeshellarg($uid) . ' '
@@ -66,7 +66,7 @@ foreach ($postFiles as $file) {
                 $updated = true;
             } elseif (!empty($post['original_text']) || !empty($post['text'])) {
                 file_put_contents($logFile, date('Y-m-d H:i:s') . " - Retrying TEXT ONLY: uid=$uid, jobId=$jobId\n", FILE_APPEND);
-                $phpPath = '/usr/bin/php';
+                $phpPath = getBestPhpCliPath();
                 $cmd = escapeshellarg($phpPath) . ' '
                      . escapeshellarg("{$root}/run_analysis.php") . ' '
                      . escapeshellarg($uid) . ' '

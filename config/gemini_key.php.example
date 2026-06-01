@@ -1,0 +1,5 @@
+<?php
+// Gemini API Key
+// Generate a key from Google AI Studio: https://aistudio.google.com/
+$geminiApiKey = 'YOUR_GEMINI_API_KEY_HERE';
+?>

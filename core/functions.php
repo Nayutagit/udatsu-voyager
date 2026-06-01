@@ -14,3 +14,22 @@ function getUserPlanFromFirestore(string $uid): ?string {
   }
   return null;
 }
+
+// Dynamically discover the best available PHP CLI version (e.g. for XServer compatibility)
+function getBestPhpCliPath(): string {
+    $candidates = [
+        '/usr/bin/php8.3',
+        '/usr/bin/php8.2',
+        '/usr/bin/php8.1',
+        '/usr/bin/php8.0',
+        '/usr/bin/php7.4',
+        '/usr/local/bin/php',
+        '/usr/bin/php'
+    ];
+    foreach ($candidates as $c) {
+        if (file_exists($c)) {
+            return $c;
+        }
+    }
+    return 'php';
+}
