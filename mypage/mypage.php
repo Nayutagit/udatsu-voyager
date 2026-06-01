@@ -175,8 +175,13 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
           <div class="post-card" id="post-card-<?= $i ?>" data-id="<?= htmlspecialchars($post['id'] ?? '') ?>">
             <div class="post-content">
               <div class="post-meta" style="margin-bottom: 10px; display: flex; align-items: center; gap: 10px;" id="post-meta-<?= $i ?>">
-                <span class="drag-handle" style="cursor: grab; color: var(--text-muted); font-size: 1.1rem; padding: 2px; display: inline-flex; align-items: center; user-select: none; -webkit-user-select: none;" title="長押しして並び替え">
-                  <i class="fas fa-grip-vertical"></i>
+                <span class="sort-actions" style="display: inline-flex; gap: 8px; align-items: center; margin-right: 5px; user-select: none; -webkit-user-select: none;">
+                  <a href="javascript:void(0)" onclick="movePost(<?= $i ?>, 'up')" style="color: var(--text-muted); font-size: 0.9rem; text-decoration: none; padding: 2px;" title="上に移動" onmouseover="this.style.color='var(--primary-neon)'" onmouseout="this.style.color='var(--text-muted)'">
+                    <i class="fas fa-chevron-up"></i>
+                  </a>
+                  <a href="javascript:void(0)" onclick="movePost(<?= $i ?>, 'down')" style="color: var(--text-muted); font-size: 0.9rem; text-decoration: none; padding: 2px;" title="下に移動" onmouseover="this.style.color='var(--primary-neon)'" onmouseout="this.style.color='var(--text-muted)'">
+                    <i class="fas fa-chevron-down"></i>
+                  </a>
                 </span>
                 <span style="display: flex; align-items: center; gap: 5px;">
                   <i class="far fa-calendar-alt"></i> 
@@ -349,7 +354,6 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
 
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <script>
 function checkPostLimit() {
   fetch('check_post_limit.php')
@@ -580,45 +584,49 @@ function toggleSummary(index) {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  const grid = document.querySelector('.dashboard-grid');
-  if (grid) {
-    new Sortable(grid, {
-      handle: '.drag-handle',
-      animation: 150,
-      delay: 200,             // 200ms delay to support scrolling on touch screens (long-press)
-      delayOnTouchOnly: true, // Only apply delay on touch
-      ghostClass: 'sortable-ghost',
-      onEnd: function () {
-        saveNewOrder();
-      }
-    });
-  }
+function movePost(cardId, direction) {
+  const card = document.getElementById('post-card-' + cardId);
+  if (!card) return;
   
-  function saveNewOrder() {
-    const postIds = Array.from(document.querySelectorAll('.post-card')).map(card => card.getAttribute('data-id'));
-    
-    const formData = new FormData();
-    formData.append('order', JSON.stringify(postIds));
-    
-    fetch('save_order_ajax.php', {
-      method: 'POST',
-      body: formData,
-      headers: { 'X-Requested-With': 'XMLHttpRequest' }
-    })
-    .then(response => response.json())
-    .then(data => {
-      if (data.status === 'ok') {
-        console.log('Order saved successfully');
-      } else {
-        console.error('Failed to save order:', data.message);
-      }
-    })
-    .catch(err => {
-      console.error('Error saving order:', err);
-    });
+  const parent = card.parentNode;
+  if (direction === 'up') {
+    const prev = card.previousElementSibling;
+    if (prev && prev.classList.contains('post-card')) {
+      parent.insertBefore(card, prev);
+      saveNewOrder();
+    }
+  } else if (direction === 'down') {
+    const next = card.nextElementSibling;
+    if (next && next.classList.contains('post-card')) {
+      parent.insertBefore(next, card);
+      saveNewOrder();
+    }
   }
-});
+}
+
+function saveNewOrder() {
+  const postIds = Array.from(document.querySelectorAll('.post-card')).map(card => card.getAttribute('data-id'));
+  
+  const formData = new FormData();
+  formData.append('order', JSON.stringify(postIds));
+  
+  fetch('save_order_ajax.php', {
+    method: 'POST',
+    body: formData,
+    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.status === 'ok') {
+      console.log('Order saved successfully');
+    } else {
+      console.error('Failed to save order:', data.message);
+    }
+  })
+  .catch(err => {
+    console.error('Error saving order:', err);
+  });
+}
 
 let pollInterval = null;
 function startPolling() {
