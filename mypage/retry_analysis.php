@@ -10,6 +10,7 @@
 session_start();
 $_sessionUid  = $_SESSION['uid']       ?? null;
 $_sessionPlan = $_SESSION['user_plan'] ?? 'guest';
+session_write_close(); // Unlock session file to prevent layout blocking / page freezing
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -18,11 +19,8 @@ if (empty($_sessionUid)) {
     exit;
 }
 
+$id    = $_POST['id'] ?? '';
 $index = $_POST['index'] ?? null;
-if (!is_numeric($index)) {
-    echo json_encode(['status' => 'error', 'message' => 'インデックスが不正です']);
-    exit;
-}
 
 $targetUid = $_sessionUid;
 if ($_sessionPlan === 'admin' && !empty($_POST['target_uid'])) {
@@ -33,7 +31,16 @@ $userDir   = __DIR__ . '/../users/';
 $postsFile = $userDir . $targetUid . '_posts.json';
 $posts     = file_exists($postsFile) ? json_decode(file_get_contents($postsFile), true) : [];
 
-if (!isset($posts[$index])) {
+if ($id !== '') {
+    foreach ($posts as $k => $p) {
+        if (($p['id'] ?? '') === $id) {
+            $index = $k;
+            break;
+        }
+    }
+}
+
+if ($index === null || !isset($posts[$index])) {
     echo json_encode(['status' => 'error', 'message' => '投稿が見つかりません']);
     exit;
 }

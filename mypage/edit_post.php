@@ -11,7 +11,17 @@ $uploadDir = $userDir . $uid . '/posts/';
 $postsFile = $userDir . $uid . '_posts.json';
 
 $index = isset($_GET['index']) ? intval($_GET['index']) : -1;
+$id = isset($_GET['id']) ? $_GET['id'] : '';
 $posts = file_exists($postsFile) ? json_decode(file_get_contents($postsFile), true) : [];
+
+if ($id !== '') {
+  foreach ($posts as $k => $p) {
+    if (($p['id'] ?? '') === $id) {
+      $index = $k;
+      break;
+    }
+  }
+}
 
 if ($index < 0 || !isset($posts[$index])) {
   die("投稿が見つかりません。");

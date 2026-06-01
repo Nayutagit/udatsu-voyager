@@ -5,6 +5,7 @@
  * Called via AJAX from mypage.php.
  */
 require_once __DIR__ . '/../core/bootstrap.php';
+session_write_close(); // Release session file lock to prevent page freezing during Gemini API calls
 require_once __DIR__ . '/../core/GeminiService.php';
 
 header('Content-Type: application/json');
@@ -14,17 +15,23 @@ if (empty($uid)) {
     exit;
 }
 
+$id    = $_POST['id'] ?? '';
 $index = $_POST['index'] ?? null;
-if (!is_numeric($index)) {
-    echo json_encode(['status' => 'error', 'message' => 'Invalid index']);
-    exit;
-}
 
 $userDir   = __DIR__ . '/../users/';
 $postsFile = $userDir . $uid . '_posts.json';
 $posts     = file_exists($postsFile) ? json_decode(file_get_contents($postsFile), true) : [];
 
-if (!isset($posts[$index])) {
+if ($id !== '') {
+    foreach ($posts as $k => $p) {
+        if (($p['id'] ?? '') === $id) {
+            $index = $k;
+            break;
+        }
+    }
+}
+
+if ($index === null || !isset($posts[$index])) {
     echo json_encode(['status' => 'error', 'message' => 'Post not found']);
     exit;
 }

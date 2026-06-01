@@ -6,6 +6,7 @@ session_start();
 
 $uid  = $_SESSION['uid'] ?? '';
 $plan = $_SESSION['user_plan'] ?? 'trial';
+session_write_close(); // Release session file lock to prevent page freezing during Gemini API calls
 
 if (!$uid) {
   header("Location: ../index.php");
@@ -15,19 +16,24 @@ if (!$uid) {
 $userDir   = __DIR__ . '/../users/';
 $postsFile = $userDir . $uid . '_posts.json';
 
+$id     = $_POST['id'] ?? '';
 $index  = $_POST['index'] ?? null;
 $action = $_POST['action'] ?? '';
-
-if (!is_numeric($index)) {
-  header("Location: mypage.php");
-  exit();
-}
 
 $posts = file_exists($postsFile)
   ? json_decode(file_get_contents($postsFile), true)
   : [];
 
-if (!isset($posts[$index])) {
+if ($id !== '') {
+  foreach ($posts as $k => $p) {
+    if (($p['id'] ?? '') === $id) {
+      $index = $k;
+      break;
+    }
+  }
+}
+
+if ($index === null || !isset($posts[$index])) {
   header("Location: mypage.php");
   exit();
 }
