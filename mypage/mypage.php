@@ -322,15 +322,22 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
       
       .post-actions-row {
         display: flex;
-        justify-content: flex-start;
+        justify-content: space-between;
         align-items: center;
-        margin-top: 6px;
+        margin-top: 8px;
         gap: 6px;
-        flex-wrap: wrap;
+        width: 100%;
       }
-      .action-buttons-group {
-        display: flex;
-        gap: 6px;
+      .post-actions-row > * {
+        flex: 1 !important;
+        min-width: 0 !important;
+        width: auto !important;
+      }
+      .post-actions-row > div {
+        display: inline-flex !important;
+      }
+      .post-actions-row > div .btn {
+        width: 100% !important;
       }
       
       .post-card .btn {
