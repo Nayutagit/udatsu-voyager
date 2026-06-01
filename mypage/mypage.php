@@ -801,9 +801,21 @@ function movePost(cardId, direction) {
     const heightTarget = target.offsetHeight;
     const gap = 16; // gap between flex items is 16px
     
-    // Set explicit smooth transition duration and easing
-    card.style.transition = 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)';
-    target.style.transition = 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)';
+    // Enable GPU hardware acceleration and set correct rendering layer
+    card.style.willChange = 'transform';
+    target.style.willChange = 'transform';
+    card.style.zIndex = '10';
+    target.style.zIndex = '1';
+    
+    // Temporarily make backgrounds opaque/solid to prevent glass-translucent text overlap
+    const isLightMode = document.body.classList.contains('light-mode');
+    const solidBg = isLightMode ? '#ffffff' : '#121212';
+    card.style.setProperty('background', solidBg, 'important');
+    target.style.setProperty('background', solidBg, 'important');
+    
+    // Set explicit smooth transition duration (250ms for snappiness)
+    card.style.transition = 'transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1)';
+    target.style.transition = 'transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1)';
     
     if (direction === 'up') {
       card.style.transform = `translateY(-${heightTarget + gap}px)`;
@@ -813,12 +825,18 @@ function movePost(cardId, direction) {
       target.style.transform = `translateY(-${heightCard + gap}px)`;
     }
     
-    // After transition finishes, swap DOM elements and reset translates
+    // After transition finishes, swap DOM elements and reset inline styles
     setTimeout(() => {
       card.style.transition = 'none';
       target.style.transition = 'none';
       card.style.transform = '';
       target.style.transform = '';
+      card.style.willChange = '';
+      target.style.willChange = '';
+      card.style.zIndex = '';
+      target.style.zIndex = '';
+      card.style.background = '';
+      target.style.background = '';
       
       if (direction === 'up') {
         parent.insertBefore(card, target);
@@ -830,10 +848,10 @@ function movePost(cardId, direction) {
       card.classList.add('moving-active');
       setTimeout(() => {
         card.classList.remove('moving-active');
-      }, 600);
+      }, 500);
       
       saveNewOrder();
-    }, 300);
+    }, 250);
   }
 }
 
