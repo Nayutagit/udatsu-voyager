@@ -176,12 +176,12 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
       }
       
       .post-eyecatch-wrapper {
-        width: 110px;
-        min-width: 110px;
-        height: 110px;
+        width: 80px;
+        min-width: 80px;
+        height: 80px;
         overflow: hidden;
-        margin: 16px 0 16px 16px;
-        border-radius: 8px;
+        margin: 12px 0 12px 12px;
+        border-radius: 6px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -190,10 +190,10 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
       }
       @media (max-width: 768px) {
         .post-eyecatch-wrapper {
-          width: 70px !important;
-          min-width: 70px !important;
-          height: 70px !important;
-          margin: 12px 0 12px 12px !important;
+          width: 54px !important;
+          min-width: 54px !important;
+          height: 54px !important;
+          margin: 8px 0 8px 8px !important;
         }
       }
       
@@ -209,14 +209,14 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
       
       .post-info {
         flex: 1;
-        padding: 16px !important;
+        padding: 12px 16px !important;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
       }
       @media (max-width: 768px) {
         .post-info {
-          padding: 12px !important;
+          padding: 8px 10px !important;
         }
       }
       
@@ -224,8 +224,8 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 6px;
-        font-size: 0.78rem;
+        margin-bottom: 4px;
+        font-size: 0.75rem;
       }
       .meta-left {
         display: flex;
@@ -289,21 +289,21 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
       }
       
       .post-title {
-        margin: 0 0 6px 0 !important;
-        line-height: 1.35 !important;
+        margin: 0 0 4px 0 !important;
+        line-height: 1.3 !important;
       }
       .post-title a {
         text-decoration: none;
         transition: all 0.3s ease;
         display: inline-block;
-        font-size: 1.05rem !important;
+        font-size: 0.95rem !important;
         font-weight: 700;
         color: var(--text-white);
         padding-right: 0 !important;
       }
       @media (max-width: 768px) {
         .post-title a {
-          font-size: 0.95rem !important;
+          font-size: 0.88rem !important;
         }
       }
       .post-title a:hover {
@@ -312,17 +312,17 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
       }
       
       .original-title-lbl {
-        font-size: 0.75rem;
+        font-size: 0.7rem;
         color: var(--text-muted);
-        margin-bottom: 6px;
+        margin-bottom: 4px;
       }
       
       .post-actions-row {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-top: 10px;
-        gap: 8px;
+        margin-top: 6px;
+        gap: 6px;
         flex-wrap: wrap;
       }
       .action-buttons-group {
@@ -456,8 +456,8 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
                       $af = $post['audio_file'];
                       $audioSrc = '../audio_proxy.php?target_uid=' . urlencode($uid) . '&path=' . urlencode($af);
                     ?>
-                    <div style="margin-top: 8px; margin-bottom: 8px; max-width: 320px;">
-                      <audio controls style="width: 100%; height: 32px; border-radius: 16px;" src="<?= htmlspecialchars($audioSrc) ?>"></audio>
+                    <div style="margin: 4px 0; max-width: 280px;">
+                      <audio controls style="width: 100%; height: 28px; border-radius: 14px;" src="<?= htmlspecialchars($audioSrc) ?>"></audio>
                     </div>
                   <?php endif; ?>
                 </div>
