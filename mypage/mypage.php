@@ -342,6 +342,68 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
         align-items: center;
         justify-content: center;
       }
+      
+      /* Make container wider on mobile screens */
+      @media (max-width: 768px) {
+        .container {
+          padding: 0 10px !important;
+        }
+      }
+      
+      /* Streamlined Audio Player Styles */
+      .post-audio-col {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding-right: 16px;
+        padding-left: 8px;
+        flex-shrink: 0;
+      }
+      @media (max-width: 768px) {
+        .post-audio-col {
+          padding-right: 10px;
+          padding-left: 4px;
+        }
+      }
+      .audio-play-circle-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border: 1px solid var(--primary-neon);
+        background: rgba(252, 200, 0, 0.08);
+        color: var(--primary-neon);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        box-shadow: 0 0 10px rgba(252, 200, 0, 0.15);
+      }
+      .audio-play-circle-btn:hover {
+        background: var(--primary-neon);
+        color: #000;
+        transform: scale(1.08);
+        box-shadow: 0 0 15px rgba(252, 200, 0, 0.45);
+      }
+      .audio-play-circle-btn.is-playing {
+        border-color: var(--accent-teal);
+        background: rgba(0, 255, 204, 0.1);
+        color: var(--accent-teal);
+        box-shadow: 0 0 12px rgba(0, 255, 204, 0.3);
+      }
+      .audio-play-circle-btn.is-playing:hover {
+        background: var(--accent-teal);
+        color: #000;
+        box-shadow: 0 0 18px rgba(0, 255, 204, 0.6);
+      }
+      @media (max-width: 768px) {
+        .audio-play-circle-btn {
+          width: 32px;
+          height: 32px;
+          font-size: 0.8rem;
+        }
+      }
     </style>
     
     <?php if (count($visiblePosts) === 0): ?>
@@ -450,17 +512,23 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
                     </div>
                   <?php endif; ?>
 
-                  <!-- Audio Player -->
-                  <?php if (!empty($post['audio_file'])): ?>
-                    <?php 
-                      $af = $post['audio_file'];
-                      $audioSrc = '../audio_proxy.php?target_uid=' . urlencode($uid) . '&path=' . urlencode($af);
-                    ?>
-                    <div style="margin: 4px 0; max-width: 280px;">
-                      <audio controls style="width: 100%; height: 28px; border-radius: 14px;" src="<?= htmlspecialchars($audioSrc) ?>"></audio>
-                    </div>
-                  <?php endif; ?>
                 </div>
+                
+                <!-- Streamlined Play/Pause Button Column -->
+                <?php 
+                  $af = $post['audio_file'] ?? $post['audio'] ?? '';
+                ?>
+                <?php if (!empty($af)): ?>
+                  <?php 
+                    $audioSrc = '../audio_proxy.php?target_uid=' . urlencode($uid) . '&path=' . urlencode($af);
+                  ?>
+                  <div class="post-audio-col">
+                    <audio id="audio-player-<?= htmlspecialchars($post['id'] ?? '') ?>" class="dashboard-audio-player" src="<?= htmlspecialchars($audioSrc) ?>" onended="resetAudioButton('<?= htmlspecialchars($post['id'] ?? '') ?>')" style="display: none;"></audio>
+                    <button type="button" id="play-btn-<?= htmlspecialchars($post['id'] ?? '') ?>" class="audio-play-circle-btn" onclick="toggleAudioPlayback(this, '<?= htmlspecialchars($post['id'] ?? '') ?>')">
+                      <i class="fas fa-play"></i>
+                    </button>
+                  </div>
+                <?php endif; ?>
 
                 <!-- Action Buttons -->
                 <div class="post-actions-row" id="post-actions-<?= htmlspecialchars($post['id'] ?? '') ?>">
@@ -761,6 +829,48 @@ function regenSummary(postId) {
     alert('通信エラーが発生しました');
     if (box) box.innerHTML = originalContent;
   });
+}
+
+function toggleAudioPlayback(btn, postId) {
+  const audio = document.getElementById('audio-player-' + postId);
+  if (!audio) return;
+  
+  // Pause any other playing audio on the page
+  document.querySelectorAll('audio.dashboard-audio-player').forEach(otherAudio => {
+    if (otherAudio !== audio && !otherAudio.paused) {
+      otherAudio.pause();
+      const otherPostId = otherAudio.id.replace('audio-player-', '');
+      const otherBtn = document.getElementById('play-btn-' + otherPostId);
+      if (otherBtn) {
+        otherBtn.innerHTML = '<i class="fas fa-play"></i>';
+        otherBtn.classList.remove('is-playing');
+      }
+    }
+  });
+
+  if (audio.paused) {
+    audio.play()
+      .then(() => {
+        btn.innerHTML = '<i class="fas fa-pause"></i>';
+        btn.classList.add('is-playing');
+      })
+      .catch(e => {
+        console.error("Playback failed:", e);
+        alert("音声の再生に失敗しました。ファイル形式またはネットワークを確認してください。");
+      });
+  } else {
+    audio.pause();
+    btn.innerHTML = '<i class="fas fa-play"></i>';
+    btn.classList.remove('is-playing');
+  }
+}
+
+function resetAudioButton(postId) {
+  const btn = document.getElementById('play-btn-' + postId);
+  if (btn) {
+    btn.innerHTML = '<i class="fas fa-play"></i>';
+    btn.classList.remove('is-playing');
+  }
 }
 
 function toggleSummary(postId) {

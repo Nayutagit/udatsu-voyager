@@ -14,11 +14,18 @@ if (empty($uid)) {
 }
 
 $storagePath = $_GET['path'] ?? '';
+$targetUid = $_GET['target_uid'] ?? '';
+if (!$targetUid && preg_match('/^audio\/([^\/]+)\//', $storagePath, $matches)) {
+    $targetUid = $matches[1];
+}
+if (!$targetUid) {
+    $targetUid = $uid;
+}
 
-    $targetUid = $_GET['target_uid'] ?? '';
-    if (!$targetUid && preg_match('/^audio\/([^\/]+)\//', $storagePath, $matches)) {
-        $targetUid = $matches[1];
-    }
+// Expand raw filenames to the user's specific uploads directory
+if ($storagePath && strpos($storagePath, '/') === false && $targetUid) {
+    $storagePath = 'uploads/' . $targetUid . '/' . $storagePath;
+}
     
     // Check if the file belongs to the user
     $isOwner = false;

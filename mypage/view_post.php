@@ -341,13 +341,9 @@ $thumbnail = $post['thumbnail'] ?? '';
         <?php
           $audioSrc = "";
           $downloadSrc = "";
-          if (strpos($audio, 'audio/') === 0 || strpos($audio, 'uploads/') === 0) {
-              $audioSrc    = "../audio_proxy.php?target_uid=" . urlencode($targetUid) . "&path=" . urlencode($audio);
-              $downloadSrc = "../audio_proxy.php?target_uid=" . urlencode($targetUid) . "&path=" . urlencode($audio) . "&download=1";
-          } else {
-              $audioSrc    = "../users/" . urlencode($targetUid) . "/posts/" . urlencode($audio);
-              $downloadSrc = "../users/" . urlencode($targetUid) . "/posts/" . urlencode($audio);
-          }
+          // Route all audio files through the proxy, including legacy ones
+          $audioSrc    = "../audio_proxy.php?target_uid=" . urlencode($targetUid) . "&path=" . urlencode($audio);
+          $downloadSrc = "../audio_proxy.php?target_uid=" . urlencode($targetUid) . "&path=" . urlencode($audio) . "&download=1";
         ?>
         <audio controls style="margin-bottom: 1rem;">
           <source src="<?= htmlspecialchars($audioSrc) ?>" type="audio/mpeg">

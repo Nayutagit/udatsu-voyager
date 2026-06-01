@@ -244,11 +244,7 @@ $timelinePosts = array_slice($timelinePosts, 0, 50);
             $audioUrl = '';
             $audioSource = $post['audio_file'] ?? $post['audio'] ?? '';
             if (!empty($audioSource)) {
-                if (strpos($audioSource, 'audio/') === 0 || strpos($audioSource, 'uploads/') === 0) {
-                    $audioUrl = "../audio_proxy.php?target_uid=" . urlencode($post['author_uid']) . "&path=" . urlencode($audioSource);
-                } else {
-                    $audioUrl = "../users/{$post['author_uid']}/posts/" . urlencode($audioSource);
-                }
+                $audioUrl = "../audio_proxy.php?target_uid=" . urlencode($post['author_uid']) . "&path=" . urlencode($audioSource);
             }
         ?>
             <div class="timeline-post">
