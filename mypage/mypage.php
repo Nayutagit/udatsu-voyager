@@ -48,27 +48,29 @@ function getPostStatusInfo($status) {
   return ['label' => '', 'class' => ''];
 }
 
-$sortOrder = $_GET['sort'] ?? 'upload';
+$sortOrder = $_GET['sort'] ?? 'custom';
 
 $visiblePosts = array_filter($posts, fn($p) => ($p['status'] ?? '') !== '削除済');
 
-uasort($visiblePosts, function($a, $b) use ($sortOrder) {
-    // Numeric extraction for IDs starting with job_TIMESTAMP
-    $idA = (int)preg_replace('/[^0-9]/', '', $a['id'] ?? '0');
-    $idB = (int)preg_replace('/[^0-9]/', '', $b['id'] ?? '0');
+if ($sortOrder !== 'custom') {
+    uasort($visiblePosts, function($a, $b) use ($sortOrder) {
+        // Numeric extraction for IDs starting with job_TIMESTAMP
+        $idA = (int)preg_replace('/[^0-9]/', '', $a['id'] ?? '0');
+        $idB = (int)preg_replace('/[^0-9]/', '', $b['id'] ?? '0');
 
-    if ($sortOrder === 'date') {
-        $timeA = strtotime($a['date'] ?? '1970-01-01');
-        $timeB = strtotime($b['date'] ?? '1970-01-01');
-        if ($timeA === $timeB) {
+        if ($sortOrder === 'date') {
+            $timeA = strtotime($a['date'] ?? '1970-01-01');
+            $timeB = strtotime($b['date'] ?? '1970-01-01');
+            if ($timeA === $timeB) {
+                return $idB <=> $idA;
+            }
+            return $timeB <=> $timeA;
+        } else {
+            // Upload order
             return $idB <=> $idA;
         }
-        return $timeB <=> $timeA;
-    } else {
-        // Upload order
-        return $idB <=> $idA;
-    }
-});
+    });
+}
 $postLimit = $plan_limits[$userPlan]['post_limit'] ?? 100;
 $remainingPosts = max(0, $postLimit - count($visiblePosts));
 $stackedCount = count(array_filter($posts, fn($p) => $p['status'] === 'My Udastack追加済'));
@@ -173,11 +175,19 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
         color: var(--primary-neon);
         text-decoration: underline;
       }
+      .post-card.drag-over {
+        border: 2px dashed var(--primary-neon) !important;
+        transform: scale(1.02);
+        box-shadow: 0 0 15px rgba(0, 255, 204, 0.2);
+      }
     </style>
     
     <div class="sort-controls animate-fadeup delay-100" style="margin-bottom: 25px; display: flex; justify-content: flex-end; align-items: center; gap: 15px;">
       <span style="font-size: 0.9rem; color: var(--text-muted);"><i class="fas fa-sort"></i> 並び替え:</span>
       <div class="glass-card" style="padding: 5px; display: flex; gap: 5px; border-radius: 20px;">
+        <a href="?sort=custom" class="btn <?= $sortOrder === 'custom' ? 'btn-primary' : '' ?>" style="padding: 5px 15px; border-radius: 15px; font-size: 0.8rem; text-decoration: none;">
+          自由並び替え
+        </a>
         <a href="?sort=upload" class="btn <?= $sortOrder === 'upload' ? 'btn-primary' : '' ?>" style="padding: 5px 15px; border-radius: 15px; font-size: 0.8rem; text-decoration: none;">
           アップロード順
         </a>
@@ -199,9 +209,14 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
     <?php else: ?>
       <div class="dashboard-grid animate-fadeup delay-300">
         <?php foreach ($visiblePosts as $i => $post): ?>
-          <div class="post-card" id="post-card-<?= $i ?>">
+          <div class="post-card" id="post-card-<?= $i ?>" data-id="<?= htmlspecialchars($post['id'] ?? '') ?>" <?= $sortOrder === 'custom' ? 'draggable="true"' : '' ?>>
             <div class="post-content">
               <div class="post-meta" style="margin-bottom: 10px; display: flex; align-items: center; gap: 10px;" id="post-meta-<?= $i ?>">
+                <?php if ($sortOrder === 'custom'): ?>
+                  <span class="drag-handle" style="cursor: grab; color: var(--text-muted); font-size: 1rem;" title="ドラッグして並び替え">
+                    <i class="fas fa-grip-vertical"></i>
+                  </span>
+                <?php endif; ?>
                 <span style="display: flex; align-items: center; gap: 5px;">
                   <i class="far fa-calendar-alt"></i> 
                   <span id="date-text-<?= $i ?>" onclick="editPostDate(<?= $i ?>, '<?= htmlspecialchars($post['date']) ?>')" style="cursor: pointer; border-bottom: 1px dashed rgba(255,255,255,0.3);">
@@ -220,8 +235,6 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
                   <span id="retry-badge-<?= $i ?>" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem; cursor: pointer; border: 1px solid rgba(245, 158, 11, 0.3);" onclick="handlePostAction(<?= $i ?>, 'retry')">
                     <i class="fas fa-redo"></i> <?= $isRawTitle && $postStatus !== 'エラー' ? '🔄 AI解析する' : '🔄 AI解析を再試行' ?>
                   </span>
-                <?php elseif ($postStatus === 'Inbox'): ?>
-                  <span style="background: rgba(0, 164, 216, 0.2); color: var(--accent-teal); padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;"><i class="fas fa-check-double"></i> 解析完了</span>
                 <?php elseif ($postStatus === 'My Udastack追加済'): ?>
                   <span id="stack-badge-<?= $i ?>" style="background: rgba(252, 200, 0, 0.1); color: var(--primary-neon); padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;"><i class="fas fa-check"></i> Stacked</span>
                 <?php endif; ?>
@@ -248,25 +261,35 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
               <?php
                 $hasSummary = !empty($post['summary']) && $post['summary'] !== '(要約解析失敗)';
                 $hasTranscription = !empty($post['original_text']) || (!empty($post['text']) && strlen($post['text'] ?? '') > 50);
+                $hasAnyText = $hasSummary || (!empty($post['text']) && $postStatus !== '解析中') || $hasTranscription;
               ?>
-              <?php if ($hasSummary): ?>
-                <div id="summary-box-<?= $i ?>" class="post-summary" style="margin: 10px 0; font-size: 0.85rem; color: var(--text-white); line-height: 1.6; background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; border-left: 3px solid var(--primary-neon);">
-                  <?= nl2br(htmlspecialchars($post['summary'])) ?>
+              <?php if ($hasAnyText): ?>
+                <div id="summary-wrapper-<?= $i ?>" style="display: none;">
+                  <?php if ($hasSummary): ?>
+                    <div id="summary-box-<?= $i ?>" class="post-summary" style="margin: 10px 0; font-size: 0.85rem; color: var(--text-white); line-height: 1.6; background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; border-left: 3px solid var(--primary-neon);">
+                      <?= nl2br(htmlspecialchars($post['summary'])) ?>
+                    </div>
+                  <?php elseif (!empty($post['text']) && $postStatus !== '解析中'): ?>
+                    <div id="summary-box-<?= $i ?>" class="post-summary" style="margin: 10px 0; font-size: 0.85rem; color: var(--text-muted); line-height: 1.6; background: rgba(255,255,255,0.02); padding: 12px; border-radius: 8px;">
+                      <?= nl2br(htmlspecialchars(mb_strimwidth(strip_tags($post['text']), 0, 160, '...'))) ?>
+                      <div style="margin-top: 8px;">
+                        <button type="button" onclick="regenSummary(<?= $i ?>)" class="btn btn-secondary" style="padding: 3px 10px; font-size: 0.7rem; border-color: #f59e0b; color: #f59e0b;">
+                          <i class="fas fa-magic"></i> 要約を生成
+                        </button>
+                      </div>
+                    </div>
+                  <?php elseif ($hasTranscription): ?>
+                    <div id="summary-box-<?= $i ?>" style="margin: 10px 0;">
+                      <button type="button" onclick="regenSummary(<?= $i ?>)" class="btn btn-secondary" style="padding: 5px 14px; font-size: 0.8rem; border-color: #f59e0b; color: #f59e0b;">
+                        <i class="fas fa-magic"></i> 要約を生成する
+                      </button>
+                    </div>
+                  <?php endif; ?>
                 </div>
-              <?php elseif (!empty($post['text']) && $postStatus !== '解析中'): ?>
-                <div id="summary-box-<?= $i ?>" class="post-summary" style="margin: 10px 0; font-size: 0.85rem; color: var(--text-muted); line-height: 1.6; background: rgba(255,255,255,0.02); padding: 12px; border-radius: 8px;">
-                  <?= nl2br(htmlspecialchars(mb_strimwidth(strip_tags($post['text']), 0, 160, '...'))) ?>
-                  <div style="margin-top: 8px;">
-                    <button type="button" onclick="regenSummary(<?= $i ?>)" class="btn btn-secondary" style="padding: 3px 10px; font-size: 0.7rem; border-color: #f59e0b; color: #f59e0b;">
-                      <i class="fas fa-magic"></i> 要約を生成
-                    </button>
-                  </div>
-                </div>
-              <?php elseif ($hasTranscription): ?>
-                <div id="summary-box-<?= $i ?>" style="margin: 10px 0;">
-                  <button type="button" onclick="regenSummary(<?= $i ?>)" class="btn btn-secondary" style="padding: 5px 14px; font-size: 0.8rem; border-color: #f59e0b; color: #f59e0b;">
-                    <i class="fas fa-magic"></i> 要約を生成する
-                  </button>
+                <div style="margin: 8px 0;">
+                  <a href="javascript:void(0)" onclick="toggleSummary(<?= $i ?>)" id="summary-toggle-<?= $i ?>" style="font-size: 0.85rem; color: var(--accent-teal); text-decoration: none; display: inline-flex; align-items: center; gap: 4px; font-weight: 500;">
+                    <i class="fas fa-chevron-down" style="font-size: 0.75rem;"></i> 続きを読む
+                  </a>
                 </div>
               <?php endif; ?>
               
@@ -581,6 +604,97 @@ function regenSummary(index) {
     if (box) box.innerHTML = originalContent;
   });
 }
+
+function toggleSummary(index) {
+  const wrapper = document.getElementById('summary-wrapper-' + index);
+  const toggle = document.getElementById('summary-toggle-' + index);
+  if (!wrapper || !toggle) return;
+  if (wrapper.style.display === 'none') {
+    wrapper.style.display = 'block';
+    toggle.innerHTML = '<i class="fas fa-chevron-up" style="font-size: 0.75rem;"></i> 閉じる';
+  } else {
+    wrapper.style.display = 'none';
+    toggle.innerHTML = '<i class="fas fa-chevron-down" style="font-size: 0.75rem;"></i> 続きを読む';
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  let draggedItem = null;
+
+  document.querySelectorAll('.post-card[draggable="true"]').forEach(card => {
+    card.addEventListener('dragstart', function(e) {
+      draggedItem = this;
+      this.style.opacity = '0.5';
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    
+    card.addEventListener('dragend', function() {
+      draggedItem = null;
+      this.style.opacity = '';
+      
+      document.querySelectorAll('.post-card').forEach(c => c.classList.remove('drag-over'));
+      saveNewOrder();
+    });
+    
+    card.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+    });
+    
+    card.addEventListener('dragenter', function(e) {
+      e.preventDefault();
+      if (this !== draggedItem) {
+        this.classList.add('drag-over');
+      }
+    });
+    
+    card.addEventListener('dragleave', function() {
+      this.classList.remove('drag-over');
+    });
+    
+    card.addEventListener('drop', function(e) {
+      e.preventDefault();
+      this.classList.remove('drag-over');
+      
+      if (this !== draggedItem) {
+        const parent = this.parentNode;
+        const allCards = Array.from(parent.querySelectorAll('.post-card'));
+        const draggedIndex = allCards.indexOf(draggedItem);
+        const targetIndex = allCards.indexOf(this);
+        
+        if (draggedIndex < targetIndex) {
+          parent.insertBefore(draggedItem, this.nextSibling);
+        } else {
+          parent.insertBefore(draggedItem, this);
+        }
+      }
+    });
+  });
+  
+  function saveNewOrder() {
+    const postIds = Array.from(document.querySelectorAll('.post-card')).map(card => card.getAttribute('data-id'));
+    
+    const formData = new FormData();
+    formData.append('order', JSON.stringify(postIds));
+    
+    fetch('save_order_ajax.php', {
+      method: 'POST',
+      body: formData,
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.status === 'ok') {
+        console.log('Order saved successfully');
+      } else {
+        console.error('Failed to save order:', data.message);
+      }
+    })
+    .catch(err => {
+      console.error('Error saving order:', err);
+    });
+  }
+});
 
 let pollInterval = null;
 function startPolling() {
