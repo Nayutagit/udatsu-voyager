@@ -139,13 +139,41 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
     </div>
     
     <style>
+      .dashboard-grid {
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)) !important;
+        gap: 20px !important;
+      }
+      .post-card {
+        transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s ease, border-color 0.3s ease !important;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25) !important;
+        background: rgba(10, 10, 10, 0.75) !important;
+      }
+      .post-card:hover {
+        transform: translateY(-5px) scale(1.01) !important;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35) !important;
+        border-color: var(--accent-teal) !important;
+      }
+      .post-card.moving-active {
+        border-color: var(--primary-neon) !important;
+        box-shadow: 0 0 15px rgba(252, 200, 0, 0.3) !important;
+      }
+      .post-content {
+        padding: 16px !important;
+      }
+      .post-eyecatch {
+        margin: -16px -16px 12px -16px !important;
+        height: 140px !important;
+      }
+      .post-title {
+        margin-bottom: 8px !important;
+      }
       .post-title a {
         text-decoration: none;
         transition: all 0.3s ease;
         position: relative;
         padding-right: 25px;
         display: block;
-        font-size: 1.1rem;
+        font-size: 1.05rem !important;
         font-weight: bold;
         color: var(--text-white);
       }
@@ -153,10 +181,12 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
         color: var(--primary-neon);
         text-decoration: underline;
       }
-      .sortable-ghost {
-        opacity: 0.3;
-        border: 2px dashed var(--primary-neon) !important;
-        background: rgba(0, 255, 204, 0.05) !important;
+      /* Compact buttons */
+      .post-card .btn {
+        padding: 6px 12px !important;
+        font-size: 0.75rem !important;
+        border-radius: 8px !important;
+        gap: 6px !important;
       }
     </style>
     
@@ -589,18 +619,54 @@ function movePost(cardId, direction) {
   if (!card) return;
   
   const parent = card.parentNode;
+  let target = null;
   if (direction === 'up') {
-    const prev = card.previousElementSibling;
-    if (prev && prev.classList.contains('post-card')) {
-      parent.insertBefore(card, prev);
-      saveNewOrder();
-    }
+    target = card.previousElementSibling;
   } else if (direction === 'down') {
-    const next = card.nextElementSibling;
-    if (next && next.classList.contains('post-card')) {
-      parent.insertBefore(next, card);
-      saveNewOrder();
+    target = card.nextElementSibling;
+  }
+  
+  if (target && target.classList.contains('post-card')) {
+    const rectCardStart = card.getBoundingClientRect();
+    const rectTargetStart = target.getBoundingClientRect();
+    
+    if (direction === 'up') {
+      parent.insertBefore(card, target);
+    } else {
+      parent.insertBefore(target, card);
     }
+    
+    const rectCardEnd = card.getBoundingClientRect();
+    const rectTargetEnd = target.getBoundingClientRect();
+    
+    const deltaCardX = rectCardStart.left - rectCardEnd.left;
+    const deltaCardY = rectCardStart.top - rectCardEnd.top;
+    const deltaTargetX = rectTargetStart.left - rectTargetEnd.left;
+    const deltaTargetY = rectTargetStart.top - rectTargetEnd.top;
+    
+    card.style.transition = 'none';
+    card.style.transform = `translate(${deltaCardX}px, ${deltaCardY}px)`;
+    target.style.transition = 'none';
+    target.style.transform = `translate(${deltaTargetX}px, ${deltaTargetY}px)`;
+    
+    card.offsetHeight; // Force reflow
+    
+    card.style.transition = 'transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)';
+    card.style.transform = 'translate(0, 0)';
+    target.style.transition = 'transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)';
+    target.style.transform = 'translate(0, 0)';
+    
+    card.classList.add('moving-active');
+    
+    setTimeout(() => {
+      card.style.transition = '';
+      card.style.transform = '';
+      target.style.transition = '';
+      target.style.transform = '';
+      card.classList.remove('moving-active');
+    }, 400);
+    
+    saveNewOrder();
   }
 }
 
