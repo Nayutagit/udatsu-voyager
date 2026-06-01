@@ -140,53 +140,199 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
     
     <style>
       .dashboard-grid {
-        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)) !important;
-        gap: 20px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 16px !important;
       }
       .post-card {
-        transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s ease, border-color 0.3s ease !important;
+        background: var(--glass-bg) !important;
+        backdrop-filter: blur(var(--glass-blur)) !important;
+        -webkit-backdrop-filter: blur(var(--glass-blur)) !important;
+        border: 1px solid var(--glass-border) !important;
+        border-radius: 12px !important;
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25) !important;
-        background: rgba(10, 10, 10, 0.75) !important;
+        overflow: hidden;
+        transition: opacity 0.15s ease, transform 0.15s ease, border-color 0.3s ease, box-shadow 0.3s ease !important;
       }
       .post-card:hover {
-        transform: translateY(-5px) scale(1.01) !important;
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35) !important;
-        border-color: var(--accent-teal) !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.35) !important;
+        border-color: rgba(252, 200, 0, 0.3) !important;
       }
       .post-card.moving-active {
         border-color: var(--primary-neon) !important;
         box-shadow: 0 0 15px rgba(252, 200, 0, 0.3) !important;
       }
-      .post-content {
+      .post-card-swapping {
+        opacity: 0 !important;
+        transform: scale(0.98) !important;
+      }
+      
+      .post-card-inner {
+        display: flex;
+        flex-direction: row;
+        width: 100%;
+      }
+      @media (max-width: 768px) {
+        .post-card-inner {
+          flex-direction: column;
+        }
+        .post-eyecatch-wrapper {
+          width: 100% !important;
+          height: 140px !important;
+          border-right: none !important;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+        }
+      }
+      
+      .post-eyecatch-wrapper {
+        width: 150px;
+        min-width: 150px;
+        height: 150px;
+        overflow: hidden;
+        background: rgba(255, 255, 255, 0.03);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-right: 1px solid rgba(255, 255, 255, 0.05);
+      }
+      .post-eyecatch-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+      }
+      .post-card:hover .post-eyecatch-img {
+        transform: scale(1.05);
+      }
+      .placeholder-icon {
+        font-size: 2.2rem;
+        color: rgba(255, 255, 255, 0.12);
+      }
+      
+      .post-info {
+        flex: 1;
         padding: 16px !important;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
       }
-      .post-eyecatch {
-        margin: -16px -16px 12px -16px !important;
-        height: 140px !important;
+      
+      .post-meta-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 6px;
+        font-size: 0.8rem;
       }
+      .meta-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .sort-actions {
+        display: inline-flex;
+        gap: 6px;
+      }
+      .sort-btn {
+        color: var(--text-muted);
+        font-size: 0.85rem;
+        padding: 2px 4px;
+        border-radius: 4px;
+        background: rgba(255,255,255,0.03);
+        transition: all 0.2s ease;
+        text-decoration: none;
+      }
+      .sort-btn:hover {
+        color: var(--primary-neon) !important;
+        background: rgba(252, 200, 0, 0.1);
+      }
+      .meta-date {
+        color: var(--text-muted);
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .editable-date {
+        cursor: pointer;
+        border-bottom: 1px dashed rgba(255,255,255,0.3);
+      }
+      
+      .badge {
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 0.72rem;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .badge-processing {
+        background: rgba(0, 255, 204, 0.15);
+        color: var(--primary-neon);
+      }
+      .badge-failed {
+        background: rgba(245, 158, 11, 0.15);
+        color: #f59e0b;
+        border: 1px solid rgba(245, 158, 11, 0.3);
+        cursor: pointer;
+      }
+      .badge-stacked {
+        background: rgba(252, 200, 0, 0.1);
+        color: var(--primary-neon);
+      }
+      .badge-shared {
+        background: rgba(168, 85, 247, 0.1);
+        color: #a855f7;
+      }
+      
       .post-title {
-        margin-bottom: 8px !important;
+        margin: 0 0 6px 0 !important;
+        line-height: 1.4;
       }
       .post-title a {
         text-decoration: none;
         transition: all 0.3s ease;
-        position: relative;
-        padding-right: 25px;
-        display: block;
-        font-size: 1.05rem !important;
+        display: inline-block;
+        font-size: 1.08rem !important;
         font-weight: bold;
         color: var(--text-white);
+        padding-right: 0 !important;
       }
       .post-title a:hover {
-        color: var(--primary-neon);
+        color: var(--primary-neon) !important;
         text-decoration: underline;
       }
-      /* Compact buttons */
+      
+      .original-title-lbl {
+        font-size: 0.78rem;
+        color: var(--text-muted);
+        margin-bottom: 8px;
+      }
+      
+      .post-actions-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 10px;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      .action-buttons-group {
+        display: flex;
+        gap: 8px;
+      }
+      
       .post-card .btn {
-        padding: 6px 12px !important;
-        font-size: 0.75rem !important;
-        border-radius: 8px !important;
-        gap: 6px !important;
+        padding: 4px 10px !important;
+        font-size: 0.72rem !important;
+        border-radius: 6px !important;
+        gap: 4px !important;
+        font-weight: 600;
+        height: 26px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
       }
     </style>
     
@@ -202,150 +348,173 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
     <?php else: ?>
       <div class="dashboard-grid animate-fadeup delay-300">
         <?php foreach ($visiblePosts as $i => $post): ?>
+          <?php
+            $postStatus = $post['status'] ?? '';
+            $postTitle = $post['title'] ?? '';
+            $isRawTitle = preg_match('/^新規録音/', $postTitle) || $postTitle === '🎙';
+            $isFailed = ($postStatus === 'エラー' || strpos($postTitle, '解析エラー') !== false || $isRawTitle || (empty($post['summary']) && empty($post['text']) && (!empty($post['audio_file']) || !empty($post['audio'])) && $postStatus !== '解析中'));
+          ?>
           <div class="post-card" id="post-card-<?= $i ?>" data-id="<?= htmlspecialchars($post['id'] ?? '') ?>">
-            <div class="post-content">
-              <div class="post-meta" style="margin-bottom: 10px; display: flex; align-items: center; gap: 10px;" id="post-meta-<?= $i ?>">
-                <span class="sort-actions" style="display: inline-flex; gap: 8px; align-items: center; margin-right: 5px; user-select: none; -webkit-user-select: none;">
-                  <a href="javascript:void(0)" onclick="movePost(<?= $i ?>, 'up')" style="color: var(--text-muted); font-size: 0.9rem; text-decoration: none; padding: 2px;" title="上に移動" onmouseover="this.style.color='var(--primary-neon)'" onmouseout="this.style.color='var(--text-muted)'">
-                    <i class="fas fa-chevron-up"></i>
-                  </a>
-                  <a href="javascript:void(0)" onclick="movePost(<?= $i ?>, 'down')" style="color: var(--text-muted); font-size: 0.9rem; text-decoration: none; padding: 2px;" title="下に移動" onmouseover="this.style.color='var(--primary-neon)'" onmouseout="this.style.color='var(--text-muted)'">
-                    <i class="fas fa-chevron-down"></i>
-                  </a>
-                </span>
-                <span style="display: flex; align-items: center; gap: 5px;">
-                  <i class="far fa-calendar-alt"></i> 
-                  <span id="date-text-<?= $i ?>" onclick="editPostDate(<?= $i ?>, '<?= htmlspecialchars($post['date']) ?>')" style="cursor: pointer; border-bottom: 1px dashed rgba(255,255,255,0.3);">
-                    <?= htmlspecialchars($post['date']) ?>
-                  </span>
-                </span>
-                <?php
-                  $postStatus = $post['status'] ?? '';
-                  $postTitle = $post['title'] ?? '';
-                  $isRawTitle = preg_match('/^新規録音/', $postTitle) || $postTitle === '🎙';
-                  $isFailed = ($postStatus === 'エラー' || strpos($postTitle, '解析エラー') !== false || $isRawTitle || (empty($post['summary']) && empty($post['text']) && (!empty($post['audio_file']) || !empty($post['audio'])) && $postStatus !== '解析中'));
-                ?>
-                <?php if ($postStatus === '解析中'): ?>
-                  <span style="background: rgba(0, 255, 204, 0.2); color: var(--primary-neon); padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;"><i class="fas fa-spinner fa-spin"></i> 解析中...</span>
-                <?php elseif ($postStatus === 'エラー' || strpos($postTitle, '解析エラー') !== false || $isRawTitle): ?>
-                  <span id="retry-badge-<?= $i ?>" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem; cursor: pointer; border: 1px solid rgba(245, 158, 11, 0.3);" onclick="handlePostAction(<?= $i ?>, 'retry')">
-                    <i class="fas fa-redo"></i> <?= $isRawTitle && $postStatus !== 'エラー' ? '🔄 AI解析する' : '🔄 AI解析を再試行' ?>
-                  </span>
-                <?php elseif ($postStatus === 'My Udastack追加済'): ?>
-                  <span id="stack-badge-<?= $i ?>" style="background: rgba(252, 200, 0, 0.1); color: var(--primary-neon); padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;"><i class="fas fa-check"></i> Stacked</span>
-                <?php endif; ?>
-                <?php if (!empty($post['is_shared'])): ?>
-                  <span style="background: rgba(168, 85, 247, 0.1); color: #a855f7; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;"><i class="fas fa-share-alt"></i> Shared</span>
-                <?php endif; ?>
-              </div>
+            <div class="post-card-inner">
+              
+              <!-- Eyecatch Column -->
               <?php if (!empty($post['thumbnail'])): ?>
-                <div class="post-eyecatch" style="margin: -15px -15px 15px -15px; overflow: hidden; border-radius: 12px 12px 0 0; height: 180px;">
-                  <img src="../<?= htmlspecialchars($post['thumbnail']) ?>" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                <div class="post-eyecatch-wrapper">
+                  <img src="../<?= htmlspecialchars($post['thumbnail']) ?>" class="post-eyecatch-img">
+                </div>
+              <?php else: ?>
+                <div class="post-eyecatch-wrapper placeholder-icon">
+                  <i class="fas fa-microphone-alt"></i>
                 </div>
               <?php endif; ?>
 
-              <h3 class="post-title" style="min-height: auto; margin-bottom: 10px;">
-                <a href="view_post.php?index=<?= $i ?>"><?= htmlspecialchars(mb_strimwidth($post['title'], 0, 50, '...')) ?></a>
-              </h3>
-              
-              <?php if (!empty($post['original_title'])): ?>
-                <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px; display: flex; align-items: center; gap: 5px;">
-                  <i class="fas fa-file-audio"></i> 元ファイル名: <span><?= htmlspecialchars(mb_strimwidth($post['original_title'], 0, 50, '...')) ?></span>
-                </div>
-              <?php endif; ?>
-              
-              <?php
-                $hasSummary = !empty($post['summary']) && $post['summary'] !== '(要約解析失敗)';
-                $hasTranscription = !empty($post['original_text']) || (!empty($post['text']) && strlen($post['text'] ?? '') > 50);
-                $hasAnyText = $hasSummary || (!empty($post['text']) && $postStatus !== '解析中') || $hasTranscription;
-              ?>
-              <?php if ($hasAnyText): ?>
-                <div id="summary-wrapper-<?= $i ?>" style="display: none;">
-                  <?php if ($hasSummary): ?>
-                    <div id="summary-box-<?= $i ?>" class="post-summary" style="margin: 10px 0; font-size: 0.85rem; color: var(--text-white); line-height: 1.6; background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; border-left: 3px solid var(--primary-neon);">
-                      <?= nl2br(htmlspecialchars($post['summary'])) ?>
+              <!-- Content Column -->
+              <div class="post-info">
+                <div>
+                  <div class="post-meta-row" id="post-meta-<?= $i ?>">
+                    <div class="meta-left">
+                      <span class="sort-actions" style="user-select: none; -webkit-user-select: none;">
+                        <a href="javascript:void(0)" onclick="movePost(<?= $i ?>, 'up')" class="sort-btn" title="上に移動">
+                          <i class="fas fa-chevron-up"></i>
+                        </a>
+                        <a href="javascript:void(0)" onclick="movePost(<?= $i ?>, 'down')" class="sort-btn" title="下に移動">
+                          <i class="fas fa-chevron-down"></i>
+                        </a>
+                      </span>
+                      <span class="meta-date">
+                        <i class="far fa-calendar-alt"></i>
+                        <span id="date-text-<?= $i ?>" onclick="editPostDate(<?= $i ?>, '<?= htmlspecialchars($post['date']) ?>')" class="editable-date">
+                          <?= htmlspecialchars($post['date']) ?>
+                        </span>
+                      </span>
                     </div>
-                  <?php elseif (!empty($post['text']) && $postStatus !== '解析中'): ?>
-                    <div id="summary-box-<?= $i ?>" class="post-summary" style="margin: 10px 0; font-size: 0.85rem; color: var(--text-muted); line-height: 1.6; background: rgba(255,255,255,0.02); padding: 12px; border-radius: 8px;">
-                      <?= nl2br(htmlspecialchars(mb_strimwidth(strip_tags($post['text']), 0, 160, '...'))) ?>
-                      <div style="margin-top: 8px;">
-                        <button type="button" onclick="regenSummary(<?= $i ?>)" class="btn btn-secondary" style="padding: 3px 10px; font-size: 0.7rem; border-color: #f59e0b; color: #f59e0b;">
-                          <i class="fas fa-magic"></i> 要約を生成
-                        </button>
-                      </div>
+                    <div class="meta-right">
+                      <?php if ($postStatus === '解析中'): ?>
+                        <span class="badge badge-processing"><i class="fas fa-spinner fa-spin"></i> 解析中...</span>
+                      <?php elseif ($postStatus === 'エラー' || strpos($postTitle, '解析エラー') !== false || $isRawTitle): ?>
+                        <span id="retry-badge-<?= $i ?>" class="badge badge-failed" onclick="handlePostAction(<?= $i ?>, 'retry')">
+                          <i class="fas fa-redo"></i> <?= $isRawTitle && $postStatus !== 'エラー' ? 'AI解析する' : 'AI解析再試行' ?>
+                        </span>
+                      <?php elseif ($postStatus === 'My Udastack追加済'): ?>
+                        <span id="stack-badge-<?= $i ?>" class="badge badge-stacked"><i class="fas fa-check"></i> Stacked</span>
+                      <?php endif; ?>
+                      <?php if (!empty($post['is_shared'])): ?>
+                        <span class="badge badge-shared"><i class="fas fa-share-alt"></i> Shared</span>
+                      <?php endif; ?>
                     </div>
-                  <?php elseif ($hasTranscription): ?>
-                    <div id="summary-box-<?= $i ?>" style="margin: 10px 0;">
-                      <button type="button" onclick="regenSummary(<?= $i ?>)" class="btn btn-secondary" style="padding: 5px 14px; font-size: 0.8rem; border-color: #f59e0b; color: #f59e0b;">
-                        <i class="fas fa-magic"></i> 要約を生成する
-                      </button>
+                  </div>
+
+                  <h3 class="post-title">
+                    <a href="view_post.php?index=<?= $i ?>"><?= htmlspecialchars(mb_strimwidth($postTitle, 0, 80, '...')) ?></a>
+                  </h3>
+
+                  <?php if (!empty($post['original_title'])): ?>
+                    <div class="original-title-lbl">
+                      <i class="fas fa-file-audio"></i> 元ファイル: <?= htmlspecialchars(mb_strimwidth($post['original_title'], 0, 50, '...')) ?>
+                    </div>
+                  <?php endif; ?>
+
+                  <!-- Accordion Text -->
+                  <?php
+                    $hasSummary = !empty($post['summary']) && $post['summary'] !== '(要約解析失敗)';
+                    $hasTranscription = !empty($post['original_text']) || (!empty($post['text']) && strlen($post['text'] ?? '') > 50);
+                    $hasAnyText = $hasSummary || (!empty($post['text']) && $postStatus !== '解析中') || $hasTranscription;
+                  ?>
+                  <?php if ($hasAnyText): ?>
+                    <div id="summary-wrapper-<?= $i ?>" style="display: none;">
+                      <?php if ($hasSummary): ?>
+                        <div id="summary-box-<?= $i ?>" class="post-summary" style="margin: 10px 0; font-size: 0.85rem; color: var(--text-white); line-height: 1.6; background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; border-left: 3px solid var(--primary-neon);">
+                          <?= nl2br(htmlspecialchars($post['summary'])) ?>
+                        </div>
+                      <?php elseif (!empty($post['text']) && $postStatus !== '解析中'): ?>
+                        <div id="summary-box-<?= $i ?>" class="post-summary" style="margin: 10px 0; font-size: 0.85rem; color: var(--text-muted); line-height: 1.6; background: rgba(255,255,255,0.02); padding: 12px; border-radius: 8px;">
+                          <?= nl2br(htmlspecialchars(mb_strimwidth(strip_tags($post['text']), 0, 160, '...'))) ?>
+                          <div style="margin-top: 8px;">
+                            <button type="button" onclick="regenSummary(<?= $i ?>)" class="btn btn-secondary" style="padding: 3px 10px; font-size: 0.7rem; border-color: #f59e0b; color: #f59e0b;">
+                              <i class="fas fa-magic"></i> 要約を生成
+                            </button>
+                          </div>
+                        </div>
+                      <?php elseif ($hasTranscription): ?>
+                        <div id="summary-box-<?= $i ?>" style="margin: 10px 0;">
+                          <button type="button" onclick="regenSummary(<?= $i ?>)" class="btn btn-secondary" style="padding: 5px 14px; font-size: 0.8rem; border-color: #f59e0b; color: #f59e0b;">
+                            <i class="fas fa-magic"></i> 要約を生成する
+                          </button>
+                        </div>
+                      <?php endif; ?>
+                    </div>
+                    <div style="margin: 8px 0;">
+                      <a href="javascript:void(0)" onclick="toggleSummary(<?= $i ?>)" id="summary-toggle-<?= $i ?>" style="font-size: 0.85rem; color: var(--accent-teal); text-decoration: none; display: inline-flex; align-items: center; gap: 4px; font-weight: 500;">
+                        <i class="fas fa-chevron-down" style="font-size: 0.75rem;"></i> 続きを読む
+                      </a>
+                    </div>
+                  <?php endif; ?>
+
+                  <!-- Audio Player -->
+                  <?php if (!empty($post['audio_file'])): ?>
+                    <?php 
+                      $af = $post['audio_file'];
+                      $audioSrc = '../audio_proxy.php?target_uid=' . urlencode($uid) . '&path=' . urlencode($af);
+                    ?>
+                    <div style="margin-top: 8px; margin-bottom: 8px; max-width: 320px;">
+                      <audio controls style="width: 100%; height: 32px; border-radius: 16px;" src="<?= htmlspecialchars($audioSrc) ?>"></audio>
                     </div>
                   <?php endif; ?>
                 </div>
-                <div style="margin: 8px 0;">
-                  <a href="javascript:void(0)" onclick="toggleSummary(<?= $i ?>)" id="summary-toggle-<?= $i ?>" style="font-size: 0.85rem; color: var(--accent-teal); text-decoration: none; display: inline-flex; align-items: center; gap: 4px; font-weight: 500;">
-                    <i class="fas fa-chevron-down" style="font-size: 0.75rem;"></i> 続きを読む
-                  </a>
-                </div>
-              <?php endif; ?>
-              
-              <?php if (!empty($post['audio_file'])): ?>
-                <?php 
-                  $af = $post['audio_file'];
-                  $audioSrc = '../audio_proxy.php?target_uid=' . urlencode($uid) . '&path=' . urlencode($af);
-                ?>
-                <div style="margin-top: 10px; margin-bottom: 10px;">
-                  <audio controls style="width: 100%; height: 36px; border-radius: 18px;" src="<?= htmlspecialchars($audioSrc) ?>"></audio>
-                </div>
-              <?php endif; ?>
-              
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px;" id="post-actions-<?= $i ?>">
-                <a href="edit_post.php?index=<?= $i ?>" class="btn btn-secondary" style="padding: 5px 10px; font-size: 0.8rem; flex: 1;">
-                  <i class="fas fa-edit"></i> Edit
-                </a>
-                
-                <button type="button" onclick="handlePostAction(<?= $i ?>, 'delete')" class="btn btn-secondary" style="padding: 5px 10px; font-size: 0.8rem; width: 100%; color: var(--warning-red); border-color: var(--warning-red);">
-                  <i class="fas fa-trash"></i> Delete
-                </button>
-                
-                <?php if ($isFailed): ?>
-                  <div id="retry-btn-container-<?= $i ?>" style="grid-column: span 2; display: flex; margin-top: 5px;">
-                    <button type="button" onclick="handlePostAction(<?= $i ?>, 'retry')" class="btn btn-primary" style="padding: 8px 15px; font-size: 0.85rem; width: 100%; background: #ffda44; color: #000; font-weight: bold; border-radius: 8px; border: none; box-shadow: 0 0 10px rgba(255, 218, 68, 0.4); cursor: pointer; transition: 0.3s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
-                      <i class="fas fa-redo"></i> AI解析を再試行する
+
+                <!-- Action Buttons -->
+                <div class="post-actions-row" id="post-actions-<?= $i ?>">
+                  <div class="action-buttons-group">
+                    <a href="edit_post.php?index=<?= $i ?>" class="btn btn-secondary">
+                      <i class="fas fa-edit"></i> Edit
+                    </a>
+                    <button type="button" onclick="handlePostAction(<?= $i ?>, 'delete')" class="btn btn-secondary" style="color: var(--warning-red); border-color: var(--warning-red);">
+                      <i class="fas fa-trash"></i> Delete
                     </button>
                   </div>
-                <?php else: ?>
-                  <div id="stack-btn-container-<?= $i ?>" style="display: flex;">
-                    <?php if (($post['status'] ?? '') === 'My Udastack追加済'): ?>
-                      <button type="button" onclick="handlePostAction(<?= $i ?>, 'unstack')" class="btn btn-primary" style="padding: 5px 10px; font-size: 0.8rem; flex: 1; border-color: var(--primary-neon); background: rgba(252, 200, 0, 0.1); color: var(--primary-neon);">
-                        <i class="fas fa-check"></i> Stacked
-                      </button>
+
+                  <div class="action-buttons-group">
+                    <?php if ($isFailed): ?>
+                      <div id="retry-btn-container-<?= $i ?>" style="display: flex;">
+                        <button type="button" onclick="handlePostAction(<?= $i ?>, 'retry')" class="btn btn-primary">
+                          <i class="fas fa-redo"></i> AI解析再試行
+                        </button>
+                      </div>
                     <?php else: ?>
-                      <button type="button" onclick="handlePostAction(<?= $i ?>, 'stack')" class="btn btn-primary" style="padding: 5px 10px; font-size: 0.8rem; width: 100%;">
-                        <i class="fas fa-plus"></i> Stack
-                      </button>
+                      <div id="stack-btn-container-<?= $i ?>" style="display: flex;">
+                        <?php if (($post['status'] ?? '') === 'My Udastack追加済'): ?>
+                          <button type="button" onclick="handlePostAction(<?= $i ?>, 'unstack')" class="btn btn-primary" style="border-color: var(--primary-neon); background: rgba(252, 200, 0, 0.1); color: var(--primary-neon);">
+                            <i class="fas fa-check"></i> Stacked
+                          </button>
+                        <?php else: ?>
+                          <button type="button" onclick="handlePostAction(<?= $i ?>, 'stack')" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Stack
+                          </button>
+                        <?php endif; ?>
+                      </div>
+                      
+                      <div id="share-btn-container-<?= $i ?>" style="display: flex;">
+                        <?php if (!empty($post['is_shared'])): ?>
+                          <button type="button" onclick="handlePostAction(<?= $i ?>, 'unshare')" class="btn btn-secondary" style="border-color: #a855f7; color: #a855f7;">
+                            <i class="fas fa-share-alt"></i> Shared
+                          </button>
+                        <?php else: ?>
+                          <button type="button" onclick="handlePostAction(<?= $i ?>, 'share')" class="btn btn-secondary">
+                            <i class="fas fa-share-alt"></i> Share
+                          </button>
+                        <?php endif; ?>
+                      </div>
+                      <?php if (!empty($post['audio_file']) || !empty($post['audio'])): ?>
+                        <div id="retry-btn-container-<?= $i ?>" style="display: flex;">
+                          <button type="button" onclick="handlePostAction(<?= $i ?>, 'retry')" class="btn btn-secondary" style="border-color: rgba(245,158,11,0.4); color: #f59e0b; background: rgba(245,158,11,0.05);" onmouseover="this.style.background='rgba(245,158,11,0.12)'" onmouseout="this.style.background='rgba(245,158,11,0.05)'">
+                            <i class="fas fa-redo"></i> 再解析
+                          </button>
+                        </div>
+                      <?php endif; ?>
                     <?php endif; ?>
                   </div>
-                  
-                  <div id="share-btn-container-<?= $i ?>" style="display: flex;">
-                    <?php if (!empty($post['is_shared'])): ?>
-                      <button type="button" onclick="handlePostAction(<?= $i ?>, 'unshare')" class="btn btn-secondary" style="padding: 5px 10px; font-size: 0.8rem; width: 100%; border-color: #a855f7; color: #a855f7;">
-                        <i class="fas fa-share-alt"></i> Shared
-                      </button>
-                    <?php else: ?>
-                      <button type="button" onclick="handlePostAction(<?= $i ?>, 'share')" class="btn btn-secondary" style="padding: 5px 10px; font-size: 0.8rem; width: 100%;">
-                        <i class="fas fa-share-alt"></i> Share
-                      </button>
-                    <?php endif; ?>
-                  </div>
-                  <?php if (!empty($post['audio_file']) || !empty($post['audio'])): ?>
-                    <div id="retry-btn-container-<?= $i ?>" style="grid-column: span 2; display: flex; margin-top: 6px;">
-                      <button type="button" onclick="handlePostAction(<?= $i ?>, 'retry')" class="btn btn-secondary" style="padding: 5px 10px; font-size: 0.75rem; width: 100%; border-color: rgba(245,158,11,0.4); color: #f59e0b; background: rgba(245,158,11,0.05); border-radius: 8px; transition: 0.3s;" onmouseover="this.style.background='rgba(245,158,11,0.12)'" onmouseout="this.style.background='rgba(245,158,11,0.05)'">
-                        <i class="fas fa-redo"></i> 音声から再解析する
-                      </button>
-                    </div>
-                  <?php endif; ?>
-                <?php endif; ?>
+                </div>
+
               </div>
             </div>
           </div>
@@ -627,46 +796,30 @@ function movePost(cardId, direction) {
   }
   
   if (target && target.classList.contains('post-card')) {
-    const rectCardStart = card.getBoundingClientRect();
-    const rectTargetStart = target.getBoundingClientRect();
-    
-    if (direction === 'up') {
-      parent.insertBefore(card, target);
-    } else {
-      parent.insertBefore(target, card);
-    }
-    
-    const rectCardEnd = card.getBoundingClientRect();
-    const rectTargetEnd = target.getBoundingClientRect();
-    
-    const deltaCardX = rectCardStart.left - rectCardEnd.left;
-    const deltaCardY = rectCardStart.top - rectCardEnd.top;
-    const deltaTargetX = rectTargetStart.left - rectTargetEnd.left;
-    const deltaTargetY = rectTargetStart.top - rectTargetEnd.top;
-    
-    card.style.transition = 'none';
-    card.style.transform = `translate(${deltaCardX}px, ${deltaCardY}px)`;
-    target.style.transition = 'none';
-    target.style.transform = `translate(${deltaTargetX}px, ${deltaTargetY}px)`;
-    
-    card.offsetHeight; // Force reflow
-    
-    card.style.transition = 'transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)';
-    card.style.transform = 'translate(0, 0)';
-    target.style.transition = 'transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)';
-    target.style.transform = 'translate(0, 0)';
-    
-    card.classList.add('moving-active');
+    // Add swapping class to fade out both elements
+    card.classList.add('post-card-swapping');
+    target.classList.add('post-card-swapping');
     
     setTimeout(() => {
-      card.style.transition = '';
-      card.style.transform = '';
-      target.style.transition = '';
-      target.style.transform = '';
-      card.classList.remove('moving-active');
-    }, 400);
-    
-    saveNewOrder();
+      // Swap DOM nodes
+      if (direction === 'up') {
+        parent.insertBefore(card, target);
+      } else {
+        parent.insertBefore(target, card);
+      }
+      
+      // Remove class to fade back in
+      card.classList.remove('post-card-swapping');
+      target.classList.remove('post-card-swapping');
+      
+      // Highlight moved card
+      card.classList.add('moving-active');
+      setTimeout(() => {
+        card.classList.remove('moving-active');
+      }, 600);
+      
+      saveNewOrder();
+    }, 150); // Matches the 0.15s CSS transition
   }
 }
 
