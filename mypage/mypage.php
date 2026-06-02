@@ -38,12 +38,22 @@ if (!is_array($posts)) {
   $posts = [];
   file_put_contents($postsFile, json_encode($posts));
 }
+$postsUpdated = false;
 foreach ($posts as &$p) {
+  if (empty($p['id'])) {
+    $p['id'] = uniqid('post_');
+    $postsUpdated = true;
+  }
   if (!isset($p['status'])) {
     $p['status'] = '';
+    $postsUpdated = true;
   }
 }
 unset($p);
+
+if ($postsUpdated) {
+  file_put_contents($postsFile, json_encode($posts, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+}
 
 function getPostStatusInfo($status) {
   if ($status === 'My Udastack追加済') {

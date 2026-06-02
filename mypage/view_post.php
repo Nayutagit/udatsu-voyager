@@ -17,6 +17,19 @@ if (!is_array($posts)) {
   $posts = [];
 }
 
+$postsUpdated = false;
+foreach ($posts as &$p) {
+  if (empty($p['id'])) {
+    $p['id'] = uniqid('post_');
+    $postsUpdated = true;
+  }
+}
+unset($p);
+
+if ($postsUpdated) {
+  file_put_contents($postsFile, json_encode($posts, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+}
+
 if ($id !== '') {
   foreach ($posts as $k => $p) {
     if (($p['id'] ?? '') === $id) {
