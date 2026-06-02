@@ -62,5 +62,11 @@ foreach ($uploads_files as $f) {
     echo basename($f) . " (" . filesize($f) . " bytes) - " . date("Y-m-d H:i:s", filemtime($f)) . "\n";
 }
 
+echo "\n=== ALL FILES IN LOG/ ===\n";
+$log_files = glob(__DIR__ . '/log/*');
+foreach ($log_files as $f) {
+    echo basename($f) . " (" . filesize($f) . " bytes) - " . date("Y-m-d H:i:s", filemtime($f)) . "\n";
+}
+
 
 echo "</pre>";
