@@ -1,6 +1,6 @@
 <?php
-require_once '/home/xs413084/udatsu-voyager.com/firebase/firestore.php';
-require_once '/home/xs413084/udatsu-voyager.com/public_html/vendor/autoload.php';
+require_once __DIR__ . '/../../firebase/firestore.php';
+require_once __DIR__ . '/../vendor/autoload.php';
 
 use Stripe\Webhook;
 

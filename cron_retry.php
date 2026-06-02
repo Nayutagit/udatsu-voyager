@@ -87,4 +87,12 @@ foreach ($postFiles as $file) {
 }
 
 file_put_contents($logFile, date('Y-m-d H:i:s') . " - END CRON RETRY\n", FILE_APPEND);
+
+// Rotate all relevant logs to save disk space
+if (function_exists('rotate_log_file')) {
+    rotate_log_file($logFile);
+    rotate_log_file($root . '/log/analysis_log.txt');
+    rotate_log_file($root . '/webhook_debug.txt');
+}
+
 echo "Cron retry finished.\n";

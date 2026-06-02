@@ -33,3 +33,18 @@ function getBestPhpCliPath(): string {
     }
     return 'php';
 }
+
+// Keep log files from growing infinitely by truncating them to the last N lines when they exceed a threshold
+function rotate_log_file(string $path, int $maxLines = 1000): void {
+    if (!file_exists($path)) {
+        return;
+    }
+    // Only read and process if the file is larger than 1MB (to prevent performance overhead)
+    if (filesize($path) > 1024 * 1024) {
+        $lines = file($path);
+        if ($lines !== false && count($lines) > $maxLines) {
+            $keep = array_slice($lines, -$maxLines);
+            file_put_contents($path, implode("", $keep));
+        }
+    }
+}

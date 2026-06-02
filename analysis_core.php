@@ -238,6 +238,10 @@ function run_analysis_for_post(string $uid, string $audioPath, string $jobId, st
             @unlink($tempLocalPath);
             file_put_contents($logFile, date('Y-m-d H:i:s') . " - Cleaned up temp local file: $tempLocalPath\n", FILE_APPEND);
         }
+        // Rotate the analysis log file to keep disk usage under control
+        if (function_exists('rotate_log_file')) {
+            rotate_log_file($logFile);
+        }
     }
 }
 

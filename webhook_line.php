@@ -166,17 +166,25 @@ if (function_exists('fastcgi_finish_request')) {
 
 // === ここから解析処理（LINEは既に切断済み） ===
 if (!empty($pendingJobs)) {
-    ignore_user_abort(true);
-    set_time_limit(600);
-
-    require_once __DIR__ . '/core/GeminiService.php';
-    require_once __DIR__ . '/core/FirebaseService.php';
-    require_once __DIR__ . '/analysis_core.php';
+    require_once __DIR__ . '/core/functions.php';
+    $phpPath = getBestPhpCliPath();
+    $runAnalysis = __DIR__ . '/run_analysis.php';
+    $logFile = __DIR__ . '/log/analysis_log.txt';
+    if (!file_exists(__DIR__ . '/log')) {
+        mkdir(__DIR__ . '/log', 0755, true);
+    }
 
     foreach ($pendingJobs as $job) {
-        file_put_contents(__DIR__ . '/webhook_debug.txt', date('Y-m-d H:i:s') . " - Starting inline analysis for {$job['audioPath']}\n", FILE_APPEND);
-        run_analysis_for_post($job['uid'], $job['audioPath'], $job['jobId'], $job['originalTitle']);
-        file_put_contents(__DIR__ . '/webhook_debug.txt', date('Y-m-d H:i:s') . " - Inline analysis complete for {$job['jobId']}\n", FILE_APPEND);
+        file_put_contents(__DIR__ . '/webhook_debug.txt', date('Y-m-d H:i:s') . " - Kicking background analysis CLI for {$job['jobId']}\n", FILE_APPEND);
+        $cmd = escapeshellarg($phpPath) . ' '
+             . escapeshellarg($runAnalysis) . ' '
+             . escapeshellarg($job['uid']) . ' '
+             . escapeshellarg($job['audioPath']) . ' '
+             . escapeshellarg($job['jobId']) . ' '
+             . escapeshellarg($job['originalTitle'] ?? '')
+             . ' >> ' . escapeshellarg($logFile) . ' 2>&1 &';
+        file_put_contents(__DIR__ . '/webhook_debug.txt', date('Y-m-d H:i:s') . " - Executing: $cmd\n", FILE_APPEND);
+        exec($cmd);
     }
 }
 

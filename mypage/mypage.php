@@ -351,6 +351,16 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
         display: inline-flex;
         align-items: center;
         justify-content: center;
+        white-space: nowrap !important;
+      }
+      @media (max-width: 480px) {
+        .post-card .btn .btn-text {
+          display: none !important;
+        }
+        .post-card .btn {
+          padding: 3px 4px !important;
+          gap: 0 !important;
+        }
       }
       
       /* Make container wider on mobile screens */
@@ -504,20 +514,20 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
                 <!-- Action Buttons -->
                 <div class="post-actions-row" id="post-actions-<?= htmlspecialchars($post['id'] ?? '') ?>">
                   <a href="edit_post.php?id=<?= htmlspecialchars($post['id'] ?? '') ?>" class="btn btn-secondary">
-                    <i class="fas fa-edit"></i> Edit
+                    <i class="fas fa-edit"></i> <span class="btn-text">Edit</span>
                   </a>
                   <button type="button" onclick="handlePostAction('<?= htmlspecialchars($post['id'] ?? '') ?>', 'delete')" class="btn btn-secondary" style="color: var(--warning-red); border-color: var(--warning-red);">
-                    <i class="fas fa-trash"></i> Delete
+                    <i class="fas fa-trash"></i> <span class="btn-text">Delete</span>
                   </button>
 
                   <div id="stack-btn-container-<?= htmlspecialchars($post['id'] ?? '') ?>" style="display: inline-flex;">
                     <?php if (($post['status'] ?? '') === 'My Udastack追加済'): ?>
                       <button type="button" onclick="handlePostAction('<?= htmlspecialchars($post['id'] ?? '') ?>', 'unstack')" class="btn btn-primary" style="border-color: var(--primary-neon); background: rgba(252, 200, 0, 0.1); color: var(--primary-neon);">
-                        <i class="fas fa-check"></i> Stacked
+                        <i class="fas fa-check"></i> <span class="btn-text">Stacked</span>
                       </button>
                     <?php else: ?>
                       <button type="button" onclick="handlePostAction('<?= htmlspecialchars($post['id'] ?? '') ?>', 'stack')" class="btn btn-primary">
-                        <i class="fas fa-plus"></i> Stack
+                        <i class="fas fa-plus"></i> <span class="btn-text">Stack</span>
                       </button>
                     <?php endif; ?>
                   </div>
@@ -525,18 +535,18 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
                   <div id="share-btn-container-<?= htmlspecialchars($post['id'] ?? '') ?>" style="display: inline-flex;">
                     <?php if (!empty($post['is_shared'])): ?>
                       <button type="button" onclick="handlePostAction('<?= htmlspecialchars($post['id'] ?? '') ?>', 'unshare')" class="btn btn-secondary" style="border-color: #a855f7; color: #a855f7;">
-                        <i class="fas fa-share-alt"></i> Shared
+                        <i class="fas fa-share-alt"></i> <span class="btn-text">Shared</span>
                       </button>
                     <?php else: ?>
                       <button type="button" onclick="handlePostAction('<?= htmlspecialchars($post['id'] ?? '') ?>', 'share')" class="btn btn-secondary">
-                        <i class="fas fa-share-alt"></i> Share
+                        <i class="fas fa-share-alt"></i> <span class="btn-text">Share</span>
                       </button>
                     <?php endif; ?>
                   </div>
                   <?php if (!empty($post['audio_file']) || !empty($post['audio'])): ?>
                     <div id="retry-btn-container-<?= htmlspecialchars($post['id'] ?? '') ?>" style="display: inline-flex;">
                       <button type="button" onclick="handlePostAction('<?= htmlspecialchars($post['id'] ?? '') ?>', 'retry')" class="btn btn-secondary" style="border-color: rgba(245,158,11,0.4); color: #f59e0b; background: rgba(245,158,11,0.05);" onmouseover="this.style.background='rgba(245,158,11,0.12)'" onmouseout="this.style.background='rgba(245,158,11,0.05)'">
-                        <i class="fas fa-redo"></i> 再解析
+                        <i class="fas fa-redo"></i> <span class="btn-text">再解析</span>
                       </button>
                     </div>
                   <?php endif; ?>
@@ -705,7 +715,7 @@ function handlePostAction(postId, action) {
         const meta = document.getElementById('post-meta-' + postId);
         
         if (action === 'stack') {
-          container.innerHTML = `<button type="button" onclick="handlePostAction('${postId}', 'unstack')" class="btn btn-primary" style="padding: 5px 10px; font-size: 0.8rem; flex: 1; border-color: var(--primary-neon); background: rgba(252, 200, 0, 0.1); color: var(--primary-neon);"><i class="fas fa-check"></i> Stacked</button>`;
+          container.innerHTML = `<button type="button" onclick="handlePostAction('${postId}', 'unstack')" class="btn btn-primary" style="border-color: var(--primary-neon); background: rgba(252, 200, 0, 0.1); color: var(--primary-neon);"><i class="fas fa-check"></i> <span class="btn-text">Stacked</span></button>`;
           // Remove any existing badge before adding a new one
           const existingBadge = document.getElementById('stack-badge-' + postId);
           if (existingBadge) existingBadge.remove();
@@ -716,7 +726,7 @@ function handlePostAction(postId, action) {
           meta.appendChild(badge);
           alert("完了しました！My Udastackに追加しました。");
         } else {
-          container.innerHTML = `<button type="button" onclick="handlePostAction('${postId}', 'stack')" class="btn btn-primary" style="padding: 5px 10px; font-size: 0.8rem; width: 100%;"><i class="fas fa-plus"></i> Stack</button>`;
+          container.innerHTML = `<button type="button" onclick="handlePostAction('${postId}', 'stack')" class="btn btn-primary"><i class="fas fa-plus"></i> <span class="btn-text">Stack</span></button>`;
           const badge = document.getElementById('stack-badge-' + postId);
           if (badge) badge.remove();
         }
@@ -725,7 +735,7 @@ function handlePostAction(postId, action) {
         const meta = document.getElementById('post-meta-' + postId);
         
         if (action === 'share') {
-          container.innerHTML = `<button type="button" onclick="handlePostAction('${postId}', 'unshare')" class="btn btn-secondary" style="padding: 5px 10px; font-size: 0.8rem; width: 100%; border-color: #a855f7; color: #a855f7;"><i class="fas fa-share-alt"></i> Shared</button>`;
+          container.innerHTML = `<button type="button" onclick="handlePostAction('${postId}', 'unshare')" class="btn btn-secondary" style="border-color: #a855f7; color: #a855f7;"><i class="fas fa-share-alt"></i> <span class="btn-text">Shared</span></button>`;
           // Remove any existing badge before adding a new one
           const existingShareBadge = document.getElementById('share-badge-' + postId);
           if (existingShareBadge) existingShareBadge.remove();
@@ -735,7 +745,7 @@ function handlePostAction(postId, action) {
           badge.innerHTML = '<i class="fas fa-share-alt"></i> Shared';
           meta.appendChild(badge);
         } else {
-          container.innerHTML = `<button type="button" onclick="handlePostAction('${postId}', 'share')" class="btn btn-secondary" style="padding: 5px 10px; font-size: 0.8rem; width: 100%;"><i class="fas fa-share-alt"></i> Share</button>`;
+          container.innerHTML = `<button type="button" onclick="handlePostAction('${postId}', 'share')" class="btn btn-secondary"><i class="fas fa-share-alt"></i> <span class="btn-text">Share</span></button>`;
           const badge = document.getElementById('share-badge-' + postId);
           if (badge) badge.remove();
         }

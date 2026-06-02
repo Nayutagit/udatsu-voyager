@@ -6,10 +6,10 @@
  */
 
 if (PHP_SAPI === 'cli') {
-    $uid           = $argv[1] ?? null;
-    $audioPath     = $argv[2] ?? null;
-    $jobId         = $argv[3] ?? null;
-    $originalTitle = $argv[4] ?? null;
+    $uid           = $argv[1] ?? '';
+    $audioPath     = $argv[2] ?? '';
+    $jobId         = $argv[3] ?? '';
+    $originalTitle = $argv[4] ?? '';
 } else {
     $secret = $_POST['secret'] ?? '';
     if ($secret !== 'voyager_internal_exec_1234') {
@@ -17,10 +17,10 @@ if (PHP_SAPI === 'cli') {
         exit('Unauthorized');
     }
     // Set variables if not already set by an inline caller
-    if (!isset($uid)) $uid = $_POST['uid'] ?? null;
-    if (!isset($audioPath)) $audioPath = $_POST['audioPath'] ?? null;
-    if (!isset($jobId)) $jobId = $_POST['jobId'] ?? null;
-    if (!isset($originalTitle)) $originalTitle = $_POST['originalTitle'] ?? null;
+    if (!isset($uid)) $uid = $_POST['uid'] ?? '';
+    if (!isset($audioPath)) $audioPath = $_POST['audioPath'] ?? '';
+    if (!isset($jobId)) $jobId = $_POST['jobId'] ?? '';
+    if (!isset($originalTitle)) $originalTitle = $_POST['originalTitle'] ?? '';
 
     // Only close connection if headers haven't been sent yet
     if (!headers_sent()) {
@@ -54,7 +54,7 @@ require_once __DIR__ . '/core/FirebaseService.php';
 $uid = $_savedUid;
 $audioPath = $_savedAudioPath;
 $jobId = $_savedJobId;
-$originalTitle = $originalTitle; // Passed from POST/CLI
+$originalTitle = $originalTitle ?? ''; // Passed from POST/CLI
 
 require_once __DIR__ . '/core/GeminiService.php';
 require_once __DIR__ . '/core/FirebaseService.php';

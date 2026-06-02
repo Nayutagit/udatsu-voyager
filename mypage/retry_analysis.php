@@ -64,17 +64,21 @@ if (function_exists('fastcgi_finish_request')) {
     flush();
 }
 
-// === ここから先はバックグラウンド処理 ===
+// === ここから先はバックグラウンド処理（CLI経由で非同期実行） ===
 ignore_user_abort(true);
-set_time_limit(600);
 
-// 依存クラスを読み込む（bootstrap.phpは使わず直接）
-$geminiKeyFile = __DIR__ . '/../config/gemini_key.php';
-if (file_exists($geminiKeyFile)) require_once $geminiKeyFile;
+require_once __DIR__ . '/../core/functions.php';
+$phpPath = getBestPhpCliPath();
+$runAnalysis = __DIR__ . '/../run_analysis.php';
+$logFile = __DIR__ . '/../log/analysis_log.txt';
+if (!file_exists(__DIR__ . '/../log')) {
+    mkdir(__DIR__ . '/../log', 0755, true);
+}
 
-require_once __DIR__ . '/../core/GeminiService.php';
-require_once __DIR__ . '/../core/FirebaseService.php';
-require_once __DIR__ . '/../analysis_core.php';
-
-// 解析実行
-run_analysis_for_post($targetUid, $audioPath, $jobId);
+$cmd = escapeshellarg($phpPath) . ' '
+     . escapeshellarg($runAnalysis) . ' '
+     . escapeshellarg($targetUid) . ' '
+     . escapeshellarg($audioPath) . ' '
+     . escapeshellarg($jobId)
+     . ' >> ' . escapeshellarg($logFile) . ' 2>&1 &';
+exec($cmd);
