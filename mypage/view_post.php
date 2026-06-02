@@ -345,8 +345,7 @@ $thumbnail = $post['thumbnail'] ?? '';
           $audioSrc    = "../audio_proxy.php?target_uid=" . urlencode($targetUid) . "&path=" . urlencode($audio);
           $downloadSrc = "../audio_proxy.php?target_uid=" . urlencode($targetUid) . "&path=" . urlencode($audio) . "&download=1";
         ?>
-        <audio controls style="margin-bottom: 1rem;">
-          <source src="<?= htmlspecialchars($audioSrc) ?>" type="audio/mpeg">
+        <audio controls src="<?= htmlspecialchars($audioSrc) ?>" style="margin-bottom: 1rem;">
           お使いのブラウザは音声再生に対応していません。
         </audio>
         <div style="margin-top: -5px; margin-bottom: 2.5rem; display: flex; justify-content: flex-end;">

@@ -354,12 +354,13 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
         white-space: nowrap !important;
       }
       @media (max-width: 480px) {
-        .post-card .btn .btn-text {
-          display: none !important;
+        .post-actions-row {
+          gap: 3px !important;
         }
         .post-card .btn {
-          padding: 3px 4px !important;
-          gap: 0 !important;
+          font-size: 0.62rem !important;
+          padding: 3px 2px !important;
+          gap: 2px !important;
         }
       }
       

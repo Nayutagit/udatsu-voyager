@@ -75,7 +75,8 @@ if (strpos($storagePath, 'uploads/') === 0 && file_exists(__DIR__ . '/' . $stora
         readfile(__DIR__ . '/' . $storagePath);
         exit();
     }
-    header("Location: /" . $storagePath, true, 302);
+    $proto = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? 'https' : 'http';
+    header("Location: " . $proto . "://" . $_SERVER['HTTP_HOST'] . "/" . $storagePath, true, 302);
     exit();
 }
 
