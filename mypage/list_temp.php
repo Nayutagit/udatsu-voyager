@@ -1,12 +1,7 @@
 <?php
-header('Content-Type: application/json');
-$files = glob(__DIR__ . '/../users/*.json');
-$out = [];
-foreach ($files as $f) {
-    $out[basename($f)] = [
-        'size' => filesize($f),
-        'mtime' => date('Y-m-d H:i:s', filemtime($f)),
-        'preview' => substr(file_get_contents($f), 0, 100)
-    ];
-}
-echo json_encode($out, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+$path = realpath(__DIR__ . '/../users');
+echo "Path: " . $path . "\n";
+$files = glob($path . '/*.json');
+print_r($files);
