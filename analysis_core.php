@@ -13,6 +13,11 @@ function run_analysis_for_post(string $uid, string $audioPath, string $jobId, st
     $logFile       = $root . '/log/analysis_log.txt';
     $userPostsFile = $userDir . $uid . '_posts.json';
 
+    // functions.php の共通関数（saveUserPosts 等）をロード
+    if (!function_exists('saveUserPosts')) {
+        require_once $root . '/core/functions.php';
+    }
+
     if (!file_exists($root . '/log')) {
         mkdir($root . '/log', 0777, true);
         chmod($root . '/log', 0777);
@@ -39,7 +44,7 @@ function run_analysis_for_post(string $uid, string $audioPath, string $jobId, st
             'status'        => '解析中',
             'audio_file'    => $audioPath,
         ];
-        file_put_contents($userPostsFile, json_encode($posts, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        saveUserPosts($uid, $userPostsFile, $posts);
     } else {
         foreach ($posts as &$p) {
             if (($p['id'] ?? '') === $jobId) {
@@ -51,7 +56,7 @@ function run_analysis_for_post(string $uid, string $audioPath, string $jobId, st
             }
         }
         unset($p);
-        file_put_contents($userPostsFile, json_encode($posts, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        saveUserPosts($uid, $userPostsFile, $posts);
     }
 
     $tempLocalPath = null;
@@ -209,7 +214,7 @@ function run_analysis_for_post(string $uid, string $audioPath, string $jobId, st
             ]);
         }
         unset($p);
-        file_put_contents($userPostsFile, json_encode($posts, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        saveUserPosts($uid, $userPostsFile, $posts);
         file_put_contents($logFile, date('Y-m-d H:i:s') . " - SAVED to $userPostsFile (Total: " . count($posts) . ")\n", FILE_APPEND);
 
         // ローカルファイル削除（Firebaseにアップ済なら）
@@ -233,7 +238,7 @@ function run_analysis_for_post(string $uid, string $audioPath, string $jobId, st
                 }
             }
             unset($p);
-            file_put_contents($userPostsFile, json_encode($posts, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+            saveUserPosts($uid, $userPostsFile, $posts);
         }
     } finally {
         if (!empty($tempLocalPath) && file_exists($tempLocalPath)) {
