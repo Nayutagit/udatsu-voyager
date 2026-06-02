@@ -50,4 +50,11 @@ foreach ($files as $f) {
     }
 }
 
+echo "\n=== ALL FILES IN USERS/ ===\n";
+$all_files = glob(__DIR__ . '/users/*');
+foreach ($all_files as $f) {
+    echo basename($f) . " (" . filesize($f) . " bytes) - " . date("Y-m-d H:i:s", filemtime($f)) . "\n";
+}
+
+
 echo "</pre>";
