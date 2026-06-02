@@ -224,15 +224,17 @@ function run_analysis_for_post(string $uid, string $audioPath, string $jobId, st
 
     } catch (Throwable $e) {
         file_put_contents($logFile, date('Y-m-d H:i:s') . " - ERROR: " . $e->getMessage() . "\n", FILE_APPEND);
-        $posts = json_decode(file_get_contents($userPostsFile), true);
-        foreach ($posts as &$p) {
-            if (($p['id'] ?? '') === $jobId) {
-                $p['status'] = 'エラー';
-                break;
+        $posts = file_exists($userPostsFile) ? json_decode(file_get_contents($userPostsFile), true) : null;
+        if (is_array($posts)) {
+            foreach ($posts as &$p) {
+                if (($p['id'] ?? '') === $jobId) {
+                    $p['status'] = 'エラー';
+                    break;
+                }
             }
+            unset($p);
+            file_put_contents($userPostsFile, json_encode($posts, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
         }
-        unset($p);
-        file_put_contents($userPostsFile, json_encode($posts, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
     } finally {
         if (!empty($tempLocalPath) && file_exists($tempLocalPath)) {
             @unlink($tempLocalPath);

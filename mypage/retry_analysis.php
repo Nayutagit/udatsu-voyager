@@ -30,6 +30,9 @@ if ($_sessionPlan === 'admin' && !empty($_POST['target_uid'])) {
 $userDir   = __DIR__ . '/../users/';
 $postsFile = $userDir . $targetUid . '_posts.json';
 $posts     = file_exists($postsFile) ? json_decode(file_get_contents($postsFile), true) : [];
+if (!is_array($posts)) {
+    $posts = [];
+}
 
 if ($id !== '') {
     foreach ($posts as $k => $p) {

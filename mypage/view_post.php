@@ -13,6 +13,9 @@ $postsFile = $userDir . $targetUid . '_posts.json';
 $index = isset($_GET['index']) ? intval($_GET['index']) : -1;
 $id = isset($_GET['id']) ? $_GET['id'] : '';
 $posts = file_exists($postsFile) ? json_decode(file_get_contents($postsFile), true) : [];
+if (!is_array($posts)) {
+  $posts = [];
+}
 
 if ($id !== '') {
   foreach ($posts as $k => $p) {

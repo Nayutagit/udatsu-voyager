@@ -34,6 +34,10 @@ $title = $profile['title'] ?? '';
 $imagePath   = !empty($profile['image']) ? '../uploads/' . $uid . '/' . $profile['image'] : '../img/default-icon.png';
 
 $posts = file_exists($postsFile) ? json_decode(file_get_contents($postsFile), true) : [];
+if (!is_array($posts)) {
+  $posts = [];
+  file_put_contents($postsFile, json_encode($posts));
+}
 foreach ($posts as &$p) {
   if (!isset($p['status'])) {
     $p['status'] = '';
