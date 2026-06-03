@@ -350,7 +350,7 @@ function toggleAudio(postId) {
   const icon  = document.getElementById('play-icon-' + postId);
   if (!audio) return;
 
-  // If another audio is playing, pause it first
+  // Pause any other playing audio
   if (currentAudioId && currentAudioId !== postId) {
     const prev = document.getElementById('audio-' + currentAudioId);
     const prevIcon = document.getElementById('play-icon-' + currentAudioId);
@@ -360,6 +360,11 @@ function toggleAudio(postId) {
   }
 
   if (audio.paused) {
+    // Add loadedmetadata listener to update duration once loaded
+    audio.addEventListener('loadedmetadata', function onMeta() {
+      updateProgress(postId);
+      audio.removeEventListener('loadedmetadata', onMeta);
+    });
     audio.play().catch(e => console.warn('Playback error:', e));
     icon.className = 'fas fa-pause';
     currentAudioId = postId;
@@ -374,15 +379,16 @@ function updateProgress(postId) {
   const audio    = document.getElementById('audio-' + postId);
   const progress = document.getElementById('progress-' + postId);
   const timeEl   = document.getElementById('time-' + postId);
-  if (!audio || !progress) return;
+  if (!audio || !progress || !timeEl) return;
 
   const pct = audio.duration ? (audio.currentTime / audio.duration) * 100 : 0;
   progress.value = pct;
 
   const cur = formatTime(audio.currentTime);
-  const dur = audio.duration ? formatTime(audio.duration) : '--:--';
+  const dur = (audio.duration && !isNaN(audio.duration)) ? formatTime(audio.duration) : '--:--';
   timeEl.textContent = cur + ' / ' + dur;
 }
+
 
 function seekAudio(postId, value) {
   const audio = document.getElementById('audio-' + postId);

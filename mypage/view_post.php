@@ -4,507 +4,441 @@ if (!isset($_SESSION['uid'])) {
   header("Location: login.php");
   exit();
 }
-$myUid = $_SESSION['uid'];
+$myUid     = $_SESSION['uid'];
 $targetUid = isset($_GET['uid']) ? $_GET['uid'] : $myUid;
-$isOwner = ($myUid === $targetUid);
+$isOwner   = ($myUid === $targetUid);
+$userName  = $_SESSION['userName'] ?? '';
+$userPlan  = $_SESSION['userPlan'] ?? 'free';
 
-$userDir = __DIR__ . '/../users/';
+$userDir   = __DIR__ . '/../users/';
 $postsFile = $userDir . $targetUid . '_posts.json';
-$index = isset($_GET['index']) ? intval($_GET['index']) : -1;
-$id = isset($_GET['id']) ? $_GET['id'] : '';
-$posts = file_exists($postsFile) ? json_decode(file_get_contents($postsFile), true) : [];
-if (!is_array($posts)) {
-  $posts = [];
-}
+$id        = isset($_GET['id']) ? $_GET['id'] : '';
+$index     = isset($_GET['index']) ? intval($_GET['index']) : -1;
 
+$posts = file_exists($postsFile) ? json_decode(file_get_contents($postsFile), true) : [];
+if (!is_array($posts)) $posts = [];
+
+// Assign IDs if missing
 $postsUpdated = false;
 foreach ($posts as &$p) {
-  if (empty($p['id'])) {
-    $p['id'] = uniqid('post_');
-    $postsUpdated = true;
-  }
+  if (empty($p['id'])) { $p['id'] = uniqid('post_'); $postsUpdated = true; }
 }
 unset($p);
+if ($postsUpdated) file_put_contents($postsFile, json_encode($posts, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 
-if ($postsUpdated) {
-  file_put_contents($postsFile, json_encode($posts, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-}
-
+// Find post
 if ($id !== '') {
   foreach ($posts as $k => $p) {
-    if (($p['id'] ?? '') === $id) {
-      $index = $k;
-      break;
-    }
+    if (($p['id'] ?? '') === $id) { $index = $k; break; }
   }
 }
 
 if ($index < 0 || !isset($posts[$index])) {
   die("投稿が見つかりません。");
 }
-$post = $posts[$index];
-$title = $post['title'] ?? '';
-$text = $post['text'] ?? '';
-$date = $post['date'] ?? '';
+$post     = $posts[$index];
+$title    = $post['title'] ?? '';
+$text     = $post['text'] ?? '';
+$summary  = $post['summary'] ?? '';
+$date     = $post['date'] ?? '';
 $category = $post['category'] ?? '';
-$audio = $post['audio_file'] ?? $post['audio'] ?? '';
-$thumbnail = $post['thumbnail'] ?? '';
+$audio    = $post['audio_file'] ?? $post['audio'] ?? '';
+
+$audioSrc    = !empty($audio) ? "../audio_proxy.php?target_uid=" . urlencode($targetUid) . "&path=" . urlencode($audio) : '';
+$downloadSrc = !empty($audio) ? "../audio_proxy.php?target_uid=" . urlencode($targetUid) . "&path=" . urlencode($audio) . "&download=1" : '';
+
+$profileFile = $userDir . $targetUid . '_profile.json';
+$profile = ['display_name' => $userName, 'image' => ''];
+if (file_exists($profileFile)) {
+  $profile = array_merge($profile, json_decode(file_get_contents($profileFile), true) ?: []);
+}
+$displayName = $profile['display_name'] ?? $userName;
+$imagePath   = !empty($profile['image']) ? '../uploads/' . $targetUid . '/' . $profile['image'] : '../img/default-icon.png';
 ?>
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="ja" data-theme="dark">
 <head>
   <meta charset="UTF-8">
-  <title><?php echo htmlspecialchars($title); ?> | Udatsu投稿詳細</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title><?= htmlspecialchars($title) ?> | Udatsu</title>
   <link rel="icon" type="image/png" href="../img/favicon.png">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="../css/style.css?v=<?= time() ?>">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <style>
-    /* Page specific styles */
-    .container {
-      max-width: 800px;
+    /* View Post specific */
+    .vp-container {
+      max-width: 600px;
       margin: 0 auto;
-      position: relative;
+      padding: 0;
     }
-    header {
+    .vp-card {
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      padding: 20px 16px;
+    }
+    .vp-title {
+      font-size: 1.2rem;
+      font-weight: 800;
+      line-height: 1.4;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+    }
+    .vp-meta {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-bottom: 16px;
       display: flex;
       align-items: center;
-      gap: 1.5rem;
-      margin-bottom: 3rem;
-      padding: 1rem 0;
-      animation: slideDown 1s ease;
+      gap: 8px;
+      flex-wrap: wrap;
     }
-    @keyframes slideDown {
-      from { transform: translateY(-30px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
-    }
-    header img.logo {
-      height: 52px;
-      transition: all 0.4s ease;
-      filter: drop-shadow(0 0 8px rgba(252, 200, 0, 0.6));
-    }
-    header img.logo:hover {
-      transform: scale(1.05);
-      filter: drop-shadow(0 0 15px rgba(252, 200, 0, 0.6));
-    }
-    header a {
-      color: var(--text-white);
-      font-weight: 700;
-      font-size: 1.3rem;
-      text-decoration: none;
-      transition: all 0.3s ease;
-    }
-    header a:hover {
-      color: var(--primary-neon);
-    }
-    .post-container {
-      background: var(--bg-panel);
-      backdrop-filter: blur(25px);
-      padding: 3rem;
-      border-radius: 20px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
-      margin-bottom: 3rem;
-      transition: all 0.4s ease;
-      animation: fadeInUp 1s ease 0.3s both;
-      position: relative;
-      overflow: hidden;
-    }
-    @keyframes fadeInUp {
-      from { transform: translateY(40px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
-    }
-    .post-container::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 2px;
-      background: linear-gradient(90deg, transparent, var(--primary-neon), transparent);
-      transition: left 0.4s ease;
-    }
-    .post-container:hover::before {
-      left: 100%;
-    }
-    .post-container:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
-    }
-    .post-title {
-      font-size: 2rem;
-      font-weight: 700;
-      margin-bottom: 1rem;
-      color: var(--text-white);
-      line-height: 1.4;
-    }
-    .post-meta {
-      font-size: 1rem;
-      color: var(--text-muted);
-      margin-bottom: 2rem;
-      padding: 1rem;
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 10px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    .thumbnail {
-      width: 100%;
-      height: auto;
-      border-radius: 16px;
-      margin-bottom: 2rem;
-      box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
-      transition: all 0.4s ease;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    .thumbnail:hover {
-      transform: scale(1.02);
-      box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
-    }
-    audio {
-      width: 100%;
-      margin-bottom: 2rem;
-      border-radius: 12px;
-      background: rgba(42, 42, 46, 0.95);
-      padding: 1rem;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
-    }
-    audio::-webkit-media-controls-panel {
-      background-color: rgba(42, 42, 46, 0.95);
-    }
-    .post-text {
-      font-size: 1.1rem;
-      line-height: 1.8;
-      color: var(--text-muted);
-      background: rgba(255, 255, 255, 0.05);
-      padding: 2.5rem;
-      border-radius: 12px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    /* Markdown Styling (Apply to both text and summary) */
-    .markdown-body h1, .markdown-body h2, .markdown-body h3 {
-      color: var(--text-white);
-      margin-top: 1.5rem;
-      margin-bottom: 1rem;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      padding-bottom: 0.5rem;
-    }
-    .markdown-body h1 { font-size: 1.6rem; }
-    .markdown-body h2 { font-size: 1.4rem; }
-    .markdown-body h3 { font-size: 1.2rem; }
-    .markdown-body p { margin-bottom: 1rem; line-height: 1.8; }
-    .markdown-body strong { color: var(--primary-neon); font-weight: 700; }
-    .markdown-body ul, .markdown-body ol { margin-bottom: 1rem; padding-left: 1.5rem; }
-    .markdown-body li { margin-bottom: 0.4rem; }
-    .markdown-body blockquote {
-      border-left: 4px solid var(--primary-neon);
-      padding-left: 1rem;
-      margin: 1.5rem 0;
-      color: var(--text-white);
-      font-style: italic;
-      background: rgba(255, 255, 255, 0.03);
-      padding: 1rem;
+    .vp-summary {
+      background: var(--brand-dim);
+      border-left: 3px solid var(--brand);
       border-radius: 0 8px 8px 0;
+      padding: 14px 16px;
+      margin-bottom: 16px;
+      font-size: 0.88rem;
+      line-height: 1.75;
+      color: var(--text-primary);
     }
-    .markdown-body code {
-      background: rgba(255, 255, 255, 0.1);
-      padding: 0.2rem 0.4rem;
+    .vp-summary h4 {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--brand);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 8px;
+    }
+    .vp-article {
+      font-size: 0.9rem;
+      line-height: 1.85;
+      color: var(--text-primary);
+      word-break: break-word;
+    }
+    .vp-article h1, .vp-article h2, .vp-article h3 {
+      color: var(--text-primary);
+      font-weight: 700;
+      margin: 1.4em 0 0.6em;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--border);
+    }
+    .vp-article h1 { font-size: 1.15rem; }
+    .vp-article h2 { font-size: 1.05rem; }
+    .vp-article h3 { font-size: 0.97rem; }
+    .vp-article p  { margin-bottom: 0.9em; }
+    .vp-article strong { color: var(--brand); }
+    .vp-article blockquote {
+      border-left: 3px solid var(--brand-dim);
+      padding: 10px 14px;
+      color: var(--text-secondary);
+      margin: 12px 0;
+      border-radius: 0 6px 6px 0;
+      background: var(--bg-input);
+    }
+    .vp-article ul, .vp-article ol {
+      padding-left: 1.4em;
+      margin-bottom: 0.9em;
+    }
+    .vp-article li { margin-bottom: 0.3em; }
+    .vp-article code {
+      background: var(--bg-input);
+      padding: 1px 5px;
       border-radius: 4px;
-      font-family: monospace;
+      font-size: 0.85em;
     }
-    .back-button {
-      text-align: center;
-      animation: fadeInUp 1s ease 0.6s both;
+    .vp-edit-toolbar {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 16px;
     }
-    .back-button a {
-      background: var(--bg-panel);
-      backdrop-filter: blur(20px);
-      color: var(--text-white);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 50px;
-      padding: 1rem 2.5rem;
-      font-size: 1rem;
-      font-weight: 600;
-      text-decoration: none;
-      transition: all 0.3s ease;
-      position: relative;
-      overflow: hidden;
-      display: inline-block;
-    }
-    .back-button a::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(45deg, var(--primary-neon), #ffda44);
-      transition: left 0.3s ease;
-      z-index: -1;
-    }
-    .back-button a:hover::before {
-      left: 0;
-    }
-    .back-button a:hover {
-      color: #000;
-      border-color: var(--primary-neon);
-      transform: translateY(-3px);
-      box-shadow: 0 0 20px rgba(252, 200, 0, 0.6);
-    }
-    @media (max-width: 768px) {
-      body {
-        padding: 0; /* Remove body padding on mobile to maximize width */
-      }
-      .container {
-        padding-top: 80px !important;
-        padding-left: 10px !important;
-        padding-right: 10px !important;
-      }
-      .post-container {
-        padding: 1.5rem 1rem; /* Reduce internal padding on mobile */
-        border-radius: 0; /* Optional: edge-to-edge feel */
-        border-left: none;
-        border-right: none;
-      }
-      header {
-        padding: 1rem;
-        flex-direction: row;
-        justify-content: space-between;
-        text-align: left;
-      }
-      header img.logo {
-        height: 36px;
-      }
-      .post-title {
-        font-size: 1.4rem;
-      }
-      .post-text {
-        padding: 1.5rem 1rem;
-        background: rgba(255, 255, 255, 0.03);
-        border: none;
-        font-size: 1.1rem;
-        color: #eee;
-        line-height: 1.9;
-      }
-      .post-text h1 { font-size: 1.5rem; }
-      .post-text h2 { font-size: 1.3rem; }
-      .summary-box {
-        padding: 1.2rem !important;
-        margin-bottom: 2rem !important;
-      }
+    .vp-audio {
+      background: var(--bg-input);
+      border-radius: 28px;
+      padding: 10px 14px 10px 10px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
     }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <a href="mypage.php">
-        <img src="../img/udatsu-logo.png" alt="Udatsuロゴ" class="logo">
+
+<!-- Header -->
+<header class="app-header">
+  <a href="mypage.php" class="icon-btn" style="color:var(--text-primary);" aria-label="戻る">
+    <i class="fas fa-arrow-left"></i>
+  </a>
+  <span class="app-header__logo" style="font-size:1rem;font-weight:700;">投稿詳細</span>
+  <div class="app-header__actions">
+    <button class="theme-toggle" id="themeToggleBtn" aria-label="テーマ切替">
+      <i class="fas fa-moon" id="themeIcon"></i>
+    </button>
+  </div>
+</header>
+
+<main class="app-main">
+<div class="vp-container">
+
+  <!-- Author + title card -->
+  <div class="vp-card">
+    <div class="post-header" style="margin-bottom:12px;">
+      <img src="<?= htmlspecialchars($imagePath) ?>" alt="<?= htmlspecialchars($displayName) ?>" class="post-avatar">
+      <div class="post-header__info">
+        <div class="post-username"><?= htmlspecialchars($displayName) ?></div>
+        <div class="post-date"><?= htmlspecialchars($date) ?></div>
+      </div>
+      <?php if ($isOwner): ?>
+      <a href="edit_post.php?id=<?= htmlspecialchars($post['id'] ?? '') ?>" class="btn btn-secondary btn-sm">
+        <i class="fas fa-edit"></i> 編集
       </a>
-      <a href="mypage.php">Udatsuマイページ</a>
-    </header>
-    
-    <div class="post-container">
-      <!-- アクションバー -->
-      <div style="display: <?= $isOwner ? 'flex' : 'none' ?>; justify-content: flex-end; gap: 10px; margin-bottom: 25px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; flex-wrap: wrap;">
-        <button onclick="copyContent(this)" id="btn-copy" class="btn-small" style="background: rgba(0,255,204,0.05); color: var(--primary-neon); border: 1px solid rgba(0,255,204,0.4); border-radius: 8px; padding: 8px 14px; cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: 0.3s; display: flex; align-items: center; gap: 6px;">
-          <i class="far fa-copy"></i> コピー
-        </button>
-        <button onclick="toggleEdit()" id="btn-edit" class="btn-small" style="background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 8px 14px; cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: 0.3s; display: flex; align-items: center; gap: 6px;">
-          <i class="far fa-edit"></i> 編集
-        </button>
-        <button onclick="savePost()" id="btn-save" style="display:none; background: var(--primary-neon); color: #000; border: none; border-radius: 8px; padding: 8px 16px; cursor: pointer; font-size: 0.85rem; font-weight: 700; transition: 0.3s; align-items: center; gap: 6px;">
-          <i class="fas fa-save"></i> 保存
-        </button>
-        <button onclick="cancelEdit()" id="btn-cancel" style="display:none; background: rgba(255,68,68,0.1); color: #ff4444; border: 1px solid rgba(255,68,68,0.3); border-radius: 8px; padding: 8px 14px; cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: 0.3s; align-items: center; gap: 6px;">
-          <i class="fas fa-times"></i> キャンセル
-        </button>
-      </div>
-
-      <?php if (!$isOwner): ?>
-      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 25px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; flex-wrap: wrap;">
-        <button onclick="copyContent(this)" id="btn-copy" class="btn-small" style="background: rgba(0,255,204,0.05); color: var(--primary-neon); border: 1px solid rgba(0,255,204,0.4); border-radius: 8px; padding: 8px 14px; cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: 0.3s; display: flex; align-items: center; gap: 6px;">
-          <i class="far fa-copy"></i> コピー
-        </button>
-      </div>
       <?php endif; ?>
+    </div>
 
-      <!-- タイトル（表示/編集切り替え） -->
-      <div id="view-title" class="post-title"><?php echo htmlspecialchars($title); ?></div>
-      <input id="edit-title" type="text" value="<?php echo htmlspecialchars($title); ?>" style="display:none; width:100%; font-size:1.4rem; font-weight:700; background:rgba(255,255,255,0.08); border:1px solid rgba(252,200,0,0.5); border-radius:10px; padding:10px 14px; color:#fff; margin-bottom:1rem; box-sizing:border-box;">
+    <!-- Edit toolbar (owner only) -->
+    <?php if ($isOwner): ?>
+    <div class="vp-edit-toolbar" id="editToolbar" style="display:none;">
+      <button onclick="savePost()" id="btn-save" class="btn btn-primary btn-sm">
+        <i class="fas fa-save"></i> 保存
+      </button>
+      <button onclick="cancelEdit()" class="btn btn-secondary btn-sm">
+        <i class="fas fa-times"></i> キャンセル
+      </button>
+    </div>
+    <?php endif; ?>
 
-      <?php $originalTitle = $post['original_title'] ?? ''; ?>
-      <!-- 元ファイル名（表示/編集切り替え） -->
-      <div id="view-original-title" style="font-size: 1.1rem; color: var(--text-muted); margin-top: -5px; margin-bottom: 1.5rem; display: <?php echo !empty($originalTitle) ? 'block' : 'none'; ?>;">
-        <i class="fas fa-file-audio"></i> 元ファイル名: <span id="view-original-title-text"><?php echo htmlspecialchars($originalTitle); ?></span>
-      </div>
-      <div id="edit-original-title-container" style="display:none; margin-bottom:1.5rem;">
-        <label style="color:var(--text-muted); font-size:0.9rem; font-weight:600; display:block; margin-bottom:6px;">元ファイル名:</label>
-        <input id="edit-original-title" type="text" value="<?php echo htmlspecialchars($originalTitle); ?>" style="width:100%; font-size:1.1rem; background:rgba(255,255,255,0.08); border:1px solid rgba(252,200,0,0.4); border-radius:10px; padding:8px 12px; color:#fff; box-sizing:border-box;">
-      </div>
+    <div id="view-title" class="vp-title"><?= htmlspecialchars($title) ?></div>
+    <input id="edit-title" type="text" value="<?= htmlspecialchars($title) ?>" class="form-control" style="display:none;margin-bottom:8px;font-weight:700;">
 
-      <div id="view-date" class="post-meta"><?php echo htmlspecialchars($date); ?></div>
-      <div id="edit-date-container" style="display:none; margin-bottom:1.5rem;">
-        <label style="color:var(--text-muted); font-size:0.9rem; font-weight:600; display:block; margin-bottom:6px;">収録日:</label>
-        <input id="edit-date" type="date" value="<?php echo htmlspecialchars($date); ?>" style="width:100%; max-width:250px; font-size:1rem; background:rgba(255,255,255,0.08); border:1px solid rgba(252,200,0,0.4); border-radius:10px; padding:8px 12px; color:#fff; box-sizing:border-box;">
-      </div>
-      
-      <?php if ($thumbnail): ?>
-        <img class="thumbnail" src="../<?php echo htmlspecialchars($thumbnail); ?>" alt="アイキャッチ画像">
-      <?php endif; ?>
-      
-      <?php if ($audio): ?>
-        <?php
-          $audioSrc = "";
-          $downloadSrc = "";
-          // Route all audio files through the proxy, including legacy ones
-          $audioSrc    = "../audio_proxy.php?target_uid=" . urlencode($targetUid) . "&path=" . urlencode($audio);
-          $downloadSrc = "../audio_proxy.php?target_uid=" . urlencode($targetUid) . "&path=" . urlencode($audio) . "&download=1";
-        ?>
-        <audio controls src="<?= htmlspecialchars($audioSrc) ?>" style="margin-bottom: 1rem;">
-          お使いのブラウザは音声再生に対応していません。
-        </audio>
-        <div style="margin-top: -5px; margin-bottom: 2.5rem; display: flex; justify-content: flex-end;">
-          <a href="<?= htmlspecialchars($downloadSrc) ?>" class="btn-small" style="background: rgba(0,255,204,0.05); color: var(--primary-neon); border: 1px solid rgba(0,255,204,0.4); border-radius: 8px; padding: 8px 14px; cursor: pointer; font-size: 0.85rem; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; transition: 0.3s;">
-            <i class="fas fa-download"></i> 音声をダウンロード
+    <div class="vp-meta">
+      <?php if ($category): ?><span><i class="fas fa-tag"></i> <?= htmlspecialchars($category) ?></span><?php endif; ?>
+      <button onclick="copyContent()" class="btn btn-ghost btn-sm" style="margin-left:auto;color:var(--text-muted);">
+        <i class="far fa-copy"></i> コピー
+      </button>
+    </div>
+
+    <!-- Audio player -->
+    <?php if (!empty($audioSrc)): ?>
+    <div class="vp-audio">
+      <button class="audio-play-btn" onclick="toggleAudioVP()" id="vp-play-btn" aria-label="再生">
+        <i class="fas fa-play" id="vp-play-icon"></i>
+      </button>
+      <div class="audio-progress-wrapper">
+        <input type="range" class="audio-progress" id="vp-progress" value="0" min="0" max="100" step="0.1"
+               oninput="seekAudioVP(this.value)">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span class="audio-time" id="vp-time">0:00 / --:--</span>
+          <a href="<?= htmlspecialchars($downloadSrc) ?>" class="btn btn-ghost btn-sm" style="font-size:0.7rem;color:var(--text-muted);">
+            <i class="fas fa-download"></i>
           </a>
         </div>
-      <?php endif; ?>
-      
-      <?php if (!empty($post['summary'])): ?>
-        <div class="summary-box" style="margin-bottom: 2.5rem; background: rgba(252, 200, 0, 0.05); border: 1px solid rgba(252, 200, 0, 0.2); padding: 1.5rem; border-radius: 16px;">
-          <h3 style="color: var(--primary-neon); margin-bottom: 1rem; font-size: 1.1rem; display: flex; align-items: center; gap: 8px; border: none; padding: 0;">
-            <i class="fas fa-magic"></i> AI要約
-          </h3>
-          <div id="summary-content" class="markdown-body" style="color: var(--text-white); font-size: 1rem; line-height: 1.7;">
-            <?php echo $post['summary']; ?>
-          </div>
-        </div>
-      <?php endif; ?>
+      </div>
+      <audio id="vp-audio" src="<?= htmlspecialchars($audioSrc) ?>" preload="none"
+             ontimeupdate="updateProgressVP()" onended="audioEndedVP()"></audio>
+    </div>
+    <?php endif; ?>
 
-      <!-- 本文（表示/編集切り替え） -->
-      <div id="view-text" class="post-text markdown-body"><?php echo $text; ?></div>
-      <textarea id="edit-text" style="display:none; width:100%; min-height:60vh; font-size:1rem; line-height:1.8; background:rgba(255,255,255,0.06); border:1px solid rgba(252,200,0,0.4); border-radius:12px; padding:16px; color:#fff; resize:vertical; box-sizing:border-box; font-family:inherit;"><?php echo htmlspecialchars($text); ?></textarea>
+    <!-- Summary -->
+    <?php if (!empty($summary)): ?>
+    <div class="vp-summary">
+      <h4><i class="fas fa-magic"></i> AI要約</h4>
+      <div id="summary-content"><?= htmlspecialchars($summary) ?></div>
     </div>
-    
-    <div class="back-button">
-      <a href="mypage.php">← マイページに戻る</a>
-    </div>
+    <?php endif; ?>
+
+    <!-- Full article -->
+    <div id="view-text" class="vp-article"><?= htmlspecialchars($text) ?></div>
+    <textarea id="edit-text" class="form-control" style="display:none;min-height:50vh;resize:vertical;margin-top:8px;font-size:0.88rem;line-height:1.8;"><?= htmlspecialchars($text) ?></textarea>
+
+  </div><!-- /vp-card -->
+
+  <!-- Actions -->
+  <div style="padding:16px;display:flex;gap:12px;align-items:center;">
+    <a href="mypage.php" class="btn btn-secondary btn-sm">
+      <i class="fas fa-arrow-left"></i> マイページ
+    </a>
+    <?php if ($isOwner): ?>
+    <button onclick="toggleEdit()" id="btn-edit" class="btn btn-ghost btn-sm" style="margin-left:auto;">
+      <i class="fas fa-edit"></i> 編集する
+    </button>
+    <?php endif; ?>
   </div>
 
-  <script>
-    const postIndex = <?= $index ?>;
-    let isEditing = false;
+</div>
+</main>
 
-    // --- Markdown レンダリング ---
-    function renderMarkdown() {
-      const viewText = document.getElementById('view-text');
-      if (viewText) viewText.innerHTML = marked.parse(viewText.textContent.trim());
-      const summary = document.getElementById('summary-content');
-      if (summary) summary.innerHTML = marked.parse(summary.textContent.trim());
+<!-- Bottom nav -->
+<nav class="app-nav">
+  <a href="mypage.php" class="nav-item">
+    <i class="fas fa-home"></i>
+    <span>ホーム</span>
+  </a>
+  <a href="timeline.php" class="nav-item">
+    <i class="fas fa-compass"></i>
+    <span>探す</span>
+  </a>
+  <a href="../voyager_upload.php" class="nav-item" aria-label="録音">
+    <div class="nav-record"><i class="fas fa-microphone"></i></div>
+  </a>
+  <a href="network.php" class="nav-item">
+    <i class="fas fa-user-friends"></i>
+    <span>つながり</span>
+  </a>
+  <a href="profile.php" class="nav-item active">
+    <i class="fas fa-user"></i>
+    <span>自分</span>
+  </a>
+</nav>
+
+<div class="toast" id="globalToast"></div>
+
+<script>
+/* Theme */
+(function() {
+  const t = localStorage.getItem('udatsu_theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', t);
+  const icon = document.getElementById('themeIcon');
+  if (icon) icon.className = t === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
+})();
+document.getElementById('themeToggleBtn').addEventListener('click', function() {
+  const html = document.documentElement;
+  const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+  localStorage.setItem('udatsu_theme', next);
+  const icon = document.getElementById('themeIcon');
+  if (icon) icon.className = next === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
+});
+
+/* Toast */
+function showToast(msg, type='') {
+  const t = document.getElementById('globalToast');
+  t.textContent = msg;
+  t.className = 'toast ' + type + ' show';
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+/* Markdown render */
+function renderMarkdown() {
+  const vt = document.getElementById('view-text');
+  if (vt && typeof marked !== 'undefined') {
+    const raw = vt.textContent.trim();
+    if (raw) vt.innerHTML = marked.parse(raw);
+  }
+  const sc = document.getElementById('summary-content');
+  if (sc && typeof marked !== 'undefined') {
+    const raw = sc.textContent.trim();
+    if (raw) sc.innerHTML = marked.parse(raw);
+  }
+}
+if (typeof marked !== 'undefined') renderMarkdown();
+else document.querySelector('script[src*="marked"]').addEventListener('load', renderMarkdown);
+
+/* Audio (view post) */
+function toggleAudioVP() {
+  const audio = document.getElementById('vp-audio');
+  const icon  = document.getElementById('vp-play-icon');
+  if (!audio) return;
+  if (audio.paused) {
+    audio.addEventListener('loadedmetadata', function onMeta() {
+      updateProgressVP();
+      audio.removeEventListener('loadedmetadata', onMeta);
+    });
+    audio.play().catch(e => console.warn(e));
+    icon.className = 'fas fa-pause';
+  } else {
+    audio.pause();
+    icon.className = 'fas fa-play';
+  }
+}
+function updateProgressVP() {
+  const audio = document.getElementById('vp-audio');
+  const prog  = document.getElementById('vp-progress');
+  const time  = document.getElementById('vp-time');
+  if (!audio) return;
+  const pct = audio.duration ? (audio.currentTime / audio.duration) * 100 : 0;
+  if (prog) prog.value = pct;
+  const cur = fmtTime(audio.currentTime);
+  const dur = (audio.duration && !isNaN(audio.duration)) ? fmtTime(audio.duration) : '--:--';
+  if (time) time.textContent = cur + ' / ' + dur;
+}
+function seekAudioVP(val) {
+  const audio = document.getElementById('vp-audio');
+  if (audio && audio.duration) audio.currentTime = (val / 100) * audio.duration;
+}
+function audioEndedVP() {
+  const icon = document.getElementById('vp-play-icon');
+  const prog = document.getElementById('vp-progress');
+  if (icon) icon.className = 'fas fa-play';
+  if (prog) prog.value = 0;
+}
+function fmtTime(sec) {
+  if (isNaN(sec)) return '0:00';
+  return Math.floor(sec/60) + ':' + Math.floor(sec%60).toString().padStart(2,'0');
+}
+
+/* Edit mode */
+function toggleEdit() {
+  document.getElementById('view-title').style.display = 'none';
+  document.getElementById('edit-title').style.display = 'block';
+  document.getElementById('view-text').style.display  = 'none';
+  document.getElementById('edit-text').style.display  = 'block';
+  document.getElementById('editToolbar').style.display = 'flex';
+  document.getElementById('btn-edit').style.display   = 'none';
+}
+function cancelEdit() {
+  document.getElementById('view-title').style.display = 'block';
+  document.getElementById('edit-title').style.display = 'none';
+  document.getElementById('view-text').style.display  = 'block';
+  document.getElementById('edit-text').style.display  = 'none';
+  document.getElementById('editToolbar').style.display = 'none';
+  document.getElementById('btn-edit').style.display   = 'inline-flex';
+}
+async function savePost() {
+  const btn = document.getElementById('btn-save');
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+  btn.disabled = true;
+  const fd = new FormData();
+  fd.append('index', <?= $index ?>);
+  fd.append('title', document.getElementById('edit-title').value);
+  fd.append('text',  document.getElementById('edit-text').value);
+  try {
+    const res = await fetch('save_post_ajax.php', { method:'POST', body:fd });
+    const data = await res.json();
+    if (data.status === 'ok') {
+      const newTitle = document.getElementById('edit-title').value;
+      const newText  = document.getElementById('edit-text').value;
+      document.getElementById('view-title').textContent = newTitle;
+      document.getElementById('view-text').innerHTML = typeof marked !== 'undefined' ? marked.parse(newText) : newText;
+      document.title = newTitle + ' | Udatsu';
+      cancelEdit();
+      showToast('保存しました', 'success');
+    } else {
+      showToast(data.message || '保存に失敗しました', 'error');
     }
-    renderMarkdown();
+  } catch(e) {
+    showToast('通信エラーが発生しました', 'error');
+  } finally {
+    btn.innerHTML = '<i class="fas fa-save"></i> 保存';
+    btn.disabled = false;
+  }
+}
 
-    // --- 編集モード切り替え ---
-    function toggleEdit() {
-      isEditing = true;
-      document.getElementById('view-title').style.display = 'none';
-      document.getElementById('edit-title').style.display = 'block';
-      document.getElementById('view-original-title').style.display = 'none';
-      document.getElementById('edit-original-title-container').style.display = 'block';
-      document.getElementById('view-date').style.display  = 'none';
-      document.getElementById('edit-date-container').style.display = 'block';
-      document.getElementById('view-text').style.display  = 'none';
-      document.getElementById('edit-text').style.display  = 'block';
-      document.getElementById('btn-edit').style.display   = 'none';
-      document.getElementById('btn-copy').style.display   = 'none';
-      document.getElementById('btn-save').style.display   = 'flex';
-      document.getElementById('btn-cancel').style.display = 'flex';
-      document.getElementById('edit-title').focus();
-    }
-
-    function cancelEdit() {
-      isEditing = false;
-      document.getElementById('view-title').style.display = 'block';
-      document.getElementById('edit-title').style.display = 'none';
-      const origTitleVal = document.getElementById('edit-original-title').value.trim();
-      document.getElementById('view-original-title').style.display = origTitleVal ? 'block' : 'none';
-      document.getElementById('edit-original-title-container').style.display = 'none';
-      document.getElementById('view-date').style.display  = 'block';
-      document.getElementById('edit-date-container').style.display = 'none';
-      document.getElementById('view-text').style.display  = 'block';
-      document.getElementById('edit-text').style.display  = 'none';
-      document.getElementById('btn-edit').style.display   = 'flex';
-      document.getElementById('btn-copy').style.display   = 'flex';
-      document.getElementById('btn-save').style.display   = 'none';
-      document.getElementById('btn-cancel').style.display = 'none';
-    }
-
-    async function savePost() {
-      const saveBtn = document.getElementById('btn-save');
-      saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 保存中...';
-      saveBtn.disabled = true;
-
-      const newTitle = document.getElementById('edit-title').value.trim();
-      const newOriginalTitle = document.getElementById('edit-original-title').value.trim();
-      const newDate  = document.getElementById('edit-date').value.trim();
-      const newText  = document.getElementById('edit-text').value.trim();
-
-      const fd = new FormData();
-      fd.append('index', postIndex);
-      fd.append('title', newTitle);
-      fd.append('original_title', newOriginalTitle);
-      fd.append('date',  newDate);
-      fd.append('text',  newText);
-
-      try {
-        const res  = await fetch('save_post_ajax.php', { method: 'POST', body: fd });
-        const data = await res.json();
-        if (data.status === 'ok') {
-          // 表示を更新してビューモードに戻る
-          document.getElementById('view-title').textContent = newTitle;
-          document.getElementById('view-original-title-text').textContent = newOriginalTitle;
-          document.getElementById('view-date').textContent = newDate;
-          document.getElementById('view-text').innerHTML = marked.parse(newText);
-          document.title = newTitle + ' | Udatsu投稿詳細';
-          cancelEdit();
-          // 一時的な保存完了トースト
-          const toast = document.createElement('div');
-          toast.textContent = '✅ 保存しました';
-          toast.style.cssText = 'position:fixed;bottom:24px;right:24px;background:var(--primary-neon);color:#000;padding:12px 20px;border-radius:8px;font-weight:700;z-index:9999;animation:slideIn 0.3s ease;';
-          document.body.appendChild(toast);
-          setTimeout(() => toast.remove(), 2500);
-        } else {
-          alert(data.message || '保存に失敗しました');
-        }
-      } catch(e) {
-        alert('通信エラーが発生しました');
-      } finally {
-        saveBtn.innerHTML = '<i class="fas fa-save"></i> 保存';
-        saveBtn.disabled = false;
-      }
-    }
-
-    // コピー
-    async function copyContent(btn) {
-      const title = document.getElementById('view-title').textContent;
-      const text  = document.getElementById('view-text').innerText;
-      const combined = title + '\n\n' + text;
-      try {
-        await navigator.clipboard.writeText(combined);
-        const orig = btn.innerHTML;
-        btn.innerHTML = '<i class="fas fa-check"></i> コピー完了';
-        btn.style.background = 'rgba(0,255,204,0.2)';
-        setTimeout(() => { btn.innerHTML = orig; btn.style.background = ''; }, 2000);
-      } catch(err) {
-        const ta = document.createElement('textarea');
-        ta.value = combined;
-        document.body.appendChild(ta);
-        ta.select();
-        try { document.execCommand('copy'); } catch(e) { alert('コピーに失敗しました'); }
-        document.body.removeChild(ta);
-      }
-    }
-  </script>
+/* Copy */
+async function copyContent() {
+  const title = document.getElementById('view-title').textContent;
+  const text  = document.getElementById('view-text').innerText;
+  try {
+    await navigator.clipboard.writeText(title + '\n\n' + text);
+    showToast('コピーしました', 'success');
+  } catch(e) {
+    showToast('コピーに失敗しました', 'error');
+  }
+}
+</script>
 </body>
 </html>
