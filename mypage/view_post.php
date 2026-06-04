@@ -171,7 +171,7 @@ $imagePath   = !empty($profile['image']) ? '../uploads/' . $targetUid . '/' . $p
 
 <!-- Header -->
 <header class="app-header">
-  <a href="mypage.php" class="icon-btn" style="color:var(--text-primary);" aria-label="戻る">
+  <a href="javascript:void(0);" onclick="goBackOrHome()" class="icon-btn" style="color:var(--text-primary);" aria-label="戻る">
     <i class="fas fa-arrow-left"></i>
   </a>
   <a href="mypage.php" class="app-header__logo" style="text-decoration: none; display: flex; align-items: center; margin-left: 10px;">
@@ -439,6 +439,14 @@ async function copyContent() {
     showToast('コピーしました', 'success');
   } catch(e) {
     showToast('コピーに失敗しました', 'error');
+  }
+}
+
+function goBackOrHome() {
+  if (document.referrer && document.referrer.indexOf(window.location.host) !== -1) {
+    history.back();
+  } else {
+    window.location.href = 'mypage.php';
   }
 }
 </script>
