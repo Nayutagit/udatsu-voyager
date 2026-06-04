@@ -32,37 +32,28 @@ $profilesCache = [];
 // Collect shared posts
 $timelinePosts = [];
 
-// 1. Collect from mutual followers
-foreach ($myFollowing as $followUid) {
-    if (!in_array($followUid, $myFollowers)) {
-        continue; // Only mutual followers
-    }
+// 1. Collect from ALL users
+$allPostFiles = glob($userDir . '*_posts.json');
+foreach ($allPostFiles as $postsFile) {
+    $authorUid = basename($postsFile, '_posts.json');
+    if ($authorUid === $uid) continue; // Skip own posts here, added in step 2
 
-    $postsFile = $userDir . $followUid . '_posts.json';
-    if (file_exists($postsFile)) {
-        $followPosts = json_decode(file_get_contents($postsFile), true) ?: [];
+    $followPosts = json_decode(file_get_contents($postsFile), true) ?: [];
+    
+    if (!isset($profilesCache[$authorUid])) {
+        $profilesCache[$authorUid] = getUserProfile($authorUid, $userDir);
+    }
+    $profile = $profilesCache[$authorUid];
+    
+    foreach ($followPosts as $idx => $post) {
+        $status = $post['status'] ?? '';
+        $isShared = !empty($post['is_shared']);
         
-        if (!isset($profilesCache[$followUid])) {
-            $profilesCache[$followUid] = getUserProfile($followUid, $userDir);
-        }
-        $profile = $profilesCache[$followUid];
-        
-        foreach ($followPosts as $idx => $post) {
-            $status = $post['status'] ?? '';
-            $isShared = !empty($post['is_shared']);
-            
-            // Allow 'エラー' only for Admin
-            $allowedStatus = ['My Udastack追加済', '', 'Inbox'];
-            if ($userPlan === 'admin') {
-                $allowedStatus[] = 'エラー';
-            }
-            
-            if ($isShared && (in_array($status, $allowedStatus) || $status === '')) {
-                $post['author_uid'] = $followUid;
-                $post['author_profile'] = $profile;
-                $post['original_index'] = $idx;
-                $timelinePosts[] = $post;
-            }
+        if ($isShared && $status !== '削除済') {
+            $post['author_uid'] = $authorUid;
+            $post['author_profile'] = $profile;
+            $post['original_index'] = $idx;
+            $timelinePosts[] = $post;
         }
     }
 }
@@ -78,10 +69,8 @@ if (file_exists($myPostsFile)) {
     
     foreach ($myPosts as $idx => $post) {
         $status = $post['status'] ?? '';
-        $allowedStatus = ['My Udastack追加済', '', 'Inbox'];
-        if ($userPlan === 'admin') $allowedStatus[] = 'エラー';
-
-        if (!empty($post['is_shared']) && (in_array($status, $allowedStatus) || $status === '')) {
+        
+        if (!empty($post['is_shared']) && $status !== '削除済') {
             $post['author_uid'] = $uid;
             $post['author_profile'] = $myProfile;
             $post['original_index'] = $idx;
@@ -141,14 +130,14 @@ $timelinePosts = array_slice($timelinePosts, 0, 50);
     
     <div style="padding: 0 15px; margin-bottom: 20px;">
       <h2 style="font-size: 1.2rem; margin-bottom: 5px; color: var(--text-primary);"><i class="fas fa-compass" style="color: var(--primary-neon);"></i> タイムライン</h2>
-      <p style="font-size: 0.85rem; color: var(--text-secondary);">フォロー中のユーザーの投稿</p>
+      <p style="font-size: 0.85rem; color: var(--text-secondary);">みんなの共有投稿</p>
     </div>
 
     <?php if (empty($timelinePosts)): ?>
     <div class="empty-state">
       <i class="fas fa-users-slash"></i>
       <h3>タイムラインはまだ空です</h3>
-      <p>フォローしているユーザーが投稿をシェアするとここに表示されます。</p>
+      <p>他のユーザーが投稿をシェアするとここに表示されます。</p>
       <a href="network.php" class="btn btn-primary btn-sm" style="margin-top: 15px;">
         <i class="fas fa-search"></i> ユーザーを探す
       </a>
