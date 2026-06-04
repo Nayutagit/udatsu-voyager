@@ -321,10 +321,10 @@ $plan_label = match ($plan) {
           if ($plan === $key) {
             echo "<span class='select-btn disabled'>利用中</span>";
           } elseif ($key === 'trial') {
-            echo "<a class='select-btn' href='https://udatsuageteko.com/sayonarasamishii'>トライアルに戻す<br>（課金停止）</a>";
+            echo "<a class='select-btn' href='#' onclick='alert(\"現在準備中です\"); return false;'>トライアルに戻す<br>（課金停止）</a>";
           } elseif ($p['price_id']) {
             if (in_array($plan, ['light', 'standard', 'premium'])) {
-              echo "<a class='select-btn' href='https://udatsuageteko.com/mottoageteko'>プラン変更申請</a>";
+              echo "<a class='select-btn' href='#' onclick='alert(\"現在準備中です\"); return false;'>プラン変更申請</a>";
             } else {
               echo "<button class='select-btn' onclick=\"startCheckoutWithPlan('{$p['price_id']}')\">申し込む</button>";
             }

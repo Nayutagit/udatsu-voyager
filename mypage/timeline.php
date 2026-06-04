@@ -121,7 +121,17 @@ $timelinePosts = array_slice($timelinePosts, 0, 50);
 <!-- ============================================================
      APP HEADER
      ============================================================ -->
-<?php include __DIR__ . '/header.php'; ?>
+<header class="app-header">
+  <a href="mypage.php" class="app-header__logo" style="text-decoration: none; display: flex; align-items: center;">
+    <img src="../img/udatsu-logo.png" alt="Udatsu" style="height: 32px; filter: drop-shadow(0 0 5px rgba(252,200,0,0.5));">
+  </a>
+  <div class="app-header__actions">
+    <!-- Dark/Light toggle -->
+    <button class="theme-toggle" id="themeToggleBtn" title="ダーク/ライト切替" aria-label="テーマ切替">
+      <i class="fas fa-moon" id="themeIcon"></i>
+    </button>
+  </div>
+</header>
 
 <!-- ============================================================
      MAIN FEED (TIMELINE)

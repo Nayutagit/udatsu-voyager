@@ -59,8 +59,8 @@ try {
         'plan' => $plan,
       ],
     ],
-    'success_url' => 'https://udatsuageteko.com/success?session_id={CHECKOUT_SESSION_ID}',
-    'cancel_url' => 'https://udatsuageteko.com/cancel',
+    'success_url' => 'https://' . $_SERVER['HTTP_HOST'] . '/mypage/mypage.php?session_id={CHECKOUT_SESSION_ID}',
+    'cancel_url' => 'https://' . $_SERVER['HTTP_HOST'] . '/mypage/membership.php',
   ]);
 } catch (Exception $e) {
   echo json_encode(['error' => 'Checkout セッションの作成に失敗しました: ' . $e->getMessage()]);

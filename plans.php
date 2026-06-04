@@ -141,7 +141,7 @@ $plan_label = match ($user_plan) {
   </style>
 </head>
 <body>
-  <a href="https://udatsuageteko.com/">
+  <a href="index.php">
     <img src="img/udatsu-logo.png" alt="Udatsu" class="logo">
   </a>
   <h1>Udatsu プラン紹介</h1>

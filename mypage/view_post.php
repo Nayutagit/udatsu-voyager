@@ -174,7 +174,9 @@ $imagePath   = !empty($profile['image']) ? '../uploads/' . $targetUid . '/' . $p
   <a href="mypage.php" class="icon-btn" style="color:var(--text-primary);" aria-label="戻る">
     <i class="fas fa-arrow-left"></i>
   </a>
-  <span class="app-header__logo" style="font-size:1rem;font-weight:700;">投稿詳細</span>
+  <a href="mypage.php" class="app-header__logo" style="text-decoration: none; display: flex; align-items: center; margin-left: 10px;">
+    <img src="../img/udatsu-logo.png" alt="Udatsu" style="height: 28px; filter: drop-shadow(0 0 5px rgba(252,200,0,0.5));">
+  </a>
   <div class="app-header__actions">
     <button class="theme-toggle" id="themeToggleBtn" aria-label="テーマ切替">
       <i class="fas fa-moon" id="themeIcon"></i>

@@ -120,7 +120,7 @@ if (!empty($uid)) {
 
   <div class="login-container animate-fadeup">
     
-    <img src="img/udatsu-logo.png" alt="Udatsu Logo" class="hero-logo">
+    <a href="index.php"><img src="img/udatsu-logo.png" alt="Udatsu Logo" class="hero-logo"></a>
     <h1 class="brand-title">Udatsu</h1>
     <p class="brand-subtitle">声でつながる、新しいSNS。</p>
 

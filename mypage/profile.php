@@ -173,7 +173,11 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
 </head>
 <body>
 
-<?php include __DIR__ . '/header.php'; ?>
+<header class="app-header">
+  <a href="mypage.php" class="app-header__logo" style="text-decoration: none; display: flex; align-items: center;">
+    <img src="../img/udatsu-logo.png" alt="Udatsu" style="height: 32px; filter: drop-shadow(0 0 5px rgba(252,200,0,0.5));">
+  </a>
+</header>
 
 <main class="app-main" style="padding-top: 60px;">
   
