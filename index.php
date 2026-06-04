@@ -15,15 +15,15 @@ if (!empty($uid)) {
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>Udatsu - Login</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Udatsu</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <link rel="icon" type="image/png" href="img/favicon.png">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="css/style.css">
   <link rel="manifest" href="manifest.json">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Voyager">
+  <meta name="apple-mobile-web-app-title" content="Udatsu">
   <link rel="apple-touch-icon" href="img/udatsu-logo.png">
   <style>
     body {
@@ -32,55 +32,119 @@ if (!empty($uid)) {
       min-height: 100vh;
       justify-content: center;
       align-items: center;
-      background-image: url('img/concrete_bg.png');
-      background-size: cover;
-      background-position: center;
+      background-color: var(--bg-primary);
+      padding: var(--spacing-lg);
+    }
+    .login-container {
+      width: 100%;
+      max-width: 400px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
     }
     .hero-logo {
-      width: 120px;
-      margin-bottom: 20px;
-      filter: drop-shadow(0 0 15px rgba(252, 200, 0, 0.6));
-      animation: float 6s ease-in-out infinite;
+      width: 80px;
+      height: 80px;
+      border-radius: 20px;
+      margin-bottom: var(--spacing-lg);
+      box-shadow: 0 4px 20px rgba(252, 200, 0, 0.2);
     }
-    @keyframes float {
-      0% { transform: translateY(0px); }
-      50% { transform: translateY(-10px); }
-      100% { transform: translateY(0px); }
+    .brand-title {
+      font-family: var(--font-display);
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: var(--spacing-xs);
+      letter-spacing: -0.02em;
+    }
+    .brand-subtitle {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      margin-bottom: var(--spacing-2xl);
+    }
+    .login-box {
+      width: 100%;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+      padding: var(--spacing-xl) var(--spacing-lg);
+      border: 1px solid var(--border-color);
+    }
+    .login-box p {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      margin-bottom: var(--spacing-xl);
+      line-height: 1.5;
+    }
+    .btn-google {
+      width: 100%;
+      padding: 14px;
+      border-radius: 24px;
+      background: var(--accent-color);
+      color: var(--bg-primary);
+      font-weight: 600;
+      font-size: 1rem;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .btn-google:active {
+      opacity: 0.8;
+    }
+    .secure-badge {
+      margin-top: var(--spacing-lg);
+      font-size: 0.75rem;
+      color: var(--text-tertiary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .footer-links {
+      margin-top: var(--spacing-2xl);
+      font-size: 0.75rem;
+      color: var(--text-tertiary);
+    }
+    .footer-links a {
+      color: var(--text-tertiary);
+      text-decoration: none;
+      margin: 0 10px;
     }
   </style>
 </head>
 <body>
 
-  <div class="container" style="text-align: center; max-width: 500px;">
+  <div class="login-container animate-fadeup">
     
-    <div class="animate-fadeup">
-      <img src="img/udatsu-logo.png" alt="Udatsu Logo" class="hero-logo">
-      <h1 class="text-neon" style="font-size: 3rem; margin-bottom: 10px; letter-spacing: 0.1em;">UDATSU</h1>
-      <p class="text-muted" style="font-family: var(--font-serif); letter-spacing: 0.2em; margin-bottom: 40px;">VOICE & THOUGHT ASSETS</p>
-    </div>
+    <img src="img/udatsu-logo.png" alt="Udatsu Logo" class="hero-logo">
+    <h1 class="brand-title">Udatsu</h1>
+    <p class="brand-subtitle">声でつながる、新しいSNS。</p>
 
-    <div class="glass-card animate-fadeup delay-100" style="padding: 40px;">
-      <h2 style="font-size: 1.5rem; margin-bottom: 20px;">Welcome Back</h2>
-      <p class="text-muted" style="margin-bottom: 30px; line-height: 1.6;">
-        あなたの「声」が未来をつくる。<br>
-        思考資産を蓄積し、うだつを上げよう。
+    <div class="login-box">
+      <p>
+        AIがあなたの音声をテキスト化し、<br>
+        自動で要約・記事化します。
       </p>
 
-      <button id="login-btn" class="btn btn-primary" style="width: 100%; padding: 15px; font-size: 1.1rem;">
+      <button id="login-btn" class="btn-google">
         <i class="fab fa-google"></i> Googleでログイン
       </button>
 
-      <div style="margin-top: 20px; font-size: 0.8rem; color: var(--text-muted);">
-        <i class="fas fa-lock"></i> Secure Access via Firebase
+      <div class="secure-badge">
+        <i class="fas fa-lock"></i> Secure Login via Firebase
       </div>
     </div>
 
-    <div class="animate-fadeup delay-200" style="margin-top: 40px; font-size: 0.8rem; color: var(--text-muted);">
+    <div class="footer-links">
       <div style="margin-bottom: 10px;">
-        <a href="terms.php" style="color: var(--text-muted); text-decoration: none; margin: 0 10px;">利用規約</a> | 
-        <a href="privacy.php" style="color: var(--text-muted); text-decoration: none; margin: 0 10px;">プライバシーポリシー</a>
+        <a href="terms.php">利用規約</a> | 
+        <a href="privacy.php">プライバシーポリシー</a>
       </div>
-      &copy; 2026 Nyct Studio. All Rights Reserved.
+      &copy; 2026 Nyct Studio
     </div>
 
   </div>
