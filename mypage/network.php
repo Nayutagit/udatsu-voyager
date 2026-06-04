@@ -98,13 +98,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['search_uid'])) {
 </head>
 <body>
 
-<header class="header">
-    <div class="container header-inner">
-        <a href="mypage.php" class="logo">
-            <i class="fas fa-arrow-left"></i>
-            <span style="margin-left: 10px;">Dashboard</span>
-        </a>
-    </div>
+<!-- ============================================================
+     APP HEADER
+     ============================================================ -->
+<header class="app-header">
+  <a href="mypage.php" class="app-header__logo" style="text-decoration: none; display: flex; align-items: center;">
+    <img src="../img/udatsu-logo.png" alt="Udatsu" style="height: 32px; filter: drop-shadow(0 0 5px rgba(252,200,0,0.5));">
+  </a>
 </header>
 
 <div class="container" style="padding-top: 100px; padding-bottom: 60px;">
@@ -204,6 +204,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['search_uid'])) {
     <?php endif; ?>
 
 </div>
+
+<!-- ============================================================
+     BOTTOM NAV
+     ============================================================ -->
+<nav class="app-nav">
+  <a href="mypage.php" class="nav-item">
+    <i class="fas fa-home"></i>
+    <span>ホーム</span>
+  </a>
+  <a href="timeline.php" class="nav-item">
+    <i class="fas fa-compass"></i>
+    <span>探す</span>
+  </a>
+  <a href="../voyager_upload.php" class="nav-item" aria-label="録音">
+    <div class="nav-record">
+      <i class="fas fa-microphone"></i>
+    </div>
+  </a>
+  <a href="network.php" class="nav-item active">
+    <i class="fas fa-user-friends"></i>
+    <span>つながり</span>
+  </a>
+  <a href="profile.php" class="nav-item">
+    <i class="fas fa-user"></i>
+    <span>自分</span>
+  </a>
+</nav>
 
 <script>
 function toggleFollow(targetUid, isCurrentlyFollowing) {
