@@ -2,33 +2,33 @@
 $SECRET = 'udatsu_restore_2026';
 if (($_GET['key'] ?? '') !== $SECRET) { http_response_code(403); die('Unauthorized'); }
 
+$uid = '3xRUBOkESVQShNx4XWSpsO0w5w13';
 $userDir = __DIR__ . '/users/';
-$dirs = scandir($userDir);
 
 echo "<pre>\n";
-echo "=== ALL USERS ON SERVER ===\n\n";
+// Check main file
+$main = $userDir . $uid . '_posts.json';
+echo "Main file: " . (file_exists($main) ? filesize($main) . ' bytes' : 'NOT FOUND') . "\n";
+$content = file_get_contents($main);
+echo "Main content (first 200 chars): " . htmlspecialchars(substr($content, 0, 200)) . "\n\n";
 
-$uids = [];
-foreach ($dirs as $f) {
-    if (preg_match('/^([a-zA-Z0-9_\-]+)_profile\.json$/', $f, $m)) {
-        $uids[] = $m[1];
-    }
-}
-// Also find UIDs from posts files without profiles
-foreach ($dirs as $f) {
-    if (preg_match('/^([a-zA-Z0-9_\-]+)_posts\.json$/', $f, $m)) {
-        if (!in_array($m[1], $uids)) $uids[] = $m[1];
-    }
+// Check backup files
+$files = glob($userDir . $uid . '_posts.json.bak*');
+echo "Backup files found: " . count($files) . "\n";
+foreach ($files as $f) {
+    $data = json_decode(file_get_contents($f), true);
+    echo "  " . basename($f) . " | " . filesize($f) . " bytes | " . count($data ?? []) . " posts\n";
 }
 
-foreach ($uids as $uid) {
-    $pf = $userDir . $uid . '_profile.json';
-    $pj = $userDir . $uid . '_posts.json';
-    $profile = file_exists($pf) ? json_decode(file_get_contents($pf), true) : [];
-    $posts = file_exists($pj) ? json_decode(file_get_contents($pj), true) : [];
-    $email = $profile['email'] ?? '';
-    $name  = $profile['display_name'] ?? '(no name)';
-    $cnt   = count($posts ?? []);
-    echo "$uid | $name | $email | posts:$cnt\n";
+// Check uploads directory for audio files
+$uploadDir = __DIR__ . '/uploads/' . $uid . '/';
+echo "\nUploads dir exists: " . (is_dir($uploadDir) ? 'YES' : 'NO') . "\n";
+if (is_dir($uploadDir)) {
+    $audios = glob($uploadDir . '*.m4a') ?: [];
+    $audios = array_merge($audios, glob($uploadDir . '*.mp3') ?: []);
+    echo "Audio files: " . count($audios) . "\n";
+    foreach (array_slice($audios, 0, 5) as $a) {
+        echo "  " . basename($a) . "\n";
+    }
 }
 echo "</pre>";
