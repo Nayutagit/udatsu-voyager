@@ -70,7 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$limitReached) {
 ?>
 
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="ja" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <title>Udatsu Voyager - 音声アップロード</title>
@@ -176,23 +176,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$limitReached) {
 <body>
 
   <!-- Header -->
-  <header class="header">
-    <div class="container header-inner">
-      <a href="index.php" class="logo">
-        <img src="img/udatsu-logo.png" alt="Udatsu Logo">
-        <span>Voyager</span>
-      </a>
-      <div class="nav-user">
-        <div class="user-badge">
-          <i class="fas fa-user-circle"></i> <?= htmlspecialchars($userName) ?>
-        </div>
-        <div class="user-badge">
-          Plan: <strong><?= htmlspecialchars($userPlan) ?></strong>
-        </div>
-        <a href="mypage/mypage.php" class="btn btn-secondary" style="padding: 8px 20px; font-size: 0.9rem;">
-          <i class="fas fa-columns"></i> マイページ
-        </a>
-      </div>
+  <header class="app-header">
+    <a href="mypage/mypage.php" class="app-header__logo" style="text-decoration: none; display: flex; align-items: center;">
+      <img src="img/udatsu-logo.png" alt="Udatsu" style="height: 32px; filter: drop-shadow(0 0 5px rgba(252,200,0,0.5));">
+    </a>
+    <div class="app-header__actions">
+      <button class="theme-toggle" id="themeToggleBtn" aria-label="テーマ切替">
+        <i class="fas fa-moon" id="themeIcon"></i>
+      </button>
     </div>
   </header>
 
@@ -472,6 +463,51 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
   }
+});
+</script>
+
+<nav class="app-nav">
+  <a href="mypage/mypage.php" class="nav-item">
+    <i class="fas fa-home"></i>
+    <span>ホーム</span>
+  </a>
+  <a href="mypage/timeline.php" class="nav-item">
+    <i class="fas fa-compass"></i>
+    <span>探す</span>
+  </a>
+  <a href="voyager_upload.php" class="nav-item active" aria-label="録音">
+    <div class="nav-record">
+      <i class="fas fa-microphone"></i>
+    </div>
+  </a>
+  <a href="mypage/network.php" class="nav-item">
+    <i class="fas fa-user-friends"></i>
+    <span>つながり</span>
+  </a>
+  <a href="mypage/profile.php" class="nav-item">
+    <i class="fas fa-user"></i>
+    <span>自分</span>
+  </a>
+</nav>
+<script>
+// Theme Toggle Script
+const savedTheme = localStorage.getItem('udatsu_theme') || 'dark';
+document.documentElement.setAttribute('data-theme', savedTheme);
+updateThemeIcon(savedTheme);
+
+function updateThemeIcon(theme) {
+  const icon = document.getElementById('themeIcon');
+  if (icon) {
+    icon.className = theme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
+  }
+}
+
+document.getElementById('themeToggleBtn').addEventListener('click', function() {
+  const current = document.documentElement.getAttribute('data-theme');
+  const next = current === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('udatsu_theme', next);
+  updateThemeIcon(next);
 });
 </script>
 </body>
