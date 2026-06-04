@@ -56,6 +56,7 @@ $remainingPosts = max(0, $postLimit - count($visiblePosts));
   <link rel="icon" type="image/png" href="../img/favicon.png">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="../css/style.css?v=<?= time() ?>">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <style>
     .profile-header {
       padding: 30px 20px;
@@ -136,41 +137,6 @@ $remainingPosts = max(0, $postLimit - count($visiblePosts));
       font-weight: 600;
       border: 1px solid rgba(255, 68, 68, 0.2);
     }
-    .posts-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 2px;
-      padding: 0 2px 20px 2px;
-    }
-    .grid-item {
-      aspect-ratio: 1;
-      background: var(--bg-tertiary);
-      position: relative;
-      overflow: hidden;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .grid-item img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-    .grid-item .overlay {
-      position: absolute;
-      inset: 0;
-      background: rgba(0,0,0,0.6);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      opacity: 0;
-      transition: opacity 0.2s;
-    }
-    .grid-item:active .overlay {
-      opacity: 1;
-    }
     .empty-state {
       text-align: center;
       padding: 40px 20px;
@@ -226,6 +192,15 @@ $remainingPosts = max(0, $postLimit - count($visiblePosts));
         </button>
       <?php endif; ?>
     </div>
+
+    <?php if ($isOwnProfile): ?>
+    <div style="margin-top: 15px; display: flex; justify-content: center; align-items: center; gap: 10px;">
+      <span style="font-size: 0.9rem; color: var(--text-secondary);">テーマ切替:</span>
+      <button class="theme-toggle" id="themeToggleBtn" title="ダーク/ライト切替" aria-label="テーマ切替" style="background: var(--bg-tertiary); border: 1px solid var(--border-color); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-primary);">
+        <i class="fas fa-moon" id="themeIcon"></i>
+      </button>
+    </div>
+    <?php endif; ?>
   </div>
 
   <?php if (count($visiblePosts) === 0): ?>
@@ -234,21 +209,109 @@ $remainingPosts = max(0, $postLimit - count($visiblePosts));
       <p>まだ投稿がありません</p>
     </div>
   <?php else: ?>
-    <div class="posts-grid">
+    <div class="feed" id="feed" style="padding: 0 15px;">
       <?php foreach (array_reverse($visiblePosts, true) as $i => $post): ?>
-        <a href="view_post.php?uid=<?= $targetUid ?>&index=<?= $i ?>" class="grid-item">
-          <?php if (!empty($post['thumbnail'])): ?>
-            <img src="../<?= htmlspecialchars($post['thumbnail']) ?>" alt="Thumbnail">
-          <?php else: ?>
-            <div style="color: var(--text-tertiary); font-size: 2rem;">
-              <i class="fas fa-music"></i>
+        <?php
+          $postId      = $post['id'] ?? uniqid();
+          $postTitle   = $post['title'] ?? '';
+          $postDate    = $post['date'] ?? '';
+          $postText    = $post['text'] ?? '';
+          $postSummary = $post['summary'] ?? '';
+          
+          $af          = $post['audio_file'] ?? $post['audio'] ?? '';
+          $audioSrc    = !empty($af) ? '../audio_proxy.php?target_uid=' . urlencode($targetUid) . '&path=' . urlencode($af) : '';
+          
+          $likes       = $post['likes'] ?? [];
+          $likeCount   = count($likes);
+          $isLiked     = in_array($uid, $likes);
+          $commentCount = $post['comment_count'] ?? 0;
+          
+          // Check saved status
+          $savedFile = $userDir . $uid . '_saved.json';
+          $savedItems = file_exists($savedFile) ? (json_decode(file_get_contents($savedFile), true) ?: []) : [];
+          $isSaved = false;
+          foreach ($savedItems as $sItem) {
+              if (($sItem['post_id'] ?? '') === $postId && ($sItem['author_uid'] ?? '') === $targetUid) {
+                  $isSaved = true;
+                  break;
+              }
+          }
+          
+          $displayCaption = $postSummary ?: mb_strimwidth(strip_tags($postText), 0, 120, '…');
+          $hasFullText = !empty($postText) && mb_strlen(strip_tags($postText)) > 50;
+        ?>
+        <article class="post-card" id="post-card-<?= htmlspecialchars($postId) ?>" style="margin-bottom: 20px;">
+          
+          <div class="post-header">
+            <img src="<?= htmlspecialchars($imagePath) ?>" alt="<?= htmlspecialchars($displayName) ?>" class="post-avatar">
+            <div class="post-header__info">
+              <div class="post-username"><?= htmlspecialchars($displayName) ?></div>
+              <div class="post-date"><?= htmlspecialchars($postDate) ?></div>
             </div>
-          <?php endif; ?>
-          <div class="overlay">
-            <i class="fas fa-play" style="margin-bottom: 5px;"></i>
-            <span style="font-size: 0.75rem; text-align: center; padding: 0 5px;"><?= mb_strimwidth($post['title'] ?? '', 0, 20, '…') ?></span>
           </div>
-        </a>
+
+          <?php if (!empty($displayCaption)): ?>
+          <div class="post-caption collapsed" id="caption-<?= htmlspecialchars($postId) ?>">
+            <strong><?= htmlspecialchars($postTitle) ?></strong><br>
+            <?= nl2br(htmlspecialchars($displayCaption)) ?>
+          </div>
+          <?php if ($hasFullText): ?>
+          <button class="post-read-more" id="readmore-<?= htmlspecialchars($postId) ?>"
+                  onclick="expandPost('<?= htmlspecialchars($postId) ?>')">
+            続きを読む
+          </button>
+          <?php endif; ?>
+
+          <?php if ($hasFullText): ?>
+          <div class="post-full-text" id="fulltext-<?= htmlspecialchars($postId) ?>" style="display:none;">
+            <div class="post-full-text-content"><?= htmlspecialchars(strip_tags($postText)) ?></div>
+            <div style="margin-top:12px;">
+              <a href="view_post.php?uid=<?= urlencode($targetUid) ?>&index=<?= $i ?>" class="btn btn-ghost btn-sm" style="padding-left:0;">
+                <i class="fas fa-external-link-alt"></i> 詳細ページを開く
+              </a>
+            </div>
+          </div>
+          <?php endif; ?>
+          <?php endif; ?>
+
+          <?php if (!empty($audioSrc)): ?>
+          <div class="post-audio" id="player-wrap-<?= htmlspecialchars($postId) ?>">
+            <button class="audio-play-btn" onclick="toggleAudio('<?= htmlspecialchars($postId) ?>')" id="play-btn-<?= htmlspecialchars($postId) ?>" aria-label="再生">
+              <i class="fas fa-play" id="play-icon-<?= htmlspecialchars($postId) ?>"></i>
+            </button>
+            <div class="audio-progress-wrapper">
+              <input type="range" class="audio-progress" id="progress-<?= htmlspecialchars($postId) ?>" value="0" min="0" max="100" step="0.1"
+                     oninput="seekAudio('<?= htmlspecialchars($postId) ?>', this.value)">
+              <span class="audio-time" id="time-<?= htmlspecialchars($postId) ?>">0:00</span>
+            </div>
+            <audio id="audio-<?= htmlspecialchars($postId) ?>"
+                   src="<?= htmlspecialchars($audioSrc) ?>"
+                   preload="metadata"
+                   onloadedmetadata="initDuration('<?= htmlspecialchars($postId) ?>')"
+                   ontimeupdate="updateProgress('<?= htmlspecialchars($postId) ?>')"
+                   onended="audioEnded('<?= htmlspecialchars($postId) ?>')">
+            </audio>
+          </div>
+          <?php endif; ?>
+
+          <div class="post-actions">
+            <button class="action-btn <?= $isLiked ? 'liked' : '' ?>" onclick="toggleLike('<?= htmlspecialchars($targetUid) ?>', <?= $i ?>, this)" id="like-btn-<?= htmlspecialchars($postId) ?>">
+              <i class="<?= $isLiked ? 'fas' : 'far' ?> fa-heart"></i>
+              <span class="like-count"><?= $likeCount > 0 ? $likeCount : '' ?></span>
+            </button>
+            <a href="view_post.php?uid=<?= urlencode($targetUid) ?>&index=<?= $i ?>#comments" class="action-btn">
+              <i class="far fa-comment"></i>
+              <span><?= $commentCount > 0 ? $commentCount : '' ?></span>
+            </a>
+            <button class="action-btn <?= $isSaved ? 'saved' : '' ?>" onclick="toggleSave('<?= htmlspecialchars($targetUid) ?>', '<?= htmlspecialchars($postId) ?>', this)" id="save-btn-<?= htmlspecialchars($postId) ?>">
+              <i class="<?= $isSaved ? 'fas' : 'far' ?> fa-bookmark"></i>
+            </button>
+            <a href="view_post.php?uid=<?= urlencode($targetUid) ?>&index=<?= $i ?>" class="action-btn action-btn--edit" title="詳細">
+              <i class="fas fa-chevron-right"></i>
+            </a>
+          </div>
+
+        </article>
       <?php endforeach; ?>
     </div>
   <?php endif; ?>
@@ -262,7 +325,7 @@ $remainingPosts = max(0, $postLimit - count($visiblePosts));
   </a>
   <a href="timeline.php" class="nav-item">
     <i class="fas fa-compass"></i>
-    <span>探す</span>
+    <span>タイムライン</span>
   </a>
   <a href="../voyager_upload.php" class="nav-item" aria-label="録音">
     <div class="nav-record">
@@ -279,7 +342,200 @@ $remainingPosts = max(0, $postLimit - count($visiblePosts));
   </a>
 </nav>
 
+<!-- Toast (global) -->
+<div class="toast" id="globalToast"></div>
+
 <script>
+/* =============================================================
+   Theme toggle
+   ============================================================= */
+(function() {
+  const saved = localStorage.getItem('udatsu_theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved);
+  updateThemeIcon(saved);
+})();
+
+function updateThemeIcon(theme) {
+  const icon = document.getElementById('themeIcon');
+  if (!icon) return;
+  icon.className = theme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
+}
+
+const themeToggleBtn = document.getElementById('themeToggleBtn');
+if (themeToggleBtn) {
+  themeToggleBtn.addEventListener('click', function() {
+    const html = document.documentElement;
+    const current = html.getAttribute('data-theme');
+    const next = current === 'dark' ? 'light' : 'dark';
+    html.setAttribute('data-theme', next);
+    localStorage.setItem('udatsu_theme', next);
+    updateThemeIcon(next);
+  });
+}
+
+/* =============================================================
+   Toast helper
+   ============================================================= */
+function showToast(msg, type='') {
+  const t = document.getElementById('globalToast');
+  if (!t) return;
+  t.textContent = msg;
+  t.className = 'toast ' + type + ' show';
+  setTimeout(() => { t.classList.remove('show'); }, 3000);
+}
+
+/* =============================================================
+   Audio player
+   ============================================================= */
+let currentAudioId = null;
+
+function initDuration(postId) {
+  const audio = document.getElementById('audio-' + postId);
+  const timeEl = document.getElementById('time-' + postId);
+  if (!audio || !timeEl) return;
+  const dur = (audio.duration && !isNaN(audio.duration)) ? formatTime(audio.duration) : '--:--';
+  timeEl.textContent = '0:00 / ' + dur;
+}
+
+function toggleAudio(postId) {
+  const audio = document.getElementById('audio-' + postId);
+  const icon  = document.getElementById('play-icon-' + postId);
+  if (!audio) return;
+
+  if (currentAudioId && currentAudioId !== postId) {
+    const prev = document.getElementById('audio-' + currentAudioId);
+    const prevIcon = document.getElementById('play-icon-' + currentAudioId);
+    if (prev) prev.pause();
+    if (prevIcon) prevIcon.className = 'fas fa-play';
+    currentAudioId = null;
+  }
+
+  if (audio.paused) {
+    audio.play().catch(e => console.warn(e));
+    icon.className = 'fas fa-pause';
+    currentAudioId = postId;
+  } else {
+    audio.pause();
+    icon.className = 'fas fa-play';
+    currentAudioId = null;
+  }
+}
+
+function updateProgress(postId) {
+  const audio    = document.getElementById('audio-' + postId);
+  const progress = document.getElementById('progress-' + postId);
+  const timeEl   = document.getElementById('time-' + postId);
+  if (!audio || !progress || !timeEl) return;
+
+  const pct = audio.duration ? (audio.currentTime / audio.duration) * 100 : 0;
+  progress.value = pct;
+
+  const cur = formatTime(audio.currentTime);
+  const dur = (audio.duration && !isNaN(audio.duration)) ? formatTime(audio.duration) : '--:--';
+  timeEl.textContent = cur + ' / ' + dur;
+}
+
+function seekAudio(postId, value) {
+  const audio = document.getElementById('audio-' + postId);
+  if (!audio || !audio.duration) return;
+  audio.currentTime = (value / 100) * audio.duration;
+}
+
+function audioEnded(postId) {
+  const icon = document.getElementById('play-icon-' + postId);
+  const progress = document.getElementById('progress-' + postId);
+  if (icon) icon.className = 'fas fa-play';
+  if (progress) progress.value = 0;
+  currentAudioId = null;
+}
+
+function formatTime(sec) {
+  if (isNaN(sec)) return '0:00';
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60).toString().padStart(2, '0');
+  return m + ':' + s;
+}
+
+/* =============================================================
+   Read more / Expand & Markdown Parse
+   ============================================================= */
+function expandPost(postId) {
+  const caption  = document.getElementById('caption-' + postId);
+  const fulltext = document.getElementById('fulltext-' + postId);
+  const btn      = document.getElementById('readmore-' + postId);
+  if (!fulltext) return;
+
+  const isOpen = fulltext.style.display !== 'none';
+  if (isOpen) {
+    fulltext.style.display = 'none';
+    if (caption) caption.classList.add('collapsed');
+    if (btn) btn.textContent = '続きを読む';
+  } else {
+    const contentEl = fulltext.querySelector('.post-full-text-content');
+    if (contentEl && !contentEl.dataset.parsed) {
+      const rawText = contentEl.textContent;
+      contentEl.innerHTML = marked.parse(rawText);
+      contentEl.dataset.parsed = 'true';
+    }
+    
+    fulltext.style.display = 'block';
+    if (caption) caption.classList.remove('collapsed');
+    if (btn) btn.textContent = '閉じる';
+  }
+}
+
+/* =============================================================
+   Like / Save Actions (optimistic UI)
+   ============================================================= */
+function toggleLike(authorUid, postIndex, btn) {
+  const icon = btn.querySelector('i');
+  const countSpan = btn.querySelector('.like-count');
+  if (!btn) return;
+  
+  const liked = btn.classList.toggle('liked');
+  icon.className = liked ? 'fas fa-heart' : 'far fa-heart';
+  if (countSpan) {
+    const cur = parseInt(countSpan.textContent) || 0;
+    countSpan.textContent = liked ? (cur + 1) || '1' : (cur - 1) > 0 ? (cur - 1) : '';
+  }
+
+  const fd = new FormData();
+  fd.append('action', liked ? 'like' : 'unlike');
+  fd.append('target_uid', authorUid);
+  fd.append('post_index', postIndex);
+
+  fetch('submit_interaction.php', { method: 'POST', body: fd })
+    .then(r => r.json())
+    .then(data => {
+      if (data.status === 'ok') {
+        const likedServer = (data.interaction === 'liked');
+        btn.classList.toggle('liked', likedServer);
+        icon.className = likedServer ? 'fas fa-heart' : 'far fa-heart';
+        if (countSpan) {
+          countSpan.textContent = data.count > 0 ? data.count : '';
+        }
+      }
+    }).catch(e => console.error(e));
+}
+
+function toggleSave(authorUid, postId, btn) {
+  const icon = btn.querySelector('i');
+  if (!btn) return;
+  const saved = btn.classList.toggle('saved');
+  icon.className = saved ? 'fas fa-bookmark' : 'far fa-bookmark';
+  showToast(saved ? '保存しました' : '保存を解除しました', saved ? 'success' : '');
+
+  const fd = new FormData();
+  fd.append('action', saved ? 'save' : 'unsave');
+  fd.append('target_uid', authorUid);
+  fd.append('id', postId);
+  fetch('submit_interaction.php', { method: 'POST', body: fd, headers: {'X-Requested-With':'XMLHttpRequest'} })
+    .catch(() => {});
+}
+
+/* =============================================================
+   Follow toggle
+   ============================================================= */
 function toggleFollow(targetUid, isCurrentlyFollowing) {
     const action = isCurrentlyFollowing ? 'unfollow' : 'follow';
     fetch('api_follow.php', {

@@ -181,9 +181,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$limitReached) {
       <img src="img/udatsu-logo.png" alt="Udatsu" style="height: 32px; filter: drop-shadow(0 0 5px rgba(252,200,0,0.5));">
     </a>
     <div class="app-header__actions">
-      <button class="theme-toggle" id="themeToggleBtn" aria-label="テーマ切替">
-        <i class="fas fa-moon" id="themeIcon"></i>
-      </button>
+      <!-- Notification or Empty -->
     </div>
   </header>
 
@@ -473,7 +471,7 @@ document.addEventListener('DOMContentLoaded', function() {
   </a>
   <a href="mypage/timeline.php" class="nav-item">
     <i class="fas fa-compass"></i>
-    <span>探す</span>
+    <span>タイムライン</span>
   </a>
   <a href="voyager_upload.php" class="nav-item active" aria-label="録音">
     <div class="nav-record">
@@ -490,25 +488,11 @@ document.addEventListener('DOMContentLoaded', function() {
   </a>
 </nav>
 <script>
-// Theme Toggle Script
-const savedTheme = localStorage.getItem('udatsu_theme') || 'dark';
-document.documentElement.setAttribute('data-theme', savedTheme);
-updateThemeIcon(savedTheme);
-
-function updateThemeIcon(theme) {
-  const icon = document.getElementById('themeIcon');
-  if (icon) {
-    icon.className = theme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
-  }
-}
-
-document.getElementById('themeToggleBtn').addEventListener('click', function() {
-  const current = document.documentElement.getAttribute('data-theme');
-  const next = current === 'dark' ? 'light' : 'dark';
-  document.documentElement.setAttribute('data-theme', next);
-  localStorage.setItem('udatsu_theme', next);
-  updateThemeIcon(next);
-});
+// Theme Loader
+(function() {
+  const savedTheme = localStorage.getItem('udatsu_theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+})();
 </script>
 </body>
 </html>

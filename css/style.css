@@ -776,3 +776,93 @@ nav.main-nav { display: none; }
   .app-nav    { max-width: 600px; left: 50%; transform: translateX(-50%); border-radius: 20px 20px 0 0; }
   .app-main   { padding-left: 0; padding-right: 0; }
 }
+
+/* ==========================================================================
+   Tab Navigation & Tight Typography
+   ========================================================================== */
+.profile-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 16px;
+  background: var(--bg-panel);
+  position: sticky;
+  top: 50px;
+  z-index: 10;
+}
+.profile-tab {
+  flex: 1;
+  text-align: center;
+  padding: 14px 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+.profile-tab:focus {
+  outline: none;
+}
+.profile-tab.active {
+  color: var(--brand);
+}
+.profile-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 20%;
+  right: 20%;
+  height: 3px;
+  background: var(--brand);
+  border-radius: 3px 3px 0 0;
+}
+
+/* Tight Markdown & Text Layout */
+.post-full-text p, .vp-article p {
+  margin: 0 0 10px 0;
+  line-height: 1.6;
+}
+.post-full-text p:last-child, .vp-article p:last-child {
+  margin-bottom: 0;
+}
+.post-full-text h1, .post-full-text h2, .post-full-text h3,
+.vp-article h1, .vp-article h2, .vp-article h3 {
+  font-size: 0.95rem;
+  margin: 14px 0 6px 0;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-primary);
+  font-weight: 700;
+}
+.post-full-text ul, .post-full-text ol,
+.vp-article ul, .vp-article ol {
+  margin: 4px 0 10px 20px;
+  padding: 0;
+}
+.post-full-text li, .vp-article li {
+  margin-bottom: 4px;
+  line-height: 1.6;
+}
+
+/* Sort actions */
+.sort-actions {
+  display: flex;
+  gap: 2px;
+  align-items: center;
+}
+.sort-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+.sort-btn:hover {
+  color: var(--brand);
+  background: rgba(252, 200, 0, 0.1);
+}
+

@@ -60,6 +60,227 @@ if ($postsUpdated) {
 $visiblePosts = array_filter($posts, fn($p) => ($p['status'] ?? '') !== '削除済');
 $postLimit = $plan_limits[$userPlan]['post_limit'] ?? 100;
 $remainingPosts = max(0, $postLimit - count($visiblePosts));
+
+// Fetch Liked posts
+$likedPosts = [];
+$userFiles = glob($userDir . '*_posts.json');
+foreach ($userFiles as $file) {
+    $filename = basename($file);
+    $authorUid = str_replace('_posts.json', '', $filename);
+    
+    $userPosts = json_decode(file_get_contents($file), true) ?: [];
+    foreach ($userPosts as $idx => $p) {
+        if (($p['status'] ?? '') !== '削除済' && !empty($p['likes']) && in_array($uid, $p['likes'])) {
+            $p['author_uid'] = $authorUid;
+            $p['original_index'] = $idx;
+            $likedPosts[] = $p;
+        }
+    }
+}
+usort($likedPosts, function($a, $b) {
+    return strcmp($b['id'] ?? '', $a['id'] ?? '');
+});
+
+// Fetch Saved posts
+$savedFile = $userDir . $uid . '_saved.json';
+$savedItems = file_exists($savedFile) ? (json_decode(file_get_contents($savedFile), true) ?: []) : [];
+$savedPosts = [];
+foreach ($savedItems as $sItem) {
+    $authorUid = $sItem['author_uid'] ?? '';
+    $sPostId = $sItem['post_id'] ?? '';
+    if ($authorUid && $sPostId) {
+        $authorPostsFile = $userDir . $authorUid . '_posts.json';
+        if (file_exists($authorPostsFile)) {
+            $authorPosts = json_decode(file_get_contents($authorPostsFile), true) ?: [];
+            foreach ($authorPosts as $idx => $p) {
+                if (($p['id'] ?? '') === $sPostId && ($p['status'] ?? '') !== '削除済') {
+                    $p['author_uid'] = $authorUid;
+                    $p['original_index'] = $idx;
+                    $savedPosts[] = $p;
+                    break;
+                }
+            }
+        }
+    }
+}
+
+// Card Renderer Helper
+function renderPostCard($post, $authorUid, $uid, $userDir, $isOwnPostsTab = false) {
+    $profFile = $userDir . $authorUid . '_profile.json';
+    $prof = ["display_name" => $authorUid, "image" => '', "network_id" => ''];
+    if (file_exists($profFile)) {
+        $prof = array_merge($prof, json_decode(file_get_contents($profFile), true) ?: []);
+    }
+    $displayName = $prof['display_name'] ?? $authorUid;
+    $networkId   = $prof['network_id'] ?? '';
+    $imagePath   = !empty($prof['image']) ? '../uploads/' . $authorUid . '/' . $prof['image'] : '../img/default-icon.png';
+
+    $postId      = $post['id'] ?? '';
+    $postStatus  = $post['status'] ?? '';
+    $postTitle   = $post['title'] ?? '';
+    $postDate    = $post['date'] ?? '';
+    $postSummary = $post['summary'] ?? '';
+    $postText    = $post['text'] ?? '';
+    $af          = $post['audio_file'] ?? $post['audio'] ?? '';
+    $audioSrc    = !empty($af) ? '../audio_proxy.php?target_uid=' . urlencode($authorUid) . '&path=' . urlencode($af) : '';
+    $likeCount   = isset($post['likes']) ? count($post['likes']) : 0;
+    $commentCount = $post['comment_count'] ?? 0;
+    $isLiked     = !empty($post['likes']) && in_array($uid, $post['likes']);
+    $isShared    = !empty($post['is_shared']);
+    $isAnalyzing = ($postStatus === '解析中');
+    $isError     = ($postStatus === 'エラー' || (empty($postSummary) && empty($postText) && !empty($af) && !$isAnalyzing));
+    
+    // Check saved status
+    $savedFile = $userDir . $uid . '_saved.json';
+    $savedItems = file_exists($savedFile) ? (json_decode(file_get_contents($savedFile), true) ?: []) : [];
+    $isSaved = false;
+    foreach ($savedItems as $sItem) {
+        if (($sItem['post_id'] ?? '') === $postId && ($sItem['author_uid'] ?? '') === $authorUid) {
+            $isSaved = true;
+            break;
+        }
+    }
+
+    $displayCaption = $postSummary ?: mb_strimwidth(strip_tags($postText), 0, 120, '…');
+    $hasFullText = !empty($postText) && mb_strlen(strip_tags($postText)) > 50;
+
+    // Find original index
+    $originalIndex = $post['original_index'] ?? -1;
+    if ($originalIndex === -1) {
+        $postsFile = $userDir . $authorUid . '_posts.json';
+        if (file_exists($postsFile)) {
+            $postsData = json_decode(file_get_contents($postsFile), true) ?: [];
+            foreach ($postsData as $k => $p) {
+                if (($p['id'] ?? '') === $postId) {
+                    $originalIndex = $k;
+                    break;
+                }
+            }
+        }
+    }
+    ?>
+    <article class="post-card" id="post-card-<?= htmlspecialchars($postId) ?>" data-id="<?= htmlspecialchars($postId) ?>">
+      
+      <div class="post-header">
+        <img src="<?= htmlspecialchars($imagePath) ?>" alt="<?= htmlspecialchars($displayName) ?>" class="post-avatar">
+        <div class="post-header__info">
+          <div class="post-username"><?= htmlspecialchars($displayName) ?><?= !empty($networkId) ? ' <span style="font-size:0.75rem;color:var(--text-muted);font-weight:400;">@'.htmlspecialchars($networkId).'</span>' : '' ?></div>
+          <div class="post-date"><?= htmlspecialchars($postDate) ?></div>
+        </div>
+        
+        <div style="display: flex; align-items: center; gap: 8px; margin-left: auto;">
+          <?php if ($isOwnPostsTab): ?>
+          <span class="sort-actions">
+            <button onclick="movePost(this, 'up')" class="sort-btn" title="上に移動">
+              <i class="fas fa-chevron-up"></i>
+            </button>
+            <button onclick="movePost(this, 'down')" class="sort-btn" title="下に移動">
+              <i class="fas fa-chevron-down"></i>
+            </button>
+          </span>
+          <?php endif; ?>
+
+          <?php if ($authorUid === $uid): ?>
+          <div class="relative">
+            <button class="post-menu-btn" onclick="toggleMenu('<?= htmlspecialchars($postId) ?>')" aria-label="メニュー">
+              <i class="fas fa-ellipsis-h"></i>
+            </button>
+            <div class="owner-menu" id="menu-<?= htmlspecialchars($postId) ?>" style="display:none;">
+              <a href="edit_post.php?id=<?= htmlspecialchars($postId) ?>" class="owner-menu__item">
+                <i class="fas fa-edit"></i> 編集
+              </a>
+              <?php if (!empty($af)): ?>
+              <button class="owner-menu__item" onclick="doAction('<?= htmlspecialchars($postId) ?>', 'retry'); toggleMenu('<?= htmlspecialchars($postId) ?>')">
+                <i class="fas fa-redo"></i> 再解析
+              </button>
+              <?php endif; ?>
+              <button class="owner-menu__item" onclick="sharePost('<?= htmlspecialchars($postId) ?>', <?= $isShared ? 'true' : 'false' ?>); toggleMenu('<?= htmlspecialchars($postId) ?>')">
+                <i class="fas fa-share-alt"></i> <?= $isShared ? '共有を解除' : 'タイムラインに共有' ?>
+              </button>
+              <button class="owner-menu__item owner-menu__item--danger" onclick="doAction('<?= htmlspecialchars($postId) ?>', 'delete'); toggleMenu('<?= htmlspecialchars($postId) ?>')">
+                <i class="fas fa-trash"></i> 削除
+              </button>
+            </div>
+          </div>
+          <?php endif; ?>
+        </div>
+      </div>
+
+      <?php if ($isAnalyzing): ?>
+      <div class="post-status-badge badge-analyzing">
+        <i class="fas fa-spinner fa-spin"></i> 解析中...
+      </div>
+      <?php elseif ($isError): ?>
+      <div class="post-status-badge badge-error" onclick="doAction('<?= htmlspecialchars($postId) ?>', 'retry')" title="タップして再解析">
+        <i class="fas fa-exclamation-triangle"></i> 解析未完了・タップして再試行
+      </div>
+      <?php endif; ?>
+
+      <?php if (!empty($audioSrc)): ?>
+      <div class="post-audio" id="player-wrap-<?= htmlspecialchars($postId) ?>">
+        <button class="audio-play-btn" onclick="toggleAudio('<?= htmlspecialchars($postId) ?>')" id="play-btn-<?= htmlspecialchars($postId) ?>" aria-label="再生">
+          <i class="fas fa-play" id="play-icon-<?= htmlspecialchars($postId) ?>"></i>
+        </button>
+        <div class="audio-progress-wrapper">
+          <input type="range" class="audio-progress" id="progress-<?= htmlspecialchars($postId) ?>" value="0" min="0" max="100" step="0.1"
+                 oninput="seekAudio('<?= htmlspecialchars($postId) ?>', this.value)">
+          <span class="audio-time" id="time-<?= htmlspecialchars($postId) ?>">0:00</span>
+        </div>
+        <audio id="audio-<?= htmlspecialchars($postId) ?>"
+               src="<?= htmlspecialchars($audioSrc) ?>"
+               preload="metadata"
+               onloadedmetadata="initDuration('<?= htmlspecialchars($postId) ?>')"
+               ontimeupdate="updateProgress('<?= htmlspecialchars($postId) ?>')"
+               onended="audioEnded('<?= htmlspecialchars($postId) ?>')">
+        </audio>
+      </div>
+      <?php endif; ?>
+
+      <?php if (!empty($displayCaption) && !$isAnalyzing): ?>
+      <div class="post-caption collapsed" id="caption-<?= htmlspecialchars($postId) ?>">
+        <strong><?= htmlspecialchars($postTitle) ?></strong><br>
+        <?= nl2br(htmlspecialchars($displayCaption)) ?>
+      </div>
+
+      <?php if ($hasFullText): ?>
+      <button class="post-read-more" id="readmore-<?= htmlspecialchars($postId) ?>"
+              onclick="expandPost('<?= htmlspecialchars($postId) ?>')">
+        続きを読む
+      </button>
+      <?php endif; ?>
+
+      <?php if ($hasFullText): ?>
+      <div class="post-full-text" id="fulltext-<?= htmlspecialchars($postId) ?>" style="display:none;">
+        <div class="post-full-text-content"><?= htmlspecialchars(strip_tags($postText)) ?></div>
+        <div style="margin-top:12px;">
+          <a href="view_post.php?uid=<?= urlencode($authorUid) ?>&index=<?= $originalIndex ?>" class="btn btn-ghost btn-sm" style="padding-left:0;">
+            <i class="fas fa-external-link-alt"></i> 詳細ページを開く
+          </a>
+        </div>
+      </div>
+      <?php endif; ?>
+      <?php endif; ?>
+
+      <div class="post-actions">
+        <button class="action-btn <?= $isLiked ? 'liked' : '' ?>" onclick="toggleLike('<?= htmlspecialchars($authorUid) ?>', <?= $originalIndex ?>, '<?= htmlspecialchars($postId) ?>', this)" id="like-btn-<?= htmlspecialchars($postId) ?>">
+          <i class="<?= $isLiked ? 'fas' : 'far' ?> fa-heart" id="like-icon-<?= htmlspecialchars($postId) ?>"></i>
+          <span id="like-count-<?= htmlspecialchars($postId) ?>"><?= $likeCount > 0 ? $likeCount : '' ?></span>
+        </button>
+        <a href="view_post.php?uid=<?= urlencode($authorUid) ?>&index=<?= $originalIndex ?>#comments" class="action-btn">
+          <i class="far fa-comment"></i>
+          <span><?= $commentCount > 0 ? $commentCount : '' ?></span>
+        </a>
+        <button class="action-btn <?= $isSaved ? 'saved' : '' ?>" onclick="toggleSave('<?= htmlspecialchars($authorUid) ?>', '<?= htmlspecialchars($postId) ?>', this)" id="save-btn-<?= htmlspecialchars($postId) ?>">
+          <i class="<?= $isSaved ? 'fas' : 'far' ?> fa-bookmark" id="save-icon-<?= htmlspecialchars($postId) ?>"></i>
+        </button>
+        <a href="view_post.php?uid=<?= urlencode($authorUid) ?>&index=<?= $originalIndex ?>" class="action-btn action-btn--edit" title="詳細">
+          <i class="fas fa-chevron-right"></i>
+        </a>
+      </div>
+
+    </article>
+    <?php
+}
 ?>
 <!DOCTYPE html>
 <html lang="ja" data-theme="dark">
@@ -70,6 +291,7 @@ $remainingPosts = max(0, $postLimit - count($visiblePosts));
   <link rel="icon" type="image/png" href="../img/favicon.png">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="../css/style.css?v=<?= time() ?>">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
 
@@ -81,10 +303,6 @@ $remainingPosts = max(0, $postLimit - count($visiblePosts));
     <img src="../img/udatsu-logo.png" alt="Udatsu" style="height: 32px; filter: drop-shadow(0 0 5px rgba(252,200,0,0.5));">
   </a>
   <div class="app-header__actions">
-    <!-- Dark/Light toggle -->
-    <button class="theme-toggle" id="themeToggleBtn" title="ダーク/ライト切替" aria-label="テーマ切替">
-      <i class="fas fa-moon" id="themeIcon"></i>
-    </button>
     <!-- Notification -->
     <a href="#" class="icon-btn" aria-label="通知">
       <i class="fas fa-bell"></i>
@@ -107,148 +325,58 @@ $remainingPosts = max(0, $postLimit - count($visiblePosts));
 
   <!-- Feed -->
   <div class="feed" id="feed">
-
-    <?php if (count($visiblePosts) === 0): ?>
-    <div class="empty-state">
-      <i class="fas fa-microphone-slash"></i>
-      <h3>まだ投稿がありません</h3>
-      <p>LINEで音声を送るか、マイクボタンから録音してみましょう。</p>
-      <a href="../voyager_upload.php" class="btn btn-primary btn-sm">
-        <i class="fas fa-microphone"></i> 録音する
-      </a>
+    
+    <div class="profile-tabs">
+      <button class="profile-tab active" id="tab-btn-posts" onclick="switchProfileTab('posts')">ジャーナル</button>
+      <button class="profile-tab" id="tab-btn-likes" onclick="switchProfileTab('likes')">いいね</button>
+      <button class="profile-tab" id="tab-btn-saved" onclick="switchProfileTab('saved')">保存</button>
     </div>
 
-    <?php else: ?>
-    <?php foreach ($visiblePosts as $post): ?>
-    <?php
-      $postId     = $post['id'] ?? '';
-      $postStatus = $post['status'] ?? '';
-      $postTitle  = $post['title'] ?? '';
-      $postDate   = $post['date'] ?? '';
-      $postSummary= $post['summary'] ?? '';
-      $postText   = $post['text'] ?? '';
-      $af         = $post['audio_file'] ?? $post['audio'] ?? '';
-      $audioSrc   = !empty($af) ? '../audio_proxy.php?target_uid=' . urlencode($uid) . '&path=' . urlencode($af) : '';
-      $likeCount  = $post['like_count'] ?? 0;
-      $commentCount = $post['comment_count'] ?? 0;
-      $isLiked    = false; // TODO: check per-user
-      $isShared   = !empty($post['is_shared']);
-      $isAnalyzing= ($postStatus === '解析中');
-      $isError    = ($postStatus === 'エラー' || (empty($postSummary) && empty($postText) && !empty($af) && !$isAnalyzing));
-      $displayCaption = $postSummary ?: mb_strimwidth(strip_tags($postText), 0, 120, '…');
-      $hasFullText = !empty($postText) && mb_strlen(strip_tags($postText)) > 50;
-    ?>
-    <article class="post-card" id="post-card-<?= htmlspecialchars($postId) ?>" data-id="<?= htmlspecialchars($postId) ?>">
-
-      <!-- Post header -->
-      <div class="post-header">
-        <img src="<?= htmlspecialchars($imagePath) ?>" alt="<?= htmlspecialchars($displayName) ?>" class="post-avatar">
-        <div class="post-header__info">
-          <div class="post-username"><?= htmlspecialchars($displayName) ?><?= !empty($networkId) ? ' <span style="font-size:0.75rem;color:var(--text-muted);font-weight:400;">@'.htmlspecialchars($networkId).'</span>' : '' ?></div>
-          <div class="post-date"><?= htmlspecialchars($postDate) ?></div>
-        </div>
-        <div class="relative">
-          <button class="post-menu-btn" onclick="toggleMenu('<?= htmlspecialchars($postId) ?>')" aria-label="メニュー">
-            <i class="fas fa-ellipsis-h"></i>
-          </button>
-          <div class="owner-menu" id="menu-<?= htmlspecialchars($postId) ?>" style="display:none;">
-            <a href="edit_post.php?id=<?= htmlspecialchars($postId) ?>" class="owner-menu__item">
-              <i class="fas fa-edit"></i> 編集
-            </a>
-            <?php if (!empty($af)): ?>
-            <button class="owner-menu__item" onclick="doAction('<?= htmlspecialchars($postId) ?>', 'retry'); toggleMenu('<?= htmlspecialchars($postId) ?>')">
-              <i class="fas fa-redo"></i> 再解析
-            </button>
-            <?php endif; ?>
-            <button class="owner-menu__item" onclick="sharePost('<?= htmlspecialchars($postId) ?>', <?= $isShared ? 'true' : 'false' ?>); toggleMenu('<?= htmlspecialchars($postId) ?>')">
-              <i class="fas fa-share-alt"></i> <?= $isShared ? '共有を解除' : 'タイムラインに共有' ?>
-            </button>
-            <button class="owner-menu__item owner-menu__item--danger" onclick="doAction('<?= htmlspecialchars($postId) ?>', 'delete'); toggleMenu('<?= htmlspecialchars($postId) ?>')">
-              <i class="fas fa-trash"></i> 削除
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Status badge -->
-      <?php if ($isAnalyzing): ?>
-      <div class="post-status-badge badge-analyzing">
-        <i class="fas fa-spinner fa-spin"></i> 解析中...
-      </div>
-      <?php elseif ($isError): ?>
-      <div class="post-status-badge badge-error" onclick="doAction('<?= htmlspecialchars($postId) ?>', 'retry')" title="タップして再解析">
-        <i class="fas fa-exclamation-triangle"></i> 解析未完了・タップして再試行
-      </div>
-      <?php endif; ?>
-
-      <!-- Audio player -->
-      <?php if (!empty($audioSrc)): ?>
-      <div class="post-audio" id="player-wrap-<?= htmlspecialchars($postId) ?>">
-        <button class="audio-play-btn" onclick="toggleAudio('<?= htmlspecialchars($postId) ?>')" id="play-btn-<?= htmlspecialchars($postId) ?>" aria-label="再生">
-          <i class="fas fa-play" id="play-icon-<?= htmlspecialchars($postId) ?>"></i>
-        </button>
-        <div class="audio-progress-wrapper">
-          <input type="range" class="audio-progress" id="progress-<?= htmlspecialchars($postId) ?>" value="0" min="0" max="100" step="0.1"
-                 oninput="seekAudio('<?= htmlspecialchars($postId) ?>', this.value)">
-          <span class="audio-time" id="time-<?= htmlspecialchars($postId) ?>">0:00</span>
-        </div>
-        <audio id="audio-<?= htmlspecialchars($postId) ?>"
-               src="<?= htmlspecialchars($audioSrc) ?>"
-               preload="none"
-               ontimeupdate="updateProgress('<?= htmlspecialchars($postId) ?>')"
-               onended="audioEnded('<?= htmlspecialchars($postId) ?>')">
-        </audio>
-      </div>
-      <?php endif; ?>
-
-      <!-- Caption (collapsed 3 lines) -->
-      <?php if (!empty($displayCaption) && !$isAnalyzing): ?>
-      <div class="post-caption collapsed" id="caption-<?= htmlspecialchars($postId) ?>">
-        <?= nl2br(htmlspecialchars($displayCaption)) ?>
-      </div>
-
-      <?php if ($hasFullText): ?>
-      <button class="post-read-more" id="readmore-<?= htmlspecialchars($postId) ?>"
-              onclick="expandPost('<?= htmlspecialchars($postId) ?>')">
-        続きを読む
-      </button>
-      <?php endif; ?>
-
-      <!-- Full text (hidden initially) -->
-      <?php if ($hasFullText): ?>
-      <div class="post-full-text" id="fulltext-<?= htmlspecialchars($postId) ?>" style="display:none;">
-        <?= nl2br(htmlspecialchars(strip_tags($postText))) ?>
-        <div style="margin-top:12px;">
-          <a href="view_post.php?id=<?= htmlspecialchars($postId) ?>" class="btn btn-ghost btn-sm" style="padding-left:0;">
-            <i class="fas fa-external-link-alt"></i> 詳細ページを開く
-          </a>
-        </div>
-      </div>
-      <?php endif; ?>
-
-      <?php endif; ?>
-
-      <!-- Actions -->
-      <div class="post-actions">
-        <button class="action-btn <?= $isLiked ? 'liked' : '' ?>" onclick="toggleLike('<?= htmlspecialchars($postId) ?>')" id="like-btn-<?= htmlspecialchars($postId) ?>">
-          <i class="<?= $isLiked ? 'fas' : 'far' ?> fa-heart" id="like-icon-<?= htmlspecialchars($postId) ?>"></i>
-          <span id="like-count-<?= htmlspecialchars($postId) ?>"><?= $likeCount > 0 ? $likeCount : '' ?></span>
-        </button>
-        <a href="view_post.php?id=<?= htmlspecialchars($postId) ?>#comments" class="action-btn">
-          <i class="far fa-comment"></i>
-          <span><?= $commentCount > 0 ? $commentCount : '' ?></span>
-        </a>
-        <button class="action-btn" onclick="toggleSave('<?= htmlspecialchars($postId) ?>')" id="save-btn-<?= htmlspecialchars($postId) ?>">
-          <i class="far fa-bookmark" id="save-icon-<?= htmlspecialchars($postId) ?>"></i>
-        </button>
-        <a href="view_post.php?id=<?= htmlspecialchars($postId) ?>" class="action-btn action-btn--edit" title="詳細">
-          <i class="fas fa-chevron-right"></i>
+    <!-- Tab 1: Posts (Journal) -->
+    <div id="tab-content-posts" class="tab-pane">
+      <?php if (count($visiblePosts) === 0): ?>
+      <div class="empty-state">
+        <i class="fas fa-microphone-slash"></i>
+        <h3>まだ投稿がありません</h3>
+        <p>LINEで音声を送るか、マイクボタンから録音してみましょう。</p>
+        <a href="../voyager_upload.php" class="btn btn-primary btn-sm">
+          <i class="fas fa-microphone"></i> 録音する
         </a>
       </div>
+      <?php else: ?>
+        <?php foreach ($visiblePosts as $post): ?>
+          <?php renderPostCard($post, $uid, $uid, $userDir, true); ?>
+        <?php endforeach; ?>
+      <?php endif; ?>
+    </div>
 
-    </article>
-    <?php endforeach; ?>
-    <?php endif; ?>
+    <!-- Tab 2: Likes -->
+    <div id="tab-content-likes" class="tab-pane" style="display:none;">
+      <?php if (count($likedPosts) === 0): ?>
+      <div class="empty-state">
+        <i class="far fa-heart" style="font-size: 2rem; margin-bottom: 10px;"></i>
+        <h3>いいねした投稿はありません</h3>
+      </div>
+      <?php else: ?>
+        <?php foreach ($likedPosts as $post): ?>
+          <?php renderPostCard($post, $post['author_uid'] ?? '', $uid, $userDir, false); ?>
+        <?php endforeach; ?>
+      <?php endif; ?>
+    </div>
+
+    <!-- Tab 3: Saved -->
+    <div id="tab-content-saved" class="tab-pane" style="display:none;">
+      <?php if (count($savedPosts) === 0): ?>
+      <div class="empty-state">
+        <i class="far fa-bookmark" style="font-size: 2rem; margin-bottom: 10px;"></i>
+        <h3>保存した投稿はありません</h3>
+      </div>
+      <?php else: ?>
+        <?php foreach ($savedPosts as $post): ?>
+          <?php renderPostCard($post, $post['author_uid'] ?? '', $uid, $userDir, false); ?>
+        <?php endforeach; ?>
+      <?php endif; ?>
+    </div>
 
   </div><!-- /feed -->
 </main>
@@ -263,7 +391,7 @@ $remainingPosts = max(0, $postLimit - count($visiblePosts));
   </a>
   <a href="timeline.php" class="nav-item">
     <i class="fas fa-compass"></i>
-    <span>探す</span>
+    <span>タイムライン</span>
   </a>
   <a href="../voyager_upload.php" class="nav-item" aria-label="録音">
     <div class="nav-record">
@@ -285,28 +413,36 @@ $remainingPosts = max(0, $postLimit - count($visiblePosts));
 
 <script>
 /* =============================================================
-   Theme toggle
+   Theme setting (load-only)
    ============================================================= */
 (function() {
   const saved = localStorage.getItem('udatsu_theme') || 'dark';
   document.documentElement.setAttribute('data-theme', saved);
-  updateThemeIcon(saved);
 })();
 
-function updateThemeIcon(theme) {
-  const icon = document.getElementById('themeIcon');
-  if (!icon) return;
-  icon.className = theme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
-}
+/* =============================================================
+   Tab Switcher
+   ============================================================= */
+function switchProfileTab(tabName) {
+  // Update active tab button style
+  document.querySelectorAll('.profile-tab').forEach(btn => btn.classList.remove('active'));
+  const activeBtn = document.getElementById('tab-btn-' + tabName);
+  if (activeBtn) activeBtn.classList.add('active');
 
-document.getElementById('themeToggleBtn').addEventListener('click', function() {
-  const html = document.documentElement;
-  const current = html.getAttribute('data-theme');
-  const next = current === 'dark' ? 'light' : 'dark';
-  html.setAttribute('data-theme', next);
-  localStorage.setItem('udatsu_theme', next);
-  updateThemeIcon(next);
-});
+  // Show selected content and hide others
+  document.querySelectorAll('.tab-pane').forEach(pane => pane.style.display = 'none');
+  const activePane = document.getElementById('tab-content-' + tabName);
+  if (activePane) activePane.style.display = 'block';
+  
+  // Pause any currently playing audio on tab switch
+  if (currentAudioId) {
+    const audio = document.getElementById('audio-' + currentAudioId);
+    const icon = document.getElementById('play-icon-' + currentAudioId);
+    if (audio) audio.pause();
+    if (icon) icon.className = 'fas fa-play';
+    currentAudioId = null;
+  }
+}
 
 /* =============================================================
    Toast helper
@@ -325,7 +461,6 @@ function toggleMenu(postId) {
   const menu = document.getElementById('menu-' + postId);
   if (!menu) return;
   const isOpen = menu.style.display !== 'none';
-  // Close all menus first
   document.querySelectorAll('.owner-menu').forEach(m => m.style.display = 'none');
   if (!isOpen) menu.style.display = 'block';
 }
@@ -340,12 +475,19 @@ document.addEventListener('click', function(e) {
    ============================================================= */
 let currentAudioId = null;
 
+function initDuration(postId) {
+  const audio = document.getElementById('audio-' + postId);
+  const timeEl = document.getElementById('time-' + postId);
+  if (!audio || !timeEl) return;
+  const dur = (audio.duration && !isNaN(audio.duration)) ? formatTime(audio.duration) : '--:--';
+  timeEl.textContent = '0:00 / ' + dur;
+}
+
 function toggleAudio(postId) {
   const audio = document.getElementById('audio-' + postId);
   const icon  = document.getElementById('play-icon-' + postId);
   if (!audio) return;
 
-  // Pause any other playing audio
   if (currentAudioId && currentAudioId !== postId) {
     const prev = document.getElementById('audio-' + currentAudioId);
     const prevIcon = document.getElementById('play-icon-' + currentAudioId);
@@ -355,11 +497,6 @@ function toggleAudio(postId) {
   }
 
   if (audio.paused) {
-    // Add loadedmetadata listener to update duration once loaded
-    audio.addEventListener('loadedmetadata', function onMeta() {
-      updateProgress(postId);
-      audio.removeEventListener('loadedmetadata', onMeta);
-    });
     audio.play().catch(e => console.warn('Playback error:', e));
     icon.className = 'fas fa-pause';
     currentAudioId = postId;
@@ -384,7 +521,6 @@ function updateProgress(postId) {
   timeEl.textContent = cur + ' / ' + dur;
 }
 
-
 function seekAudio(postId, value) {
   const audio = document.getElementById('audio-' + postId);
   if (!audio || !audio.duration) return;
@@ -407,7 +543,7 @@ function formatTime(sec) {
 }
 
 /* =============================================================
-   Read more / expand
+   Read more / expand & Markdown Parse
    ============================================================= */
 function expandPost(postId) {
   const caption  = document.getElementById('caption-' + postId);
@@ -421,6 +557,14 @@ function expandPost(postId) {
     if (caption) caption.classList.add('collapsed');
     if (btn) btn.textContent = '続きを読む';
   } else {
+    // Parse markdown on first expand
+    const contentEl = fulltext.querySelector('.post-full-text-content');
+    if (contentEl && !contentEl.dataset.parsed) {
+      const rawText = contentEl.textContent;
+      contentEl.innerHTML = marked.parse(rawText);
+      contentEl.dataset.parsed = 'true';
+    }
+    
     fulltext.style.display = 'block';
     if (caption) caption.classList.remove('collapsed');
     if (btn) btn.textContent = '閉じる';
@@ -430,37 +574,130 @@ function expandPost(postId) {
 /* =============================================================
    Like / Save (optimistic UI)
    ============================================================= */
-function toggleLike(postId) {
-  const btn  = document.getElementById('like-btn-' + postId);
-  const icon = document.getElementById('like-icon-' + postId);
-  const count= document.getElementById('like-count-' + postId);
+function toggleLike(authorUid, postIndex, postId, btn) {
+  const icon = btn.querySelector('i');
+  const count = btn.querySelector('.like-count') || document.getElementById('like-count-' + postId);
   if (!btn) return;
 
   const liked = btn.classList.toggle('liked');
   icon.className = liked ? 'fas fa-heart' : 'far fa-heart';
-  const cur = parseInt(count.textContent) || 0;
-  count.textContent = liked ? (cur + 1) || '' : (cur - 1) > 0 ? (cur - 1) : '';
+  if (count) {
+    const cur = parseInt(count.textContent) || 0;
+    count.textContent = liked ? (cur + 1) || '1' : (cur - 1) > 0 ? (cur - 1) : '';
+  }
 
   const fd = new FormData();
-  fd.append('id', postId);
   fd.append('action', liked ? 'like' : 'unlike');
+  fd.append('target_uid', authorUid);
+  fd.append('post_index', postIndex);
+  fd.append('id', postId);
   fetch('submit_interaction.php', { method: 'POST', body: fd, headers: {'X-Requested-With':'XMLHttpRequest'} })
     .catch(() => {});
 }
 
-function toggleSave(postId) {
-  const btn  = document.getElementById('save-btn-' + postId);
-  const icon = document.getElementById('save-icon-' + postId);
+function toggleSave(authorUid, postId, btn) {
+  const icon = btn.querySelector('i');
   if (!btn) return;
   const saved = btn.classList.toggle('saved');
   icon.className = saved ? 'fas fa-bookmark' : 'far fa-bookmark';
   showToast(saved ? '保存しました' : '保存を解除しました', saved ? 'success' : '');
 
   const fd = new FormData();
-  fd.append('id', postId);
   fd.append('action', saved ? 'save' : 'unsave');
+  fd.append('target_uid', authorUid);
+  fd.append('id', postId);
   fetch('submit_interaction.php', { method: 'POST', body: fd, headers: {'X-Requested-With':'XMLHttpRequest'} })
     .catch(() => {});
+}
+
+/* =============================================================
+   Sort actions (up / down)
+   ============================================================= */
+function movePost(btn, direction) {
+  const card = btn.closest('.post-card');
+  if (!card) return;
+  
+  const parent = card.parentNode;
+  let target = null;
+  if (direction === 'up') {
+    target = card.previousElementSibling;
+  } else if (direction === 'down') {
+    target = card.nextElementSibling;
+  }
+  
+  if (!target || !target.classList.contains('post-card')) return;
+  
+  const cards = Array.from(parent.querySelectorAll('.post-card'));
+  const firstPositions = cards.map(c => ({
+    el: c,
+    rect: c.getBoundingClientRect()
+  }));
+  
+  card.classList.add('moving-active');
+  
+  if (direction === 'up') {
+    parent.insertBefore(card, target);
+  } else {
+    parent.insertBefore(target, card);
+  }
+  
+  const lastPositions = firstPositions.map(pos => ({
+    el: pos.el,
+    firstRect: pos.rect,
+    lastRect: pos.el.getBoundingClientRect()
+  }));
+  
+  lastPositions.forEach(pos => {
+    const deltaY = pos.firstRect.top - pos.lastRect.top;
+    if (deltaY !== 0) {
+      pos.el.style.transition = 'none';
+      pos.el.style.transform = `translateY(${deltaY}px)`;
+    }
+  });
+  
+  document.body.offsetHeight;
+  
+  lastPositions.forEach(pos => {
+    const deltaY = pos.firstRect.top - pos.lastRect.top;
+    if (deltaY !== 0) {
+      pos.el.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.4s, box-shadow 0.4s, background-color 0.4s';
+      pos.el.style.transform = '';
+    }
+  });
+  
+  saveNewOrder();
+  
+  setTimeout(() => {
+    card.classList.remove('moving-active');
+    lastPositions.forEach(pos => {
+      pos.el.style.transition = '';
+      pos.el.style.transform = '';
+    });
+  }, 400);
+}
+
+function saveNewOrder() {
+  const postIds = Array.from(document.getElementById('tab-content-posts').querySelectorAll('.post-card')).map(card => card.getAttribute('data-id'));
+  
+  const formData = new FormData();
+  formData.append('order', JSON.stringify(postIds));
+  
+  fetch('save_order_ajax.php', {
+    method: 'POST',
+    body: formData,
+    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.status === 'ok') {
+      console.log('Order saved successfully');
+    } else {
+      console.error('Failed to save order:', data.message);
+    }
+  })
+  .catch(err => {
+    console.error('Error saving order:', err);
+  });
 }
 
 /* =============================================================

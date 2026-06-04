@@ -94,6 +94,9 @@ usort($timelinePosts, function($a, $b) {
 // 4. Limit to latest 50 to improve loading speed
 $timelinePosts = array_slice($timelinePosts, 0, 50);
 
+// Fetch saved posts status
+$savedFile = $userDir . $uid . '_saved.json';
+$savedItems = file_exists($savedFile) ? (json_decode(file_get_contents($savedFile), true) ?: []) : [];
 ?>
 <!DOCTYPE html>
 <html lang="ja" data-theme="dark">
@@ -104,6 +107,7 @@ $timelinePosts = array_slice($timelinePosts, 0, 50);
   <link rel="icon" type="image/png" href="../img/favicon.png">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="../css/style.css?v=<?= time() ?>">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
 
@@ -115,10 +119,10 @@ $timelinePosts = array_slice($timelinePosts, 0, 50);
     <img src="../img/udatsu-logo.png" alt="Udatsu" style="height: 32px; filter: drop-shadow(0 0 5px rgba(252,200,0,0.5));">
   </a>
   <div class="app-header__actions">
-    <!-- Dark/Light toggle -->
-    <button class="theme-toggle" id="themeToggleBtn" title="ダーク/ライト切替" aria-label="テーマ切替">
-      <i class="fas fa-moon" id="themeIcon"></i>
-    </button>
+    <!-- Notification -->
+    <a href="#" class="icon-btn" aria-label="通知">
+      <i class="fas fa-bell"></i>
+    </a>
   </div>
 </header>
 
@@ -164,6 +168,14 @@ $timelinePosts = array_slice($timelinePosts, 0, 50);
       $isLiked    = in_array($uid, $likes);
       $commentCount = $post['comment_count'] ?? 0;
       
+      $isSaved = false;
+      foreach ($savedItems as $sItem) {
+          if (($sItem['post_id'] ?? '') === $postId && ($sItem['author_uid'] ?? '') === $authorUid) {
+              $isSaved = true;
+              break;
+          }
+      }
+      
       $displayCaption = $postSummary ?: mb_strimwidth(strip_tags($postText), 0, 120, '…');
       $hasFullText = !empty($postText) && mb_strlen(strip_tags($postText)) > 50;
     ?>
@@ -200,8 +212,7 @@ $timelinePosts = array_slice($timelinePosts, 0, 50);
       <!-- Full text (hidden initially) -->
       <?php if ($hasFullText): ?>
       <div class="post-full-text" id="fulltext-<?= htmlspecialchars($postId) ?>" style="display:none;">
-        <strong><?= htmlspecialchars($postTitle) ?></strong><br>
-        <?= nl2br(htmlspecialchars(strip_tags($postText))) ?>
+        <div class="post-full-text-content"><?= htmlspecialchars(strip_tags($postText)) ?></div>
         <div style="margin-top:12px;">
           <a href="view_post.php?uid=<?= urlencode($authorUid) ?>&index=<?= $post['original_index'] ?>" class="btn btn-ghost btn-sm" style="padding-left:0;">
             <i class="fas fa-external-link-alt"></i> 詳細ページを開く
@@ -224,7 +235,8 @@ $timelinePosts = array_slice($timelinePosts, 0, 50);
         </div>
         <audio id="audio-<?= htmlspecialchars($postId) ?>"
                src="<?= htmlspecialchars($audioSrc) ?>"
-               preload="none"
+               preload="metadata"
+               onloadedmetadata="initDuration('<?= htmlspecialchars($postId) ?>')"
                ontimeupdate="updateProgress('<?= htmlspecialchars($postId) ?>')"
                onended="audioEnded('<?= htmlspecialchars($postId) ?>')">
         </audio>
@@ -241,6 +253,9 @@ $timelinePosts = array_slice($timelinePosts, 0, 50);
           <i class="far fa-comment"></i>
           <span><?= $commentCount > 0 ? $commentCount : '' ?></span>
         </a>
+        <button class="action-btn <?= $isSaved ? 'saved' : '' ?>" onclick="toggleSave('<?= htmlspecialchars($authorUid) ?>', '<?= htmlspecialchars($postId) ?>', this)" id="save-btn-<?= htmlspecialchars($postId) ?>">
+          <i class="<?= $isSaved ? 'fas' : 'far' ?> fa-bookmark"></i>
+        </button>
         <button class="action-btn" onclick="copyPostLink('<?= htmlspecialchars($authorUid) ?>', <?= $post['original_index'] ?>)">
           <i class="fas fa-share-nodes"></i>
         </button>
@@ -263,7 +278,7 @@ $timelinePosts = array_slice($timelinePosts, 0, 50);
   </a>
   <a href="timeline.php" class="nav-item active">
     <i class="fas fa-compass"></i>
-    <span>探す</span>
+    <span>タイムライン</span>
   </a>
   <a href="../voyager_upload.php" class="nav-item" aria-label="録音">
     <div class="nav-record">
@@ -280,11 +295,41 @@ $timelinePosts = array_slice($timelinePosts, 0, 50);
   </a>
 </nav>
 
+<!-- Toast (global) -->
+<div class="toast" id="globalToast"></div>
+
 <script>
+/* =============================================================
+   Theme setting (load-only)
+   ============================================================= */
+(function() {
+  const saved = localStorage.getItem('udatsu_theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved);
+})();
+
+/* =============================================================
+   Toast helper
+   ============================================================= */
+function showToast(msg, type='') {
+  const t = document.getElementById('globalToast');
+  if (!t) return;
+  t.textContent = msg;
+  t.className = 'toast ' + type + ' show';
+  setTimeout(() => { t.classList.remove('show'); }, 3000);
+}
+
 /* =============================================================
    Audio player (timeline)
    ============================================================= */
 let currentAudioId = null;
+
+function initDuration(postId) {
+  const audio = document.getElementById('audio-' + postId);
+  const timeEl = document.getElementById('time-' + postId);
+  if (!audio || !timeEl) return;
+  const dur = (audio.duration && !isNaN(audio.duration)) ? formatTime(audio.duration) : '--:--';
+  timeEl.textContent = '0:00 / ' + dur;
+}
 
 function toggleAudio(postId) {
   const audio = document.getElementById('audio-' + postId);
@@ -300,10 +345,6 @@ function toggleAudio(postId) {
   }
 
   if (audio.paused) {
-    audio.addEventListener('loadedmetadata', function onMeta() {
-      updateProgress(postId);
-      audio.removeEventListener('loadedmetadata', onMeta);
-    });
     audio.play().catch(e => console.warn(e));
     icon.className = 'fas fa-pause';
     currentAudioId = postId;
@@ -350,7 +391,7 @@ function formatTime(sec) {
 }
 
 /* =============================================================
-   Read more
+   Read more / Expand & Markdown Parse
    ============================================================= */
 function expandPost(postId) {
   const caption  = document.getElementById('caption-' + postId);
@@ -364,6 +405,13 @@ function expandPost(postId) {
     if (caption) caption.classList.add('collapsed');
     if (btn) btn.textContent = '続きを読む';
   } else {
+    const contentEl = fulltext.querySelector('.post-full-text-content');
+    if (contentEl && !contentEl.dataset.parsed) {
+      const rawText = contentEl.textContent;
+      contentEl.innerHTML = marked.parse(rawText);
+      contentEl.dataset.parsed = 'true';
+    }
+    
     fulltext.style.display = 'block';
     if (caption) caption.classList.remove('collapsed');
     if (btn) btn.textContent = '閉じる';
@@ -371,14 +419,22 @@ function expandPost(postId) {
 }
 
 /* =============================================================
-   Like / Share Actions
+   Like / Save Actions (optimistic UI)
    ============================================================= */
 function toggleLike(authorUid, postIndex, btn) {
   const icon = btn.querySelector('i');
   const countSpan = btn.querySelector('.like-count');
+  if (!btn) return;
   
+  const liked = btn.classList.toggle('liked');
+  icon.className = liked ? 'fas fa-heart' : 'far fa-heart';
+  if (countSpan) {
+    const cur = parseInt(countSpan.textContent) || 0;
+    countSpan.textContent = liked ? (cur + 1) || '1' : (cur - 1) > 0 ? (cur - 1) : '';
+  }
+
   const fd = new FormData();
-  fd.append('action', 'like');
+  fd.append('action', liked ? 'like' : 'unlike');
   fd.append('target_uid', authorUid);
   fd.append('post_index', postIndex);
 
@@ -386,18 +442,35 @@ function toggleLike(authorUid, postIndex, btn) {
     .then(r => r.json())
     .then(data => {
       if (data.status === 'ok') {
-        const liked = (data.interaction === 'liked');
-        btn.classList.toggle('liked', liked);
-        icon.className = liked ? 'fas fa-heart' : 'far fa-heart';
-        countSpan.textContent = data.count > 0 ? data.count : '';
+        const likedServer = (data.interaction === 'liked');
+        btn.classList.toggle('liked', likedServer);
+        icon.className = likedServer ? 'fas fa-heart' : 'far fa-heart';
+        if (countSpan) {
+          countSpan.textContent = data.count > 0 ? data.count : '';
+        }
       }
     }).catch(e => console.error(e));
+}
+
+function toggleSave(authorUid, postId, btn) {
+  const icon = btn.querySelector('i');
+  if (!btn) return;
+  const saved = btn.classList.toggle('saved');
+  icon.className = saved ? 'fas fa-bookmark' : 'far fa-bookmark';
+  showToast(saved ? '保存しました' : '保存を解除しました', saved ? 'success' : '');
+
+  const fd = new FormData();
+  fd.append('action', saved ? 'save' : 'unsave');
+  fd.append('target_uid', authorUid);
+  fd.append('id', postId);
+  fetch('submit_interaction.php', { method: 'POST', body: fd, headers: {'X-Requested-With':'XMLHttpRequest'} })
+    .catch(() => {});
 }
 
 function copyPostLink(uid, index) {
   const url = window.location.origin + '/mypage/view_post.php?uid=' + uid + '&index=' + index;
   navigator.clipboard.writeText(url).then(() => {
-    alert('投稿のリンクをコピーしました！');
+    showToast('リンクをコピーしました！', 'success');
   });
 }
 </script>

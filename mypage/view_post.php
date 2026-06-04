@@ -178,9 +178,7 @@ $imagePath   = !empty($profile['image']) ? '../uploads/' . $targetUid . '/' . $p
     <img src="../img/udatsu-logo.png" alt="Udatsu" style="height: 28px; filter: drop-shadow(0 0 5px rgba(252,200,0,0.5));">
   </a>
   <div class="app-header__actions">
-    <button class="theme-toggle" id="themeToggleBtn" aria-label="テーマ切替">
-      <i class="fas fa-moon" id="themeIcon"></i>
-    </button>
+    <!-- Notification or Empty -->
   </div>
 </header>
 
@@ -282,7 +280,7 @@ $imagePath   = !empty($profile['image']) ? '../uploads/' . $targetUid . '/' . $p
   </a>
   <a href="timeline.php" class="nav-item">
     <i class="fas fa-compass"></i>
-    <span>探す</span>
+    <span>タイムライン</span>
   </a>
   <a href="../voyager_upload.php" class="nav-item" aria-label="録音">
     <div class="nav-record"><i class="fas fa-microphone"></i></div>
@@ -304,17 +302,7 @@ $imagePath   = !empty($profile['image']) ? '../uploads/' . $targetUid . '/' . $p
 (function() {
   const t = localStorage.getItem('udatsu_theme') || 'dark';
   document.documentElement.setAttribute('data-theme', t);
-  const icon = document.getElementById('themeIcon');
-  if (icon) icon.className = t === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
 })();
-document.getElementById('themeToggleBtn').addEventListener('click', function() {
-  const html = document.documentElement;
-  const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-  html.setAttribute('data-theme', next);
-  localStorage.setItem('udatsu_theme', next);
-  const icon = document.getElementById('themeIcon');
-  if (icon) icon.className = next === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
-});
 
 /* Toast */
 function showToast(msg, type='') {

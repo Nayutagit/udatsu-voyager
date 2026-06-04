@@ -215,7 +215,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['search_uid'])) {
   </a>
   <a href="timeline.php" class="nav-item">
     <i class="fas fa-compass"></i>
-    <span>探す</span>
+    <span>タイムライン</span>
   </a>
   <a href="../voyager_upload.php" class="nav-item" aria-label="録音">
     <div class="nav-record">
@@ -233,6 +233,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['search_uid'])) {
 </nav>
 
 <script>
+/* =============================================================
+   Theme setting (load-only)
+   ============================================================= */
+(function() {
+  const saved = localStorage.getItem('udatsu_theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved);
+})();
+
 function toggleFollow(targetUid, isCurrentlyFollowing) {
     const action = isCurrentlyFollowing ? 'unfollow' : 'follow';
     fetch('api_follow.php', {
