@@ -390,8 +390,8 @@ if ($isRealSubmission) {
   <?php endif; ?>
 
   <div class="description">
-    投稿は日記としても残せます。<br>
-    <strong>ライトプラン以上</strong>の方は <a href="my_udastack.php">My Udastack</a> に思考資産として積み上げることができます。
+    投稿は日記（非公開）としても残せます。<br>
+    タイムラインに共有することで、他のユーザーに公開して「声の資産」として見せることも可能です。
   </div>
   
   <div class="voyager-link">

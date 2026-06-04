@@ -44,8 +44,7 @@ $visiblePosts = array_filter($posts, function($p) use ($isOwnProfile) {
 });
 $postLimit = $plan_limits[$userPlan]['post_limit'] ?? 100;
 $remainingPosts = max(0, $postLimit - count($visiblePosts));
-$stackedCount = count(array_filter($posts, fn($p) => $p['status'] === 'My Udastack追加済'));
-$stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
+
 
 ?>
 <!DOCTYPE html>
