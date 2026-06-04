@@ -7,17 +7,20 @@ if (empty($uid) || empty($userName) || empty($userPlan)) {
   exit();
 }
 
-$userDir     = __DIR__ . '/../users/';
-$profileFile = $userDir . $uid . '_profile.json';
-$postsFile   = $userDir . $uid . '_posts.json';
+$targetUid = $_GET['uid'] ?? $uid;
+$isOwnProfile = ($targetUid === $uid);
 
-$profile = ["display_name" => $userName, "title" => '', "bio" => '', "image" => ''];
+$userDir     = __DIR__ . '/../users/';
+$profileFile = $userDir . $targetUid . '_profile.json';
+$postsFile   = $userDir . $targetUid . '_posts.json';
+
+$profile = ["display_name" => ($isOwnProfile ? $userName : 'Unknown User'), "title" => '', "bio" => '', "image" => ''];
 if (file_exists($profileFile)) {
-  $profile = json_decode(file_get_contents($profileFile), true);
+  $profile = array_merge($profile, json_decode(file_get_contents($profileFile), true) ?: []);
 }
-$displayName = $profile['display_name'] ?? $userName;
+$displayName = $profile['display_name'];
 $title = $profile['title'] ?? '';
-$imagePath   = !empty($profile['image']) ? '../uploads/' . $uid . '/' . $profile['image'] : '../img/default-icon.png';
+$imagePath   = !empty($profile['image']) ? '../uploads/' . $targetUid . '/' . $profile['image'] : '../img/default-icon.png';
 
 $posts = file_exists($postsFile) ? json_decode(file_get_contents($postsFile), true) : [];
 foreach ($posts as &$p) {
@@ -34,11 +37,16 @@ function getPostStatusInfo($status) {
   return ['label' => '', 'class' => ''];
 }
 
-$visiblePosts = array_filter($posts, fn($p) => $p['status'] !== '削除済');
+$visiblePosts = array_filter($posts, function($p) use ($isOwnProfile) {
+    if ($p['status'] === '削除済') return false;
+    if (!$isOwnProfile && empty($p['is_shared'])) return false;
+    return true;
+});
 $postLimit = $plan_limits[$userPlan]['post_limit'] ?? 100;
 $remainingPosts = max(0, $postLimit - count($visiblePosts));
 $stackedCount = count(array_filter($posts, fn($p) => $p['status'] === 'My Udastack追加済'));
 $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
+
 ?>
 <!DOCTYPE html>
 <html lang="ja" data-theme="dark">
@@ -206,8 +214,18 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
     <?php endif; ?>
 
     <div class="action-row">
-      <a href="edit_profile.php" class="btn-edit">プロフィール編集</a>
-      <a href="../logout.php" class="btn-logout">ログアウト</a>
+      <?php if ($isOwnProfile): ?>
+        <a href="edit_profile.php" class="btn btn-primary">プロフィールを編集</a>
+        <a href="../logout.php" class="btn-logout">ログアウト</a>
+      <?php else: ?>
+        <?php
+          $myFollowing = file_exists($userDir . $uid . '_following.json') ? json_decode(file_get_contents($userDir . $uid . '_following.json'), true) : [];
+          $isFollowing = in_array($targetUid, is_array($myFollowing) ? $myFollowing : []);
+        ?>
+        <button onclick="toggleFollow('<?= htmlspecialchars($targetUid) ?>', <?= $isFollowing ? 'true' : 'false' ?>)" class="btn <?= $isFollowing ? 'btn-secondary' : 'btn-primary' ?>" id="btn-follow">
+            <?= $isFollowing ? 'フォロー解除' : 'フォローする' ?>
+        </button>
+      <?php endif; ?>
     </div>
   </div>
 
@@ -219,18 +237,17 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
   <?php else: ?>
     <div class="posts-grid">
       <?php foreach (array_reverse($visiblePosts, true) as $i => $post): ?>
-        <a href="view_post.php?index=<?= $i ?>" class="grid-item">
+        <a href="view_post.php?uid=<?= $targetUid ?>&index=<?= $i ?>" class="grid-item">
           <?php if (!empty($post['thumbnail'])): ?>
             <img src="../<?= htmlspecialchars($post['thumbnail']) ?>" alt="Thumbnail">
           <?php else: ?>
-            <!-- Default placeholder for voice-only post -->
             <div style="color: var(--text-tertiary); font-size: 2rem;">
               <i class="fas fa-music"></i>
             </div>
           <?php endif; ?>
           <div class="overlay">
             <i class="fas fa-play" style="margin-bottom: 5px;"></i>
-            <span style="font-size: 0.75rem; text-align: center; padding: 0 5px;"><?= mb_strimwidth($post['title'], 0, 20, '…') ?></span>
+            <span style="font-size: 0.75rem; text-align: center; padding: 0 5px;"><?= mb_strimwidth($post['title'] ?? '', 0, 20, '…') ?></span>
           </div>
         </a>
       <?php endforeach; ?>
@@ -264,7 +281,23 @@ $stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
 </nav>
 
 <script>
-// Mobile specific simple interactions can go here
+function toggleFollow(targetUid, isCurrentlyFollowing) {
+    const action = isCurrentlyFollowing ? 'unfollow' : 'follow';
+    fetch('api_follow.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: action, targetUid: targetUid })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'success') {
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(err => alert('Communication error'));
+}
 </script>
 </body>
 </html>
