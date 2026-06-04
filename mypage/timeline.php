@@ -107,293 +107,299 @@ $timelinePosts = array_slice($timelinePosts, 0, 50);
 
 ?>
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="ja" data-theme="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>タイムライン | Udatsu</title>
-    <link rel="icon" type="image/png" href="../img/favicon.png">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="../css/style.css?v=<?= time() ?>">
-    <style>
-        .timeline-post {
-            background: var(--bg-panel);
-            backdrop-filter: blur(25px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            padding: 0;
-            margin-bottom: 35px;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-            transition: transform 0.3s ease, border-color 0.3s ease;
-            animation: fadeInUp 0.8s ease both;
-        }
-        .timeline-post:hover {
-            transform: translateY(-5px);
-            border-color: var(--primary-neon);
-        }
-        .post-header {
-            padding: 20px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        .post-header img {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid var(--primary-neon);
-            box-shadow: 0 0 10px rgba(252, 200, 0, 0.3);
-        }
-        .author-name {
-            font-weight: 800;
-            font-size: 1.1rem;
-            color: var(--text-white);
-        }
-        .author-meta {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-        }
-        .post-eyecatch {
-            width: 100%;
-            height: auto;
-            max-height: 400px;
-            object-fit: cover;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        }
-        .post-body {
-            padding: 20px;
-        }
-        .post-title {
-            font-size: 1.5rem;
-            font-weight: 800;
-            margin-bottom: 12px;
-            line-height: 1.3;
-            color: var(--text-white);
-        }
-        .post-text {
-            font-size: 1rem;
-            line-height: 1.7;
-            color: #ddd;
-            margin-bottom: 20px;
-        }
-        .audio-player {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 50px;
-            padding: 10px 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        .audio-player audio {
-            flex: 1;
-            height: 35px;
-        }
-        .social-actions {
-            display: flex;
-            gap: 25px;
-            padding: 15px 20px;
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
-            background: rgba(255, 255, 255, 0.02);
-        }
-        .action-btn {
-            color: var(--text-muted);
-            font-size: 1.1rem;
-            cursor: pointer;
-            transition: color 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .action-btn:hover {
-            color: var(--primary-neon);
-        }
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Udatsu | タイムライン</title>
+  <link rel="icon" type="image/png" href="../img/favicon.png">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="../css/style.css?v=<?= time() ?>">
 </head>
 <body>
 
+<!-- ============================================================
+     APP HEADER
+     ============================================================ -->
 <?php include __DIR__ . '/header.php'; ?>
 
-<div class="container" style="padding-top: 100px; padding-bottom: 60px; max-width: 800px;">
+<!-- ============================================================
+     MAIN FEED (TIMELINE)
+     ============================================================ -->
+<main class="app-main">
+  <div class="feed" id="feed">
     
-    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 40px;">
-        <h2 class="section-title" style="margin-bottom: 0; flex-shrink: 0;"><i class="fas fa-hourglass-half" style="color: var(--primary-neon);"></i> タイムライン</h2>
-        <span class="text-muted" style="font-size: 0.9rem;">相互フォローの最新の投稿が表示されます</span>
+    <div style="padding: 0 15px; margin-bottom: 20px;">
+      <h2 style="font-size: 1.2rem; margin-bottom: 5px; color: var(--text-primary);"><i class="fas fa-compass" style="color: var(--primary-neon);"></i> タイムライン</h2>
+      <p style="font-size: 0.85rem; color: var(--text-secondary);">フォロー中のユーザーの投稿</p>
     </div>
 
     <?php if (empty($timelinePosts)): ?>
-        <div class="glass-card animate-fadeup" style="text-align: center; padding: 60px; border-radius: 20px;">
-            <i class="fas fa-users-slash" style="font-size: 4rem; color: var(--text-muted); margin-bottom: 20px;"></i>
-            <h3 style="color: var(--text-white);">タイムラインはまだ空です</h3>
-            <p style="font-size: 1rem; color: var(--text-muted); margin-top: 15px; line-height: 1.6;">
-                あなたがフォローしているユーザーが音声をシェアするとここに表示されます。<br>
-                まずはネットワークから気になるユーザーをフォローしてみましょう！
-            </p>
-            <a href="network.php" class="btn btn-primary" style="margin-top: 30px; padding: 12px 30px; border-radius: 50px;">ユーザーを探しに行く</a>
-        </div>
+    <div class="empty-state">
+      <i class="fas fa-users-slash"></i>
+      <h3>タイムラインはまだ空です</h3>
+      <p>フォローしているユーザーが投稿をシェアするとここに表示されます。</p>
+      <a href="network.php" class="btn btn-primary btn-sm" style="margin-top: 15px;">
+        <i class="fas fa-search"></i> ユーザーを探す
+      </a>
+    </div>
     <?php else: ?>
-        <?php $timelineIndex = 0; foreach ($timelinePosts as $post): 
-            $timelineIndex++;
-            $authorImg = !empty($post['author_profile']['image']) ? '../uploads/' . $post['author_uid'] . '/' . $post['author_profile']['image'] : '../img/default-icon.png';
-            $audioUrl = '';
-            $audioSource = $post['audio_file'] ?? $post['audio'] ?? '';
-            if (!empty($audioSource)) {
-                $audioUrl = "../audio_proxy.php?target_uid=" . urlencode($post['author_uid']) . "&path=" . urlencode($audioSource);
-            }
-        ?>
-            <div class="timeline-post">
-                <div class="post-header">
-                    <img src="<?= htmlspecialchars($authorImg) ?>" alt="Author">
-                    <div>
-                        <div class="author-name"><?= htmlspecialchars($post['author_profile']['display_name']) ?></div>
-                        <div class="author-meta"><?= htmlspecialchars($post['author_profile']['title']) ?> • <?= htmlspecialchars($post['date']) ?></div>
-                    </div>
-                </div>
+    <?php foreach ($timelinePosts as $post): ?>
+    <?php
+      $authorUid = $post['author_uid'];
+      $authorName = $post['author_profile']['display_name'];
+      $authorTitle = $post['author_profile']['title'];
+      $authorImg = !empty($post['author_profile']['image']) ? '../uploads/' . $authorUid . '/' . $post['author_profile']['image'] : '../img/default-icon.png';
+      
+      $postId     = $post['id'] ?? uniqid();
+      $postTitle  = $post['title'] ?? '';
+      $postDate   = $post['date'] ?? '';
+      $postText   = $post['text'] ?? '';
+      $postSummary= $post['summary'] ?? '';
+      
+      $af         = $post['audio_file'] ?? $post['audio'] ?? '';
+      $audioSrc   = !empty($af) ? '../audio_proxy.php?target_uid=' . urlencode($authorUid) . '&path=' . urlencode($af) : '';
+      
+      $likes      = $post['likes'] ?? [];
+      $likeCount  = count($likes);
+      $isLiked    = in_array($uid, $likes);
+      $commentCount = $post['comment_count'] ?? 0;
+      
+      $displayCaption = $postSummary ?: mb_strimwidth(strip_tags($postText), 0, 120, '…');
+      $hasFullText = !empty($postText) && mb_strlen(strip_tags($postText)) > 50;
+    ?>
+    <article class="post-card" id="post-card-<?= htmlspecialchars($postId) ?>">
 
-                <?php if (!empty($post['thumbnail'])): ?>
-                    <a href="view_post.php?uid=<?= urlencode($post['author_uid']) ?>&index=<?= $post['original_index'] ?>">
-                        <img src="../<?= htmlspecialchars($post['thumbnail']) ?>" class="post-eyecatch" alt="Eyecatch">
-                    </a>
-                <?php endif; ?>
-                
-                <div class="post-body">
-                    <a href="view_post.php?uid=<?= urlencode($post['author_uid']) ?>&index=<?= $post['original_index'] ?>" style="text-decoration: none; color: inherit; display: block;">
-                        <div class="post-title"><?= htmlspecialchars($post['title']) ?></div>
-                    </a>
-                    
-                    <?php 
-                        $fullText = $post['text'] ?? '';
-                        $summary = $post['summary'] ?? '';
-                        $displayContent = !empty($summary) ? $summary : $fullText;
-                        $snippet = mb_strimwidth(strip_tags($displayContent), 0, 150, '...');
-                    ?>
+      <!-- Post header -->
+      <div class="post-header">
+        <a href="profile.php?uid=<?= urlencode($authorUid) ?>">
+            <img src="<?= htmlspecialchars($authorImg) ?>" alt="<?= htmlspecialchars($authorName) ?>" class="post-avatar">
+        </a>
+        <div class="post-header__info">
+          <div class="post-username">
+              <a href="profile.php?uid=<?= urlencode($authorUid) ?>" style="color:inherit; text-decoration:none;">
+                  <?= htmlspecialchars($authorName) ?>
+              </a>
+          </div>
+          <div class="post-date"><?= htmlspecialchars($postDate) ?> <?= !empty($authorTitle) ? '• ' . htmlspecialchars($authorTitle) : '' ?></div>
+        </div>
+      </div>
 
-                    <div class="post-text" id="snippet-<?= $timelineIndex ?>">
-                        <?= nl2br(htmlspecialchars($snippet)) ?>
-                        <?php if (mb_strlen(strip_tags($displayContent)) > 150): ?>
-                            <a href="javascript:void(0)" onclick="document.getElementById('snippet-<?= $timelineIndex ?>').style.display='none'; document.getElementById('full-<?= $timelineIndex ?>').style.display='block';" style="color: var(--primary-neon); text-decoration: none; font-size: 0.9rem; font-weight: bold;">もっと見る</a>
-                        <?php endif; ?>
-                    </div>
+      <!-- Title / Summary -->
+      <?php if (!empty($displayCaption)): ?>
+      <div class="post-caption collapsed" id="caption-<?= htmlspecialchars($postId) ?>">
+        <strong><?= htmlspecialchars($postTitle) ?></strong><br>
+        <?= nl2br(htmlspecialchars($displayCaption)) ?>
+      </div>
+      <?php if ($hasFullText): ?>
+      <button class="post-read-more" id="readmore-<?= htmlspecialchars($postId) ?>"
+              onclick="expandPost('<?= htmlspecialchars($postId) ?>')">
+        続きを読む
+      </button>
+      <?php endif; ?>
 
-                    <div class="post-text" id="full-<?= $timelineIndex ?>" style="display: none;">
-                        <?= nl2br(htmlspecialchars($displayContent)) ?>
-                        <div style="margin-top: 10px;">
-                            <a href="javascript:void(0)" onclick="document.getElementById('full-<?= $timelineIndex ?>').style.display='none'; document.getElementById('snippet-<?= $timelineIndex ?>').style.display='block';" style="color: var(--text-muted); text-decoration: none; font-size: 0.85rem;">閉じる</a>
-                        </div>
-                    </div>
+      <!-- Full text (hidden initially) -->
+      <?php if ($hasFullText): ?>
+      <div class="post-full-text" id="fulltext-<?= htmlspecialchars($postId) ?>" style="display:none;">
+        <strong><?= htmlspecialchars($postTitle) ?></strong><br>
+        <?= nl2br(htmlspecialchars(strip_tags($postText))) ?>
+        <div style="margin-top:12px;">
+          <a href="view_post.php?uid=<?= urlencode($authorUid) ?>&index=<?= $post['original_index'] ?>" class="btn btn-ghost btn-sm" style="padding-left:0;">
+            <i class="fas fa-external-link-alt"></i> 詳細ページを開く
+          </a>
+        </div>
+      </div>
+      <?php endif; ?>
+      <?php endif; ?>
 
-                    <?php if ($audioUrl): ?>
-                    <div class="audio-player">
-                        <audio controls <?= ($userPlan === 'admin') ? '' : 'controlsList="nodownload"' ?>>
-                            <source src="<?= htmlspecialchars($audioUrl) ?>" type="audio/mp4">
-                        </audio>
-                    </div>
-                    <?php endif; ?>
-                </div>
+      <!-- Audio player -->
+      <?php if (!empty($audioSrc)): ?>
+      <div class="post-audio" id="player-wrap-<?= htmlspecialchars($postId) ?>">
+        <button class="audio-play-btn" onclick="toggleAudio('<?= htmlspecialchars($postId) ?>')" id="play-btn-<?= htmlspecialchars($postId) ?>" aria-label="再生">
+          <i class="fas fa-play" id="play-icon-<?= htmlspecialchars($postId) ?>"></i>
+        </button>
+        <div class="audio-progress-wrapper">
+          <input type="range" class="audio-progress" id="progress-<?= htmlspecialchars($postId) ?>" value="0" min="0" max="100" step="0.1"
+                 oninput="seekAudio('<?= htmlspecialchars($postId) ?>', this.value)">
+          <span class="audio-time" id="time-<?= htmlspecialchars($postId) ?>">0:00</span>
+        </div>
+        <audio id="audio-<?= htmlspecialchars($postId) ?>"
+               src="<?= htmlspecialchars($audioSrc) ?>"
+               preload="none"
+               ontimeupdate="updateProgress('<?= htmlspecialchars($postId) ?>')"
+               onended="audioEnded('<?= htmlspecialchars($postId) ?>')">
+        </audio>
+      </div>
+      <?php endif; ?>
 
-                <div class="social-actions">
-                    <?php 
-                        $likes = $post['likes'] ?? [];
-                        $likeCount = count($likes);
-                        $isLiked = in_array($uid, $likes);
-                    ?>
-                    <div class="action-btn" onclick="handleLike('<?= $post['author_uid'] ?>', <?= $post['original_index'] ?>, this)">
-                        <i class="<?= $isLiked ? 'fas' : 'far' ?> fa-heart" style="<?= $isLiked ? 'color: #ff4444;' : '' ?>"></i> 
-                        <span class="like-count"><?= $likeCount ?></span>
-                    </div>
-                    <div class="action-btn" onclick="alert('コメント機能は現在準備中です！')"><i class="far fa-comment"></i> Comment</div>
-                    <div class="action-btn" onclick="copyPostLink('<?= $post['author_uid'] ?>', <?= $post['original_index'] ?>)"><i class="fas fa-share-nodes"></i> Share</div>
-                </div>
+      <!-- Actions -->
+      <div class="post-actions">
+        <button class="action-btn <?= $isLiked ? 'liked' : '' ?>" onclick="toggleLike('<?= htmlspecialchars($authorUid) ?>', <?= $post['original_index'] ?>, this)" id="like-btn-<?= htmlspecialchars($postId) ?>">
+          <i class="<?= $isLiked ? 'fas' : 'far' ?> fa-heart"></i>
+          <span class="like-count"><?= $likeCount > 0 ? $likeCount : '' ?></span>
+        </button>
+        <a href="view_post.php?uid=<?= urlencode($authorUid) ?>&index=<?= $post['original_index'] ?>#comments" class="action-btn">
+          <i class="far fa-comment"></i>
+          <span><?= $commentCount > 0 ? $commentCount : '' ?></span>
+        </a>
+        <button class="action-btn" onclick="copyPostLink('<?= htmlspecialchars($authorUid) ?>', <?= $post['original_index'] ?>)">
+          <i class="fas fa-share-nodes"></i>
+        </button>
+      </div>
 
-                <?php if ((($post['status'] ?? '') === 'エラー' || strpos($post['title'] ?? '', '解析エラー') !== false) && $userPlan === 'admin'): ?>
-                <div style="padding: 15px; text-align: right; border-top: 1px solid rgba(255,255,255,0.05);">
-                    <button type="button" class="btn btn-primary" onclick="handleRetry('<?= htmlspecialchars($post['author_uid']) ?>', <?= $post['original_index'] ?>, this)" style="padding: 5px 15px; font-size: 0.85rem; background: var(--warning-red); color: white; border-color: var(--warning-red);">
-                        <i class="fas fa-sync-alt"></i> 管理者として再試行
-                    </button>
-                </div>
-                <?php endif; ?>
-            </div>
-        <?php endforeach; ?>
+    </article>
+    <?php endforeach; ?>
     <?php endif; ?>
 
-</div>
+  </div><!-- /feed -->
+</main>
+
+<!-- ============================================================
+     BOTTOM NAV
+     ============================================================ -->
+<nav class="app-nav">
+  <a href="mypage.php" class="nav-item">
+    <i class="fas fa-home"></i>
+    <span>ホーム</span>
+  </a>
+  <a href="timeline.php" class="nav-item active">
+    <i class="fas fa-compass"></i>
+    <span>探す</span>
+  </a>
+  <a href="../voyager_upload.php" class="nav-item" aria-label="録音">
+    <div class="nav-record">
+      <i class="fas fa-microphone"></i>
+    </div>
+  </a>
+  <a href="network.php" class="nav-item">
+    <i class="fas fa-user-friends"></i>
+    <span>つながり</span>
+  </a>
+  <a href="profile.php" class="nav-item">
+    <i class="fas fa-user"></i>
+    <span>自分</span>
+  </a>
+</nav>
 
 <script>
-function handleLike(authorUid, postIndex, btn) {
-    const icon = btn.querySelector('i');
-    const countSpan = btn.querySelector('.like-count');
-    
-    const formData = new FormData();
-    formData.append('action', 'like');
-    formData.append('target_uid', authorUid);
-    formData.append('post_index', postIndex);
+/* =============================================================
+   Audio player (timeline)
+   ============================================================= */
+let currentAudioId = null;
 
-    fetch('submit_interaction.php', {
-        method: 'POST',
-        body: formData
-    })
-    .then(res => res.json())
+function toggleAudio(postId) {
+  const audio = document.getElementById('audio-' + postId);
+  const icon  = document.getElementById('play-icon-' + postId);
+  if (!audio) return;
+
+  if (currentAudioId && currentAudioId !== postId) {
+    const prev = document.getElementById('audio-' + currentAudioId);
+    const prevIcon = document.getElementById('play-icon-' + currentAudioId);
+    if (prev) prev.pause();
+    if (prevIcon) prevIcon.className = 'fas fa-play';
+    currentAudioId = null;
+  }
+
+  if (audio.paused) {
+    audio.addEventListener('loadedmetadata', function onMeta() {
+      updateProgress(postId);
+      audio.removeEventListener('loadedmetadata', onMeta);
+    });
+    audio.play().catch(e => console.warn(e));
+    icon.className = 'fas fa-pause';
+    currentAudioId = postId;
+  } else {
+    audio.pause();
+    icon.className = 'fas fa-play';
+    currentAudioId = null;
+  }
+}
+
+function updateProgress(postId) {
+  const audio    = document.getElementById('audio-' + postId);
+  const progress = document.getElementById('progress-' + postId);
+  const timeEl   = document.getElementById('time-' + postId);
+  if (!audio || !progress || !timeEl) return;
+
+  const pct = audio.duration ? (audio.currentTime / audio.duration) * 100 : 0;
+  progress.value = pct;
+
+  const cur = formatTime(audio.currentTime);
+  const dur = (audio.duration && !isNaN(audio.duration)) ? formatTime(audio.duration) : '--:--';
+  timeEl.textContent = cur + ' / ' + dur;
+}
+
+function seekAudio(postId, value) {
+  const audio = document.getElementById('audio-' + postId);
+  if (!audio || !audio.duration) return;
+  audio.currentTime = (value / 100) * audio.duration;
+}
+
+function audioEnded(postId) {
+  const icon = document.getElementById('play-icon-' + postId);
+  const progress = document.getElementById('progress-' + postId);
+  if (icon) icon.className = 'fas fa-play';
+  if (progress) progress.value = 0;
+  currentAudioId = null;
+}
+
+function formatTime(sec) {
+  if (isNaN(sec)) return '0:00';
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60).toString().padStart(2, '0');
+  return m + ':' + s;
+}
+
+/* =============================================================
+   Read more
+   ============================================================= */
+function expandPost(postId) {
+  const caption  = document.getElementById('caption-' + postId);
+  const fulltext = document.getElementById('fulltext-' + postId);
+  const btn      = document.getElementById('readmore-' + postId);
+  if (!fulltext) return;
+
+  const isOpen = fulltext.style.display !== 'none';
+  if (isOpen) {
+    fulltext.style.display = 'none';
+    if (caption) caption.classList.add('collapsed');
+    if (btn) btn.textContent = '続きを読む';
+  } else {
+    fulltext.style.display = 'block';
+    if (caption) caption.classList.remove('collapsed');
+    if (btn) btn.textContent = '閉じる';
+  }
+}
+
+/* =============================================================
+   Like / Share Actions
+   ============================================================= */
+function toggleLike(authorUid, postIndex, btn) {
+  const icon = btn.querySelector('i');
+  const countSpan = btn.querySelector('.like-count');
+  
+  const fd = new FormData();
+  fd.append('action', 'like');
+  fd.append('target_uid', authorUid);
+  fd.append('post_index', postIndex);
+
+  fetch('submit_interaction.php', { method: 'POST', body: fd })
+    .then(r => r.json())
     .then(data => {
-        if (data.status === 'ok') {
-            if (data.interaction === 'liked') {
-                icon.classList.remove('far');
-                icon.classList.add('fas');
-                icon.style.color = '#ff4444';
-            } else {
-                icon.classList.remove('fas');
-                icon.classList.add('far');
-                icon.style.color = '';
-            }
-            countSpan.textContent = data.count;
-        }
-    })
-    .catch(e => console.error(e));
+      if (data.status === 'ok') {
+        const liked = (data.interaction === 'liked');
+        btn.classList.toggle('liked', liked);
+        icon.className = liked ? 'fas fa-heart' : 'far fa-heart';
+        countSpan.textContent = data.count > 0 ? data.count : '';
+      }
+    }).catch(e => console.error(e));
 }
 
 function copyPostLink(uid, index) {
-    const url = window.location.origin + '/mypage/view_post.php?uid=' + uid + '&index=' + index;
-    navigator.clipboard.writeText(url).then(() => {
-        alert('投稿のリンクをコピーしました！');
-    });
-}
-function handleRetry(authorUid, postIndex, btn) {
-    if (!confirm('管理者としてこの投稿の解析を再試行しますか？')) return;
-    
-    const originalText = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 実行中...';
-
-    const formData = new FormData();
-    formData.append('target_uid', authorUid);
-    formData.append('index', postIndex);
-
-    fetch('retry_analysis.php', {
-        method: 'POST',
-        body: formData
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.status === 'success') {
-            alert('解析をバックグラウンドで開始しました。完了まで数分かかる場合があります。');
-            btn.innerHTML = '<i class="fas fa-check"></i> 開始済み';
-        } else {
-            alert('エラー: ' + data.message);
-            btn.disabled = false;
-            btn.innerHTML = originalText;
-        }
-    })
-    .catch(e => {
-        console.error(e);
-        alert('通信エラーが発生しました');
-        btn.disabled = false;
-        btn.innerHTML = originalText;
-    });
+  const url = window.location.origin + '/mypage/view_post.php?uid=' + uid + '&index=' + index;
+  navigator.clipboard.writeText(url).then(() => {
+    alert('投稿のリンクをコピーしました！');
+  });
 }
 </script>
 </body>

@@ -55,18 +55,11 @@ if ($postsUpdated) {
   file_put_contents($postsFile, json_encode($posts, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 }
 
-function getPostStatusInfo($status) {
-  if ($status === 'My Udastack追加済') {
-    return ['label' => 'My Udastack追加済', 'class' => 'stacked'];
-  }
-  return ['label' => '', 'class' => ''];
-}
+
 
 $visiblePosts = array_filter($posts, fn($p) => ($p['status'] ?? '') !== '削除済');
 $postLimit = $plan_limits[$userPlan]['post_limit'] ?? 100;
 $remainingPosts = max(0, $postLimit - count($visiblePosts));
-$stackedCount = count(array_filter($posts, fn($p) => $p['status'] === 'My Udastack追加済'));
-$stackLimit   = $plan_limits[$userPlan]['max_stack_posts'] ?? 0;
 ?>
 <!DOCTYPE html>
 <html lang="ja" data-theme="dark">
