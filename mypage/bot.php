@@ -536,6 +536,39 @@ function removeTypingIndicator() {
   }
 }
 
+function appendSystemNotice(text) {
+  // Remove empty state if present
+  if (emptyChat) {
+    emptyChat.style.display = 'none';
+  }
+
+  const wrapper = document.createElement('div');
+  wrapper.className = 'message-wrapper system';
+  wrapper.style.alignSelf = 'center';
+  wrapper.style.maxWidth = '90%';
+  wrapper.style.margin = '8px 0';
+  wrapper.style.animation = 'messageSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards';
+  
+  const bubble = document.createElement('div');
+  bubble.className = 'message-bubble system-notice';
+  bubble.style.background = 'rgba(252, 200, 0, 0.04)';
+  bubble.style.border = '1px dashed rgba(252, 200, 0, 0.3)';
+  bubble.style.borderRadius = '12px';
+  bubble.style.padding = '8px 16px';
+  bubble.style.fontSize = '0.8rem';
+  bubble.style.color = 'var(--brand)';
+  bubble.style.display = 'flex';
+  bubble.style.alignItems = 'center';
+  bubble.style.gap = '8px';
+  bubble.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)';
+  
+  bubble.innerHTML = `<i class="fas fa-info-circle"></i> <span>${text}</span>`;
+  
+  wrapper.appendChild(bubble);
+  chatMessages.appendChild(wrapper);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
 function sendSuggested(text) {
   chatInput.value = text;
   document.getElementById('chatForm').requestSubmit();
@@ -580,6 +613,13 @@ function handleChatSubmit(event) {
     if (data.status === 'ok') {
       const reply = data.reply;
       appendMessage('assistant', reply);
+      
+      // Render system notice on post update or delete
+      if (data.action === 'update_post') {
+        appendSystemNotice(`[システム] ジャーナル「${data.post_title || '無題'}」を修正しました。`);
+      } else if (data.action === 'delete_post') {
+        appendSystemNotice(`[システム] ジャーナル「${data.post_title || '無題'}」を非公開（削除済）に設定しました。`);
+      }
       
       // Update history
       conversationHistory.push({ role: 'user', text: text });
