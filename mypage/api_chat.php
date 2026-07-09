@@ -161,10 +161,15 @@ try {
     $jsonResult = preg_replace('/^```(?:json)?\s*/i', '', trim($jsonResult));
     $jsonResult = preg_replace('/\s*```$/i', '', $jsonResult);
     
-    $parsed = json_decode($jsonResult, true);
+    // Clean up literal newlines and tabs inside JSON string values (multiline support via /s modifier)
+    $cleanedJson = preg_replace_callback('/"([^"\\\\]|\\\\.)*"/s', function($matches) {
+        return str_replace(["\r\n", "\n", "\r", "\t"], ['\n', '\n', '\n', '\t'], $matches[0]);
+    }, $jsonResult);
+    
+    $parsed = json_decode($cleanedJson, true);
     
     // Fallback parsing if JSON was enclosed inside other formats
-    if ($parsed === null && preg_match('/\{.*\}/s', $jsonResult, $matches)) {
+    if ($parsed === null && preg_match('/\{.*\}/s', $cleanedJson, $matches)) {
         $parsed = json_decode($matches[0], true);
     }
     
