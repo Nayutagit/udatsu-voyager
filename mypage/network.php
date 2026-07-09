@@ -105,6 +105,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['search_uid'])) {
   <a href="mypage.php" class="app-header__logo" style="text-decoration: none; display: flex; align-items: center;">
     <img src="../img/udatsu-logo.png" alt="Udatsu" style="height: 32px; filter: drop-shadow(0 0 5px rgba(252,200,0,0.5));">
   </a>
+  <div class="app-header__actions">
+    <!-- AI Chat Bot Link -->
+    <a href="bot.php" class="icon-btn" aria-label="AIチャット" title="思考の分身 AIチャット">
+      <i class="fas fa-brain" style="color: var(--brand); text-shadow: 0 0 8px var(--brand-glow);"></i>
+    </a>
+  </div>
 </header>
 
 <div class="container" style="padding-top: 100px; padding-bottom: 60px;">

@@ -6,8 +6,8 @@
 :root,
 [data-theme="dark"] {
   --brand: #FCC800;
-  --brand-dim: rgba(252, 200, 0, 0.15);
-  --brand-glow: rgba(252, 200, 0, 0.3);
+  --brand-dim: rgba(252, 200, 0, 0.1);
+  --brand-glow: rgba(252, 200, 0, 0.12);
 
   --bg:          #0a0a0a;
   --bg-card:     #141414;
@@ -15,7 +15,7 @@
   --bg-overlay:  rgba(0, 0, 0, 0.85);
 
   --border:      rgba(255, 255, 255, 0.08);
-  --border-brand:rgba(252, 200, 0, 0.25);
+  --border-brand:rgba(252, 200, 0, 0.15);
 
   --text-primary: #f0f0f0;
   --text-secondary:#aaaaaa;
@@ -39,7 +39,7 @@
 
   /* Legacy aliases kept for backward compat */
   --primary-neon:   #FCC800;
-  --accent-teal:    #00A4D8;
+  --accent-teal:    #0E7D93;
   --kiwi-green:     #8EE53F;
   --bg-dark:        #0a0a0a;
   --bg-darker:      #050505;
@@ -47,7 +47,7 @@
   --text-gray:      #cccccc;
   --warning-red:    #ff4444;
   --glass-bg:       rgba(10,10,10,0.85);
-  --glass-border:   rgba(255,230,0,0.12);
+  --glass-border:   rgba(252, 200, 0, 0.08);
   --glass-blur:     20px;
   --glass-shadow:   0 8px 32px rgba(0,0,0,0.5);
 }

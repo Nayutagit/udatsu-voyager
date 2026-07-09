@@ -178,7 +178,10 @@ $imagePath   = !empty($profile['image']) ? '../uploads/' . $targetUid . '/' . $p
     <img src="../img/udatsu-logo.png" alt="Udatsu" style="height: 28px; filter: drop-shadow(0 0 5px rgba(252,200,0,0.5));">
   </a>
   <div class="app-header__actions">
-    <!-- Notification or Empty -->
+    <!-- AI Chat Bot Link -->
+    <a href="bot.php" class="icon-btn" aria-label="AIチャット" title="思考の分身 AIチャット">
+      <i class="fas fa-brain" style="color: var(--brand); text-shadow: 0 0 8px var(--brand-glow);"></i>
+    </a>
   </div>
 </header>
 

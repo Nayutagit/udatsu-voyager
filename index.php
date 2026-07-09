@@ -15,7 +15,7 @@ if (!empty($uid)) {
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>Udatsu</title>
+  <title>Udatsu | 言語化 ＆ 発声のパーソナルジム</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <link rel="icon" type="image/png" href="img/favicon.png">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -26,129 +26,693 @@ if (!empty($uid)) {
   <meta name="apple-mobile-web-app-title" content="Udatsu">
   <link rel="apple-touch-icon" href="img/udatsu-logo.png">
   <style>
+    /* ==========================================================================
+       Udatsu LP Premium Gym Style Override
+       ========================================================================== */
     body {
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-      justify-content: center;
-      align-items: center;
-      background-color: var(--bg-primary);
-      padding: var(--spacing-lg);
-    }
-    .login-container {
-      width: 100%;
-      max-width: 400px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-    }
-    .hero-logo {
-      width: 80px;
-      height: 80px;
-      border-radius: 20px;
-      margin-bottom: var(--spacing-lg);
-      box-shadow: 0 4px 20px rgba(252, 200, 0, 0.2);
-    }
-    .brand-title {
-      font-family: var(--font-display);
-      font-size: 2.5rem;
-      font-weight: 700;
+      background-color: #060606;
       color: var(--text-primary);
-      margin-bottom: var(--spacing-xs);
-      letter-spacing: -0.02em;
+      font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+      overflow-x: hidden;
     }
-    .brand-subtitle {
+
+    /* Common Layout */
+    .lp-container {
+      width: 100%;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* Header */
+    .lp-header {
+      width: 100%;
+      height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      position: sticky;
+      top: 0;
+      background: rgba(6, 6, 6, 0.85);
+      backdrop-filter: blur(20px);
+      z-index: 100;
+    }
+    .header-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #fff;
+      text-decoration: none;
+    }
+    .header-logo img {
+      width: 36px;
+      height: 36px;
+      filter: drop-shadow(0 0 8px rgba(252, 200, 0, 0.4));
+    }
+    .header-nav {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    .btn-login-header {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: 99px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-login-header:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    /* Hero Section */
+    .hero-sec {
+      padding: 80px 0 100px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-badge {
+      display: inline-block;
+      padding: 6px 16px;
+      background: rgba(252, 200, 0, 0.1);
+      border: 1px solid rgba(252, 200, 0, 0.3);
+      color: var(--brand);
+      font-size: 0.85rem;
+      font-weight: 700;
+      border-radius: 99px;
+      margin-bottom: 24px;
+      letter-spacing: 0.05em;
+    }
+    .hero-sec h1 {
+      font-size: clamp(2.2rem, 5vw, 4rem);
+      line-height: 1.25;
+      font-weight: 900;
+      color: #fff;
+      margin-bottom: 24px;
+      letter-spacing: -0.01em;
+    }
+    .hero-sec h1 span {
+      background: linear-gradient(135deg, #fff, #bbb);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero-sec h1 .highlight-text {
+      background: linear-gradient(135deg, var(--brand), #ffe066);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: inline-block;
+    }
+    .hero-desc {
+      font-size: clamp(1rem, 1.8vw, 1.25rem);
+      color: var(--text-secondary);
+      max-width: 680px;
+      margin: 0 auto 40px;
+      line-height: 1.7;
+    }
+    .cta-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+    .btn-cta-primary {
+      background: linear-gradient(135deg, var(--brand), #ffd633);
+      color: #000;
+      font-size: 1.1rem;
+      font-weight: 700;
+      padding: 16px 40px;
+      border-radius: 99px;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 8px 30px rgba(252, 200, 0, 0.25);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      text-decoration: none;
+    }
+    .btn-cta-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 35px rgba(252, 200, 0, 0.4);
+    }
+    .btn-cta-secondary {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 600;
+      padding: 14px 36px;
+      border-radius: 99px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+    .btn-cta-secondary:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Section Styles */
+    .section-lp {
+      padding: 90px 0;
+      border-top: 1px solid rgba(255, 255, 255, 0.03);
+    }
+    .bg-darker {
+      background-color: #030303;
+    }
+    .section-title-lp {
+      text-align: center;
+      margin-bottom: 60px;
+    }
+    .section-title-lp span {
+      font-size: 0.85rem;
+      color: var(--brand);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      display: block;
+      margin-bottom: 12px;
+    }
+    .section-title-lp h2 {
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    /* Grid layout for features */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 30px;
+    }
+    .feature-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      padding: 40px 30px;
+      border-radius: 16px;
+      transition: all 0.3s;
+    }
+    .feature-card:hover {
+      border-color: rgba(252, 200, 0, 0.15);
+      background: rgba(255, 255, 255, 0.03);
+      transform: translateY(-4px);
+    }
+    .feature-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: rgba(252, 200, 0, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--brand);
+      font-size: 1.4rem;
+      margin-bottom: 24px;
+    }
+    .feature-card h3 {
+      font-size: 1.25rem;
+      color: #fff;
+      margin-bottom: 14px;
+      font-weight: 700;
+    }
+    .feature-card p {
       color: var(--text-secondary);
       font-size: 0.95rem;
-      margin-bottom: var(--spacing-2xl);
+      line-height: 1.6;
     }
-    .login-box {
-      width: 100%;
-      background: var(--bg-secondary);
-      border-radius: var(--radius-lg);
-      padding: var(--spacing-xl) var(--spacing-lg);
-      border: 1px solid var(--border-color);
+
+    /* Two Methods Section */
+    .method-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
     }
-    .login-box p {
+    .method-box {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 20px;
+      padding: 40px;
+      position: relative;
+      overflow: hidden;
+    }
+    .method-box::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: var(--brand);
+    }
+    .method-box.accent-teal::before {
+      background: #38bdf8;
+    }
+    .method-tag {
+      display: inline-block;
+      padding: 4px 12px;
+      background: rgba(255, 255, 255, 0.05);
+      font-size: 0.8rem;
+      font-weight: 700;
+      border-radius: 4px;
+      color: #fff;
+      margin-bottom: 20px;
+    }
+    .method-box h3 {
+      font-size: 1.6rem;
+      color: #fff;
+      margin-bottom: 16px;
+      font-weight: 700;
+    }
+    .method-box p {
+      color: var(--text-secondary);
+      font-size: 1rem;
+      line-height: 1.7;
+      margin-bottom: 24px;
+    }
+    .method-list {
+      list-style: none;
+    }
+    .method-list li {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--text-primary);
+      margin-bottom: 12px;
+      font-size: 0.95rem;
+    }
+    .method-list li i {
+      color: var(--brand);
+    }
+    .method-box.accent-teal .method-list li i {
+      color: #38bdf8;
+    }
+
+    /* Demo Section */
+    .vj-demo-list {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+    .vj-demo-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.3s;
+    }
+    .vj-demo-card:hover {
+      border-color: rgba(252, 200, 0, 0.2);
+    }
+    .vj-card-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .vj-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #2a2a2a;
+    }
+    .vj-meta {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    .vj-card-title {
+      font-size: 1.1rem;
+      color: #fff;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    .vj-card-desc {
       color: var(--text-secondary);
       font-size: 0.9rem;
-      margin-bottom: var(--spacing-xl);
       line-height: 1.5;
+      margin-bottom: 20px;
+      flex-grow: 1;
     }
-    .btn-google {
-      width: 100%;
-      padding: 14px;
-      border-radius: 24px;
-      background: var(--accent-color);
-      color: var(--bg-primary);
-      font-weight: 600;
-      font-size: 1rem;
-      border: none;
+    .vj-card-tag {
+      font-size: 0.75rem;
+      color: var(--brand);
+      background: rgba(252, 200, 0, 0.1);
+      padding: 4px 8px;
+      border-radius: 4px;
+      align-self: flex-start;
+    }
+
+    /* Pricing Section */
+    .price-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 30px;
+    }
+    .price-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 20px;
+      padding: 40px 30px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+    }
+    .price-card.popular {
+      border-color: var(--brand);
+      background: rgba(252, 200, 0, 0.02);
+      box-shadow: 0 10px 40px rgba(252, 200, 0, 0.08);
+    }
+    .badge-popular {
+      position: absolute;
+      top: -14px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--brand);
+      color: #000;
+      font-size: 0.75rem;
+      font-weight: 800;
+      padding: 4px 16px;
+      border-radius: 99px;
+      letter-spacing: 0.05em;
+    }
+    .price-card h3 {
+      font-size: 1.4rem;
+      color: #fff;
+      margin-bottom: 12px;
+      font-weight: 700;
+    }
+    .price-amount {
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: var(--brand);
+      margin-bottom: 24px;
+    }
+    .price-amount span {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+    .price-features {
+      list-style: none;
+      margin: 0 0 32px;
+      text-align: left;
+    }
+    .price-features li {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
       display: flex;
       align-items: center;
-      justify-content: center;
       gap: 10px;
-      cursor: pointer;
-      transition: opacity 0.2s;
     }
-    .btn-google:active {
-      opacity: 0.8;
+    .price-features li i {
+      color: var(--brand);
     }
-    .secure-badge {
-      margin-top: var(--spacing-lg);
-      font-size: 0.75rem;
-      color: var(--text-tertiary);
+
+    /* Footer */
+    .lp-footer {
+      padding: 60px 0;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      text-align: center;
+    }
+    .lp-footer-links {
       display: flex;
+      justify-content: center;
+      gap: 30px;
+      margin-bottom: 24px;
+    }
+    .lp-footer-links a {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .lp-footer-links a:hover {
+      color: #fff;
+    }
+    .lp-copy {
+      color: var(--text-muted);
+      font-size: 0.8rem;
+    }
+
+    /* Loading Spinner */
+    .spinner-wrap {
+      grid-column: 1 / -1;
+      display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 6px;
+      padding: 40px;
+      color: var(--text-muted);
     }
-    .footer-links {
-      margin-top: var(--spacing-2xl);
-      font-size: 0.75rem;
-      color: var(--text-tertiary);
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .features-grid, .price-grid, .vj-demo-list {
+        grid-template-columns: 1fr 1fr;
+      }
+      .price-grid {
+        max-width: 680px;
+        margin: 0 auto;
+      }
     }
-    .footer-links a {
-      color: var(--text-tertiary);
-      text-decoration: none;
-      margin: 0 10px;
+    @media (max-width: 768px) {
+      .features-grid, .price-grid, .vj-demo-list, .method-row {
+        grid-template-columns: 1fr;
+      }
+      .lp-header {
+        padding: 0 16px;
+      }
+      .section-lp {
+        padding: 60px 0;
+      }
     }
   </style>
 </head>
 <body>
 
-  <div class="login-container animate-fadeup">
-    
-    <a href="index.php"><img src="img/udatsu-logo.png" alt="Udatsu Logo" class="hero-logo"></a>
-    <h1 class="brand-title">Udatsu</h1>
-    <p class="brand-subtitle">声でつながる、新しいSNS。</p>
+  <!-- ============================================================
+       HEADER
+       ============================================================ -->
+  <header class="lp-header">
+    <div class="lp-container" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+      <a href="index.php" class="header-logo">
+        <img src="img/udatsu-logo.png" alt="Udatsu Logo">
+        <span>Udatsu</span>
+      </a>
+      <div class="header-nav">
+        <button id="login-btn-header" class="btn-login-header">Googleログイン</button>
+      </div>
+    </div>
+  </header>
 
-    <div class="login-box">
-      <p>
-        AIがあなたの音声をテキスト化し、<br>
-        自動で要約・記事化します。
+  <!-- ============================================================
+       HERO
+       ============================================================ -->
+  <section class="hero-sec">
+    <div class="lp-container">
+      <span class="hero-badge">声から始める、思考のトレーニングジム</span>
+      <h1>
+        声と思考を鍛え、<br>
+        <span class="highlight-text">人生のうだつを上げる。</span>
+      </h1>
+      <p class="hero-desc">
+        「書く時間がない」「発信が続かない」と悩む人のための、声と思考のワークアウトスペース。<br>水増しされたAI記事を作るのではなく、あなたの肉声の温度感をそのまま資産にする。ボイスジャーナルと個別伴走で、あなたの「伝える力」を実技から鍛え抜きます。
+      </p>
+      <div class="cta-group">
+        <a href="https://lin.ee/xxxxxx" target="_blank" class="btn-cta-primary">
+          <i class="fab fa-line"></i> 公式LINEで体験レッスンを予約する
+        </a>
+        <button id="login-btn" class="btn-cta-secondary">
+          <i class="fab fa-google"></i> Googleログインして無料で試す
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       CONCEPT
+       ============================================================ -->
+  <section class="section-lp bg-darker">
+    <div class="lp-container">
+      <div class="section-title-lp">
+        <span>Concept</span>
+        <h2>怪しいセミナーではなく、本質的な「ジム」であること。</h2>
+      </div>
+      <div class="features-grid">
+        <!-- Feature 1 -->
+        <div class="feature-card">
+          <div class="feature-icon"><i class="fas fa-dumbbell"></i></div>
+          <h3>キーボードで悩む時間を、喋る時間に変える。</h3>
+          <p>何を書くか何時間も悩むのはやめましょう。歩きながら、思いついた瞬間にスマホに喋るだけ。あなたらしい言葉の癖や温度感を残したまま、読み応えのある記事へと整えます。</p>
+        </div>
+        <!-- Feature 2 -->
+        <div class="feature-card">
+          <div class="feature-icon"><i class="fas fa-heartbeat"></i></div>
+          <h3>一獲千金のノウハウではなく、実技と習慣</h3>
+          <p>精神論や一攫千金のノウハウは一切ありません。オンラインジムに通うような感覚で、声の響きや論理的なアウトプットの「基礎体力」をコツコツと身体で覚えていきます。</p>
+        </div>
+        <!-- Feature 3 -->
+        <div class="feature-card">
+          <div class="feature-icon"><i class="fas fa-user-shield"></i></div>
+          <h3>あなたの「思考の分身」を共に育てる</h3>
+          <p>ただの文字起こし代行ではありません。蓄積されたボイスからあなたの思考パターンを学習し、分身として文章の精度を高めます。さらに那由他が1対1で強みを引き出す壁打ちを行います。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       METHODS
+       ============================================================ -->
+  <section class="section-lp">
+    <div class="lp-container">
+      <div class="section-title-lp">
+        <span>Training Methods</span>
+        <h2>2つのアプローチで、伝える力を鍛え抜く。</h2>
+      </div>
+      <div class="method-row">
+        <!-- Method 1 -->
+        <div class="method-box">
+          <span class="method-tag">ONLINE</span>
+          <h3>「喋って送る」だけで毎日更新</h3>
+          <p>「できる」と「やる」は別。だからこそ、喋って送るだけという極限まで低いハードルで、毎日でも記事が更新できる継続の仕組み（うだつ）を用意しました。</p>
+          <ul class="method-list">
+            <li><i class="fas fa-check-circle"></i> LINEまたはiOSアプリから簡単に録音</li>
+            <li><i class="fas fa-check-circle"></i> Gemini AIによる超高速な整文化・要約</li>
+            <li><i class="fas fa-check-circle"></i> 蓄積された音声から生成される「思考クイズ」</li>
+          </ul>
+        </div>
+        <!-- Method 2 -->
+        <div class="method-box accent-teal">
+          <span class="method-tag" style="background: rgba(56, 189, 248, 0.1); color: #38bdf8;">PHYSICAL / SESSION</span>
+          <h3>体を動かし、対面で「声そのもの」を鍛える</h3>
+          <p>呼吸法や姿勢、響く声を身体で覚えるボイトレと、1対1で深く対話する「思考の壁打ち」で、伝わる説得力を身につけます。</p>
+          <ul class="method-list">
+            <li><i class="fas fa-check-circle"></i> 姿勢、呼吸法、響く声そのものを鍛える対面ボイトレ</li>
+            <li><i class="fas fa-check-circle"></i> 暗黙知を引き出す1対1の「思考の壁打ち」セッション</li>
+            <li><i class="fas fa-check-circle"></i> プレゼンや会議で説得力を生む伝達メソッドの指導</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       REAL DEMO (NAYUTA VJ)
+       ============================================================ -->
+  <section class="section-lp bg-darker">
+    <div class="lp-container">
+      <div class="section-title-lp">
+        <span>Real Performance</span>
+        <h2>思考資産（ボイスジャーナル）の具体例</h2>
+      </div>
+      <p style="text-align: center; color: var(--text-secondary); max-width: 600px; margin: -40px auto 50px; line-height: 1.6;">
+        実際にナユタが日々録音し、AIが自動解析して整理したボイスジャーナル（思考資産）の実物です。話した熱量がそのまま丁寧な記事に変わる体験をご確認ください。
       </p>
 
-      <button id="login-btn" class="btn-google">
-        <i class="fab fa-google"></i> Googleでログイン
-      </button>
-
-      <div class="secure-badge">
-        <i class="fas fa-lock"></i> Secure Login via Firebase
+      <div class="vj-demo-list" id="nayuta-vj-list">
+        <!-- Spinner -->
+        <div class="spinner-wrap" id="vj-spinner">
+          <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: var(--brand); margin-bottom: 12px;"></i>
+          <p>思考資産をロード中...</p>
+        </div>
       </div>
     </div>
+  </section>
 
-    <div class="footer-links">
-      <div style="margin-bottom: 10px;">
-        <a href="terms.php">利用規約</a> | 
+  <!-- ============================================================
+       PRICING
+       ============================================================ -->
+  <section class="section-lp">
+    <div class="lp-container">
+      <div class="section-title-lp">
+        <span>Pricing</span>
+        <h2>ワークアウト・メニュー</h2>
+      </div>
+      <div class="price-grid">
+        <!-- Plan 1 -->
+        <div class="price-card">
+          <div>
+            <h3>単発体験セッション</h3>
+            <div class="price-amount">5,000円<span> / 1回 (1時間)</span></div>
+            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 20px;">まずは試してみたい方へ</p>
+          </div>
+          <ul class="price-features">
+            <li><i class="fas fa-check"></i> 初回カウンセリング</li>
+            <li><i class="fas fa-check"></i> 頭のもやもやの棚卸し</li>
+            <li><i class="fas fa-check"></i> ボイスジャーナル基礎体験</li>
+            <li><i class="fas fa-check"></i> オンライン受講可能</li>
+          </ul>
+          <a href="https://lin.ee/xxxxxx" target="_blank" class="btn-cta-secondary" style="justify-content: center; width: 100%;">LINEで申し込む</a>
+        </div>
+        <!-- Plan 2 -->
+        <div class="price-card popular">
+          <span class="badge-popular">RECOMMENDED</span>
+          <div>
+            <h3>実践集中セッション</h3>
+            <div class="price-amount">10,000円<span> / 1回 (3時間)</span></div>
+            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 20px;">思考のクセを分析し、基礎体力をつける</p>
+          </div>
+          <ul class="price-features">
+            <li><i class="fas fa-check"></i> 発声 ＆ 滑舌トレーニング</li>
+            <li><i class="fas fa-check"></i> 対面でのフィジカル発声指導可</li>
+            <li><i class="fas fa-check"></i> 論理的思考と言語化の壁打ち</li>
+            <li><i class="fas fa-check"></i> 今後のトレーニング計画設計</li>
+          </ul>
+          <a href="https://lin.ee/xxxxxx" target="_blank" class="btn-cta-primary" style="justify-content: center; width: 100%; font-size: 0.95rem; padding: 12px 0;">LINEで申し込む</a>
+        </div>
+        <!-- Plan 3 -->
+        <div class="price-card">
+          <div>
+            <h3>継続ジムパック</h3>
+            <div class="price-amount">お見積もり<span> / 月5回プログラム</span></div>
+            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 20px;">発信と言語化を完全に習慣化する</p>
+          </div>
+          <ul class="price-features">
+            <li><i class="fas fa-check"></i> 月5回 個別レッスン (対面/オンライン)</li>
+            <li><i class="fas fa-check"></i> 音声解析 Voyagerツール使い放題</li>
+            <li><i class="fas fa-check"></i> 那由他によるVJ記事の添削・指導</li>
+            <li><i class="fas fa-check"></i> 専属伴走パーソナルサポート</li>
+          </ul>
+          <a href="https://lin.ee/xxxxxx" target="_blank" class="btn-cta-secondary" style="justify-content: center; width: 100%;">LINEでお問い合わせ</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       FOOTER
+       ============================================================ -->
+  <footer class="lp-footer">
+    <div class="lp-container">
+      <div class="lp-footer-links">
+        <a href="terms.php">利用規約</a>
         <a href="privacy.php">プライバシーポリシー</a>
       </div>
-      &copy; 2026 Nyct Studio
+      <p class="lp-copy">&copy; 2026 Udatsu. All Rights Reserved. via Firebase Secure System</p>
     </div>
+  </footer>
 
-  </div>
-
+  <!-- ============================================================
+       SCRIPTS (FIREBASE AUTH & LOGICS)
+       ============================================================ -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
     import {
@@ -260,21 +824,79 @@ if (!empty($uid)) {
       return false;
     };
 
-    document.getElementById("login-btn").addEventListener("click", async () => {
-      const btn = document.getElementById("login-btn");
-      btn.style.opacity = "0.7";
-      btn.style.pointerEvents = "none";
-      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
-      
-      try {
-        const result = await signInWithPopup(auth, provider);
-        await completeLogin(result.user);
-      } catch (err) {
-        alert("ログインがキャンセルされたか、エラーが発生しました: " + err.message);
-        btn.style.opacity = "1";
-        btn.style.pointerEvents = "auto";
-        btn.innerHTML = 'Googleでログイン';
-      }
+    // ログインボタンバインディング
+    const setupLoginBtn = (btnId) => {
+      const btn = document.getElementById(btnId);
+      if (!btn) return;
+      btn.addEventListener("click", async () => {
+        btn.style.opacity = "0.7";
+        btn.style.pointerEvents = "none";
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
+        
+        try {
+          const result = await signInWithPopup(auth, provider);
+          await completeLogin(result.user);
+        } catch (err) {
+          alert("ログインがキャンセルされたか、エラーが発生しました: " + err.message);
+          btn.style.opacity = "1";
+          btn.style.pointerEvents = "auto";
+          btn.innerHTML = btnId === 'login-btn' ? '<i class="fab fa-google"></i> Googleログインして無料で試す' : 'Googleログイン';
+        }
+      });
+    };
+
+    setupLoginBtn("login-btn");
+    setupLoginBtn("login-btn-header");
+  </script>
+
+  <!-- ============================================================
+       DEMO LOADER SCRIPT
+       ============================================================ -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const demoList = document.getElementById("nayuta-vj-list");
+      const spinner = document.getElementById("vj-spinner");
+
+      // APIからナユタ氏の最新VJ記事を取得
+      fetch("api/get_nayuta_vj.php")
+        .then(res => res.json())
+        .then(data => {
+          if (spinner) spinner.remove();
+
+          if (!data || data.length === 0) {
+            demoList.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--text-muted);">現在、公開可能なデモ記事はありません。</p>';
+            return;
+          }
+
+          data.forEach(p => {
+            const card = document.createElement("div");
+            card.className = "vj-demo-card";
+            
+            // 日付フォーマット
+            const dateStr = p.date || "日付未設定";
+            
+            card.innerHTML = `
+              <div>
+                <div class="vj-card-header">
+                  <img src="img/default-icon.png" alt="Nayuta Avatar" class="vj-avatar">
+                  <div>
+                    <div style="font-weight:700; color:#fff; font-size:0.9rem;">ナユタ</div>
+                    <div class="vj-meta">${dateStr}</div>
+                  </div>
+                </div>
+                <h3 class="vj-card-title">${p.title}</h3>
+                <p class="vj-card-desc">${p.summary}</p>
+              </div>
+              <span class="vj-card-tag">${p.category}</span>
+            `;
+            demoList.appendChild(card);
+          });
+        })
+        .catch(err => {
+          if (spinner) spinner.remove();
+          demoList.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--warning-red);">読み込みエラーが発生しました。</p>';
+          console.error("Failed to load VJ demo:", err);
+        });
     });
   </script>
 </body>

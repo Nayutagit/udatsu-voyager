@@ -119,6 +119,10 @@ $savedItems = file_exists($savedFile) ? (json_decode(file_get_contents($savedFil
     <img src="../img/udatsu-logo.png" alt="Udatsu" style="height: 32px; filter: drop-shadow(0 0 5px rgba(252,200,0,0.5));">
   </a>
   <div class="app-header__actions">
+    <!-- AI Chat Bot Link -->
+    <a href="bot.php" class="icon-btn" aria-label="AIチャット" title="思考の分身 AIチャット">
+      <i class="fas fa-brain" style="color: var(--brand); text-shadow: 0 0 8px var(--brand-glow);"></i>
+    </a>
     <!-- Notification -->
     <a href="#" class="icon-btn" aria-label="通知">
       <i class="fas fa-bell"></i>

@@ -303,6 +303,10 @@ function renderPostCard($post, $authorUid, $uid, $userDir, $isOwnPostsTab = fals
     <img src="../img/udatsu-logo.png" alt="Udatsu" style="height: 32px; filter: drop-shadow(0 0 5px rgba(252,200,0,0.5));">
   </a>
   <div class="app-header__actions">
+    <!-- AI Chat Bot Link -->
+    <a href="bot.php" class="icon-btn" aria-label="AIチャット" title="思考の分身 AIチャット">
+      <i class="fas fa-brain" style="color: var(--brand); text-shadow: 0 0 8px var(--brand-glow);"></i>
+    </a>
     <!-- Notification -->
     <a href="#" class="icon-btn" aria-label="通知">
       <i class="fas fa-bell"></i>
@@ -326,6 +330,21 @@ function renderPostCard($post, $authorUid, $uid, $userDir, $isOwnPostsTab = fals
   <!-- Feed -->
   <div class="feed" id="feed">
     
+    <!-- AI Chat Bot Banner -->
+    <div class="ai-chat-banner" style="margin: 0 16px 16px; background: linear-gradient(135deg, rgba(252, 200, 0, 0.1) 0%, rgba(252, 200, 0, 0.02) 100%); border: 1px solid var(--border-brand); border-radius: var(--radius-card); padding: 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; box-shadow: var(--shadow-card);">
+      <div style="flex: 1;">
+        <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--brand); margin-bottom: 4px; display: flex; align-items: center; gap: 8px;">
+          <i class="fas fa-brain"></i> 思考の分身 AIチャット
+        </h4>
+        <p style="font-size: 0.78rem; color: var(--text-secondary); line-height: 1.4; margin: 0;">
+          あなたのボイスジャーナル（<?= count($visiblePosts) ?>件）を学習したAIの分身と対話します。
+        </p>
+      </div>
+      <a href="bot.php" class="btn btn-primary btn-sm" style="flex-shrink: 0; padding: 6px 16px; border-radius: var(--radius-pill); font-size: 0.78rem; font-weight: 700; text-decoration: none;">
+        話しかける
+      </a>
+    </div>
+
     <div class="profile-tabs">
       <button class="profile-tab active" id="tab-btn-posts" onclick="switchProfileTab('posts')">ジャーナル</button>
       <button class="profile-tab" id="tab-btn-likes" onclick="switchProfileTab('likes')">いいね</button>
