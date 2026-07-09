@@ -407,7 +407,6 @@ $imagePath = !empty($profile['image']) ? '../uploads/' . $uid . '/' . $profile['
           id="chatInput" 
           placeholder="分身にメッセージを送る..." 
           rows="1"
-          onkeydown="handleKeyDown(event)"
           oninput="adjustTextareaHeight(this)"
         ></textarea>
         <button class="chat-submit-btn" id="chatSubmitBtn" type="submit" aria-label="送信">
@@ -470,14 +469,6 @@ let conversationHistory = []; // Keep history in format: { role: 'user' | 'model
 function adjustTextareaHeight(el) {
   el.style.height = 'auto';
   el.style.height = Math.min(el.scrollHeight, 100) + 'px';
-}
-
-function handleKeyDown(e) {
-  // Enter key sends, Shift+Enter inserts newline
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault();
-    document.getElementById('chatForm').requestSubmit();
-  }
 }
 
 function appendMessage(role, text) {
