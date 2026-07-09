@@ -20,6 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $displayName = htmlspecialchars($_POST['display_name'] ?? '', ENT_QUOTES, 'UTF-8');
   $title = htmlspecialchars($_POST['title'] ?? '', ENT_QUOTES, 'UTF-8');
   $bio = htmlspecialchars($_POST['bio'] ?? '', ENT_QUOTES, 'UTF-8');
+  $botStyleReference = htmlspecialchars($_POST['bot_style_reference'] ?? '', ENT_QUOTES, 'UTF-8');
 
   $networkId = trim($_POST['network_id'] ?? '');
 
@@ -70,6 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       $profile['display_name'] = $displayName;
       $profile['title'] = $title;
       $profile['bio'] = $bio;
+      $profile['bot_style_reference'] = $botStyleReference;
       $profile['image'] = $imageName;
 
       file_put_contents($profileFile, json_encode($profile, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
@@ -180,6 +182,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
       <label>自己紹介文 (Bio)</label>
       <textarea name="bio" placeholder="あなたの哲学やスタンスを入力してください"><?php echo htmlspecialchars($profile['bio']); ?></textarea>
+
+      <label>AI分身の話し方手本テキスト (任意)</label>
+      <textarea name="bot_style_reference" placeholder="AI分身に模倣させたい話し方や文面のサンプル（例：『承知いたしました。私の見解としては〜〜』などの丁寧な文面、または具体的な話し方の指示）を入力してください" style="height: 120px;"><?php echo htmlspecialchars($profile['bot_style_reference'] ?? ''); ?></textarea>
+      <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 5px;">このテキストの口調や文面サンプルをAI分身が真似して会話するようになります。</div>
 
       <label>プロフィール画像（差し替え任意）</label>
       <input type="file" name="image" accept="image/*">
