@@ -38,6 +38,7 @@ $imagePath = !empty($profile['image']) ? '../uploads/' . $uid . '/' . $profile['
   <link rel="icon" type="image/png" href="../img/favicon.png">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="../css/style.css?v=<?= time() ?>">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <style>
     .chat-container {
       display: flex;
@@ -164,6 +165,23 @@ $imagePath = !empty($profile['image']) ? '../uploads/' . $uid . '/' . $profile['
       color: var(--text-primary);
       border-bottom-left-radius: 4px;
       border: 1px solid var(--border);
+    }
+
+    .message-bubble p {
+      margin: 0 0 8px 0;
+    }
+    .message-bubble p:last-child {
+      margin-bottom: 0;
+    }
+
+    .message-wrapper.assistant .message-bubble a {
+      color: var(--brand);
+      text-decoration: underline;
+      font-weight: 600;
+      transition: opacity var(--transition);
+    }
+    .message-wrapper.assistant .message-bubble a:hover {
+      opacity: 0.8;
     }
 
     .message-time {
@@ -482,7 +500,12 @@ function appendMessage(role, text) {
 
   const bubble = document.createElement('div');
   bubble.className = 'message-bubble';
-  bubble.textContent = text;
+  if (role === 'assistant') {
+    // Parse markdown (e.g. for citations)
+    bubble.innerHTML = marked.parse(text);
+  } else {
+    bubble.textContent = text;
+  }
   
   const time = document.createElement('div');
   time.className = 'message-time';
