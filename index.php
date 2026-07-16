@@ -591,19 +591,19 @@ if (!empty($uid)) {
           <h3>「喋って送る」だけで毎日更新</h3>
           <p>「できる」と「やる」は別。だからこそ、喋って送るだけという極限まで低いハードルで、毎日でも記事が更新できる継続の仕組み（うだつ）を用意しました。</p>
           <ul class="method-list">
-            <li><i class="fas fa-check-circle"></i> LINEまたはiOSアプリから簡単に録音</li>
+            <li><i class="fas fa-check-circle"></i> LINEまたはブラウザから簡単に録音</li>
             <li><i class="fas fa-check-circle"></i> Gemini AIによる超高速な整文化・要約</li>
-            <li><i class="fas fa-check-circle"></i> 蓄積された音声から生成される「思考クイズ」</li>
+            <li><i class="fas fa-check-circle"></i> 過去のジャーナル一覧を自動でアーカイブ保存</li>
           </ul>
         </div>
         <!-- Method 2 -->
         <div class="method-box accent-teal">
-          <span class="method-tag" style="background: rgba(56, 189, 248, 0.1); color: #38bdf8;">AI CHAT & QUIZ</span>
+          <span class="method-tag" style="background: rgba(56, 189, 248, 0.1); color: #38bdf8;">AI CHATBOT</span>
           <h3>AIの分身と対話し、思考を深める</h3>
-          <p>蓄積したジャーナルをもとに、AIがあなたの思考の分身を構築。さらに過去の投稿をもとにクイズを出題し、あなたの知識の定着やアウトプットを加速します。</p>
+          <p>蓄積したジャーナルをもとに、AIがあなたの思考の分身を構築。いつでもあなたの過去の考えをもとに客観的なアドバイスや、アイデアの壁打ち相手になってくれます。</p>
           <ul class="method-list">
             <li><i class="fas fa-check-circle"></i> 過去のジャーナルから学習した「思考の分身AIチャット」</li>
-            <li><i class="fas fa-check-circle"></i> 自分の知識から出題される「思考チェッククイズ」</li>
+            <li><i class="fas fa-check-circle"></i> あなた独自の価値観に沿った文章構成の提案</li>
             <li><i class="fas fa-check-circle"></i> 気づきを促し、アイデアを再発見する対話エンジン</li>
           </ul>
         </div>
