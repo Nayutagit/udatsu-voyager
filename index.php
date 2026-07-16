@@ -587,7 +587,7 @@ if (!empty($uid)) {
       <div class="method-row">
         <!-- Method 1 -->
         <div class="method-box">
-          <span class="method-tag">ONLINE</span>
+          <span class="method-tag" style="background: rgba(252, 200, 0, 0.1); color: var(--brand);">VOICE ARCHIVE</span>
           <h3>「喋って送る」だけで毎日更新</h3>
           <p>「できる」と「やる」は別。だからこそ、喋って送るだけという極限まで低いハードルで、毎日でも記事が更新できる継続の仕組み（うだつ）を用意しました。</p>
           <ul class="method-list">
@@ -612,7 +612,7 @@ if (!empty($uid)) {
   </section>
 
   <!-- ============================================================
-       REAL DEMO (NAYUTA VJ)
+       REAL DEMO (VOICE ARCHIVES)
        ============================================================ -->
   <section class="section-lp bg-darker">
     <div class="lp-container">
@@ -621,7 +621,7 @@ if (!empty($uid)) {
         <h2>思考資産（ボイスジャーナリング）の具体例</h2>
       </div>
       <p style="text-align: center; color: var(--text-secondary); max-width: 600px; margin: -40px auto 50px; line-height: 1.6;">
-        実際にナユタが日々録音し、AIが自動解析して整理したボイスジャーナリング（思考資産）の実物です。話した熱量がそのまま丁寧な記事に変わる体験をご確認ください。
+        実際に録音された音声から、AIが自動解析・作成した記事の具体例です。話した熱量や言葉づかいがそのまま丁寧な文章に整理される様子をご確認ください。
       </p>
 
       <div class="vj-demo-list" id="nayuta-vj-list">
@@ -795,7 +795,7 @@ if (!empty($uid)) {
       const demoList = document.getElementById("nayuta-vj-list");
       const spinner = document.getElementById("vj-spinner");
 
-      // APIからナユタ氏の最新VJ記事を取得
+      // APIからデモ用の最新記事を取得
       fetch("api/get_nayuta_vj.php")
         .then(res => res.json())
         .then(data => {
@@ -816,9 +816,9 @@ if (!empty($uid)) {
             card.innerHTML = `
               <div>
                 <div class="vj-card-header">
-                  <img src="img/default-icon.png" alt="Nayuta Avatar" class="vj-avatar">
+                  <img src="img/default-icon.png" alt="User Avatar" class="vj-avatar">
                   <div>
-                    <div style="font-weight:700; color:#fff; font-size:0.9rem;">ナユタ</div>
+                    <div style="font-weight:700; color:#fff; font-size:0.9rem;">デモユーザー</div>
                     <div class="vj-meta">${dateStr}</div>
                   </div>
                 </div>
