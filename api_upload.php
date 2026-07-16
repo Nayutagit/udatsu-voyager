@@ -88,8 +88,15 @@ if (!in_array($mimeType, $allowedTypes, true)) {
 // Save to uploads/
 $uploadDir = __DIR__ . '/uploads/';
 if (!file_exists($uploadDir)) mkdir($uploadDir, 0755, true);
-$safeName  = preg_replace('/[^a-zA-Z0-9]/', '_', pathinfo($fileKey['name'], PATHINFO_FILENAME));
-$extension = pathinfo($fileKey['name'], PATHINFO_EXTENSION) ?: 'mp4';
+$filenameWithExt = $fileKey['name'];
+$extension = pathinfo($filenameWithExt, PATHINFO_EXTENSION) ?: 'mp4';
+$lastDotPos = mb_strrpos($filenameWithExt, '.');
+$originalName = ($lastDotPos !== false) ? mb_substr($filenameWithExt, 0, $lastDotPos) : $filenameWithExt;
+
+$safeName = preg_replace("/[^a-zA-Z0-9]/", "_", $originalName);
+if (empty(trim($safeName, '_'))) {
+    $safeName = 'audio_' . uniqid();
+}
 $filename  = $safeName . '_' . time() . '.' . $extension;
 $targetPath = 'uploads/' . $filename;
 
@@ -112,7 +119,8 @@ curl_setopt($ch, CURLOPT_POST, true);
 curl_setopt($ch, CURLOPT_POSTFIELDS, [
     'secret' => 'voyager_internal_exec_1234',
     'uid' => $uid,
-    'audioPath' => $targetPath
+    'audioPath' => $targetPath,
+    'originalTitle' => $originalName
 ]);
 curl_setopt($ch, CURLOPT_TIMEOUT, 1); // Disconnect immediately
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);

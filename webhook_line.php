@@ -85,7 +85,9 @@ foreach ($events['events'] as $event) {
             $extension    = pathinfo($originalFileName, PATHINFO_EXTENSION) ?: 'm4a';
             $filename     = 'line_' . $messageId . '_' . time() . '.' . $extension;
             $targetPath   = 'uploads/' . $filename;
-            $originalTitle = pathinfo($originalFileName, PATHINFO_FILENAME);
+            
+            $lastDotPos   = mb_strrpos($originalFileName, '.');
+            $originalTitle = ($lastDotPos !== false) ? mb_substr($originalFileName, 0, $lastDotPos) : $originalFileName;
             file_put_contents(__DIR__ . '/' . $targetPath, $audioData);
 
             // ① まず「解析中」投稿レコードをマイページに即作成
@@ -100,7 +102,7 @@ foreach ($events['events'] as $event) {
                 'text'           => '',
                 'summary'        => '',
                 'date'           => date('Y-m-d'),
-                'category'       => 'ボイスジャーナル',
+                'category'       => 'ボイスジャーナリング',
                 'audio_file'     => $targetPath,
                 'audio'          => '',
                 'thumbnail'      => '',

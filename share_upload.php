@@ -48,11 +48,17 @@ if ($fileKey['size'] > $maxSizeBytes) {
 $uploadDir = 'uploads/';
 if (!file_exists($uploadDir)) mkdir($uploadDir, 0755, true);
 
-$originalName = pathinfo($fileKey['name'], PATHINFO_FILENAME);
-$extension    = pathinfo($fileKey['name'], PATHINFO_EXTENSION);
-$safeName     = preg_replace("/[^a-zA-Z0-9]/", "_", $originalName);
-$filename     = $safeName . "_" . time() . "." . $extension;
-$targetPath   = $uploadDir . $filename;
+$filenameWithExt = $fileKey['name'];
+$extension = pathinfo($filenameWithExt, PATHINFO_EXTENSION);
+$lastDotPos = mb_strrpos($filenameWithExt, '.');
+$originalName = ($lastDotPos !== false) ? mb_substr($filenameWithExt, 0, $lastDotPos) : $filenameWithExt;
+
+$safeName = preg_replace("/[^a-zA-Z0-9]/", "_", $originalName);
+if (empty(trim($safeName, '_'))) {
+    $safeName = 'audio_' . uniqid();
+}
+$filename = $safeName . "_" . time() . "." . $extension;
+$targetPath = $uploadDir . $filename;
 
 $finfo     = new finfo(FILEINFO_MIME_TYPE);
 $mimeType  = $finfo->file($fileKey['tmp_name']);

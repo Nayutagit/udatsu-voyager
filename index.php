@@ -527,19 +527,16 @@ if (!empty($uid)) {
        ============================================================ -->
   <section class="hero-sec">
     <div class="lp-container">
-      <span class="hero-badge">声から始める、思考のトレーニングジム</span>
+      <span class="hero-badge">声から始める、思考資産プラットフォーム</span>
       <h1>
-        声と思考を鍛え、<br>
+        声と思考を蓄積し、<br>
         <span class="highlight-text">人生のうだつを上げる。</span>
       </h1>
       <p class="hero-desc">
-        「書く時間がない」「発信が続かない」と悩む人のための、声と思考のワークアウトスペース。<br>水増しされたAI記事を作るのではなく、あなたの肉声の温度感をそのまま資産にする。ボイスジャーナルと個別伴走で、あなたの「伝える力」を実技から鍛え抜きます。
+        「書く時間がない」「発信が続かない」と悩む人のための、声のブログ・思考資産プラットフォーム。<br>水増しされたAI記事を作るのではなく、あなたの肉声の温度感と言葉づかいをそのまま資産にする。ボイスジャーナリングで、あなたの「思考と経験」を文字と音声で蓄積していきます。
       </p>
       <div class="cta-group">
-        <a href="https://lin.ee/xxxxxx" target="_blank" class="btn-cta-primary">
-          <i class="fab fa-line"></i> 公式LINEで体験レッスンを予約する
-        </a>
-        <button id="login-btn" class="btn-cta-secondary">
+        <button id="login-btn" class="btn-cta-primary">
           <i class="fab fa-google"></i> Googleログインして無料で試す
         </button>
       </div>
@@ -553,7 +550,7 @@ if (!empty($uid)) {
     <div class="lp-container">
       <div class="section-title-lp">
         <span>Concept</span>
-        <h2>怪しいセミナーではなく、本質的な「ジム」であること。</h2>
+        <h2>喋るだけで、あなたの言葉がそのまま資産になる。</h2>
       </div>
       <div class="features-grid">
         <!-- Feature 1 -->
@@ -565,14 +562,14 @@ if (!empty($uid)) {
         <!-- Feature 2 -->
         <div class="feature-card">
           <div class="feature-icon"><i class="fas fa-heartbeat"></i></div>
-          <h3>一獲千金のノウハウではなく、実技と習慣</h3>
-          <p>精神論や一攫千金のノウハウは一切ありません。オンラインジムに通うような感覚で、声の響きや論理的なアウトプットの「基礎体力」をコツコツと身体で覚えていきます。</p>
+          <h3>一獲千金のノウハウではなく、言語化の習慣</h3>
+          <p>書くための特別なスキルや時間は必要ありません。日々の気づきやアイデアを声で録音するだけで、自動で整理・整文化され、発信可能な記事として蓄積されてしていきます。</p>
         </div>
         <!-- Feature 3 -->
         <div class="feature-card">
           <div class="feature-icon"><i class="fas fa-user-shield"></i></div>
-          <h3>あなたの「思考の分身」を共に育てる</h3>
-          <p>ただの文字起こし代行ではありません。蓄積されたボイスからあなたの思考パターンを学習し、分身として文章の精度を高めます。さらに那由他が1対1で強みを引き出す壁打ちを行います。</p>
+          <h3>あなたの「思考の分身」をAIが学習</h3>
+          <p>ただの文字起こしツールではありません。蓄積されたあなたのボイスデータから思考パターンや独自の口調を学習し、あなただけの「思考の分身AI」と対話できるようになります。</p>
         </div>
       </div>
     </div>
@@ -584,8 +581,8 @@ if (!empty($uid)) {
   <section class="section-lp">
     <div class="lp-container">
       <div class="section-title-lp">
-        <span>Training Methods</span>
-        <h2>2つのアプローチで、伝える力を鍛え抜く。</h2>
+        <span>Product Features</span>
+        <h2>録音から蓄積、対話までカバーする言語化システム。</h2>
       </div>
       <div class="method-row">
         <!-- Method 1 -->
@@ -601,13 +598,13 @@ if (!empty($uid)) {
         </div>
         <!-- Method 2 -->
         <div class="method-box accent-teal">
-          <span class="method-tag" style="background: rgba(56, 189, 248, 0.1); color: #38bdf8;">PHYSICAL / SESSION</span>
-          <h3>体を動かし、対面で「声そのもの」を鍛える</h3>
-          <p>呼吸法や姿勢、響く声を身体で覚えるボイトレと、1対1で深く対話する「思考の壁打ち」で、伝わる説得力を身につけます。</p>
+          <span class="method-tag" style="background: rgba(56, 189, 248, 0.1); color: #38bdf8;">AI CHAT & QUIZ</span>
+          <h3>AIの分身と対話し、思考を深める</h3>
+          <p>蓄積したジャーナルをもとに、AIがあなたの思考の分身を構築。さらに過去の投稿をもとにクイズを出題し、あなたの知識の定着やアウトプットを加速します。</p>
           <ul class="method-list">
-            <li><i class="fas fa-check-circle"></i> 姿勢、呼吸法、響く声そのものを鍛える対面ボイトレ</li>
-            <li><i class="fas fa-check-circle"></i> 暗黙知を引き出す1対1の「思考の壁打ち」セッション</li>
-            <li><i class="fas fa-check-circle"></i> プレゼンや会議で説得力を生む伝達メソッドの指導</li>
+            <li><i class="fas fa-check-circle"></i> 過去のジャーナルから学習した「思考の分身AIチャット」</li>
+            <li><i class="fas fa-check-circle"></i> 自分の知識から出題される「思考トレーニングクイズ」</li>
+            <li><i class="fas fa-check-circle"></i> 気づきを促し、アイデアを再発見する対話エンジン</li>
           </ul>
         </div>
       </div>
@@ -621,10 +618,10 @@ if (!empty($uid)) {
     <div class="lp-container">
       <div class="section-title-lp">
         <span>Real Performance</span>
-        <h2>思考資産（ボイスジャーナル）の具体例</h2>
+        <h2>思考資産（ボイスジャーナリング）の具体例</h2>
       </div>
       <p style="text-align: center; color: var(--text-secondary); max-width: 600px; margin: -40px auto 50px; line-height: 1.6;">
-        実際にナユタが日々録音し、AIが自動解析して整理したボイスジャーナル（思考資産）の実物です。話した熱量がそのまま丁寧な記事に変わる体験をご確認ください。
+        実際にナユタが日々録音し、AIが自動解析して整理したボイスジャーナリング（思考資産）の実物です。話した熱量がそのまま丁寧な記事に変わる体験をご確認ください。
       </p>
 
       <div class="vj-demo-list" id="nayuta-vj-list">
@@ -637,65 +634,6 @@ if (!empty($uid)) {
     </div>
   </section>
 
-  <!-- ============================================================
-       PRICING
-       ============================================================ -->
-  <section class="section-lp">
-    <div class="lp-container">
-      <div class="section-title-lp">
-        <span>Pricing</span>
-        <h2>ワークアウト・メニュー</h2>
-      </div>
-      <div class="price-grid">
-        <!-- Plan 1 -->
-        <div class="price-card">
-          <div>
-            <h3>単発体験セッション</h3>
-            <div class="price-amount">5,000円<span> / 1回 (1時間)</span></div>
-            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 20px;">まずは試してみたい方へ</p>
-          </div>
-          <ul class="price-features">
-            <li><i class="fas fa-check"></i> 初回カウンセリング</li>
-            <li><i class="fas fa-check"></i> 頭のもやもやの棚卸し</li>
-            <li><i class="fas fa-check"></i> ボイスジャーナル基礎体験</li>
-            <li><i class="fas fa-check"></i> オンライン受講可能</li>
-          </ul>
-          <a href="https://lin.ee/xxxxxx" target="_blank" class="btn-cta-secondary" style="justify-content: center; width: 100%;">LINEで申し込む</a>
-        </div>
-        <!-- Plan 2 -->
-        <div class="price-card popular">
-          <span class="badge-popular">RECOMMENDED</span>
-          <div>
-            <h3>実践集中セッション</h3>
-            <div class="price-amount">10,000円<span> / 1回 (3時間)</span></div>
-            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 20px;">思考のクセを分析し、基礎体力をつける</p>
-          </div>
-          <ul class="price-features">
-            <li><i class="fas fa-check"></i> 発声 ＆ 滑舌トレーニング</li>
-            <li><i class="fas fa-check"></i> 対面でのフィジカル発声指導可</li>
-            <li><i class="fas fa-check"></i> 論理的思考と言語化の壁打ち</li>
-            <li><i class="fas fa-check"></i> 今後のトレーニング計画設計</li>
-          </ul>
-          <a href="https://lin.ee/xxxxxx" target="_blank" class="btn-cta-primary" style="justify-content: center; width: 100%; font-size: 0.95rem; padding: 12px 0;">LINEで申し込む</a>
-        </div>
-        <!-- Plan 3 -->
-        <div class="price-card">
-          <div>
-            <h3>継続ジムパック</h3>
-            <div class="price-amount">お見積もり<span> / 月5回プログラム</span></div>
-            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 20px;">発信と言語化を完全に習慣化する</p>
-          </div>
-          <ul class="price-features">
-            <li><i class="fas fa-check"></i> 月5回 個別レッスン (対面/オンライン)</li>
-            <li><i class="fas fa-check"></i> 音声解析 Voyagerツール使い放題</li>
-            <li><i class="fas fa-check"></i> 那由他によるVJ記事の添削・指導</li>
-            <li><i class="fas fa-check"></i> 専属伴走パーソナルサポート</li>
-          </ul>
-          <a href="https://lin.ee/xxxxxx" target="_blank" class="btn-cta-secondary" style="justify-content: center; width: 100%;">LINEでお問い合わせ</a>
-        </div>
-      </div>
-    </div>
-  </section>
 
   <!-- ============================================================
        FOOTER

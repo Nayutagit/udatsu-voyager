@@ -323,7 +323,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <label>カテゴリ</label>
       <select name="category" required>
         <option value="">選択してください</option>
-        <option value="ボイスジャーナル" <?php if($post['category'] === 'ボイスジャーナル') echo 'selected'; ?>>ボイスジャーナル</option>
+        <option value="ボイスジャーナリング" <?php if($post['category'] === 'ボイスジャーナル' || $post['category'] === 'ボイスジャーナリング') echo 'selected'; ?>>ボイスジャーナリング</option>
         <option value="インタビュー" <?php if($post['category'] === 'インタビュー') echo 'selected'; ?>>インタビュー</option>
         <option value="告知・お知らせ" <?php if($post['category'] === '告知・お知らせ') echo 'selected'; ?>>告知・お知らせ</option>
         <option value="フリートーク" <?php if($post['category'] === 'フリートーク') echo 'selected'; ?>>フリートーク</option>

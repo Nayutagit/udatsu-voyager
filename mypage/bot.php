@@ -393,7 +393,7 @@ $imagePath = !empty($profile['image']) ? '../uploads/' . $uid . '/' . $profile['
       <div class="empty-chat" id="emptyChat">
         <i class="fas fa-brain"></i>
         <h3>あなたの「思考の分身」</h3>
-        <p>これまでに蓄積したボイスジャーナルをもとに、あなたの哲学や考え方を模倣したAIです。自分自身と対話してみましょう。</p>
+        <p>これまでに蓄積したボイスジャーナリングをもとに、あなたの哲学や考え方を模倣したAIです。自分自身と対話してみましょう。</p>
       </div>
 
     </div>

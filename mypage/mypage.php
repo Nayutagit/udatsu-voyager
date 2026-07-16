@@ -343,7 +343,7 @@ function renderPostCard($post, $authorUid, $uid, $userDir, $isOwnPostsTab = fals
           <i class="fas fa-brain"></i> 思考の分身 AIチャット
         </h4>
         <p style="font-size: 0.78rem; color: var(--text-secondary); line-height: 1.4; margin: 0;">
-          あなたのボイスジャーナル（<?= count($visiblePosts) ?>件）を学習したAIの分身と対話します。
+          あなたのボイスジャーナリング（<?= count($visiblePosts) ?>件）を学習したAIの分身と対話します。
         </p>
       </div>
       <a href="bot.php" class="btn btn-primary btn-sm" style="flex-shrink: 0; padding: 6px 16px; border-radius: var(--radius-pill); font-size: 0.78rem; font-weight: 700; text-decoration: none;">
