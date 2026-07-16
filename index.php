@@ -15,7 +15,7 @@ if (!empty($uid)) {
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>Udatsu | 言語化 ＆ 発声のパーソナルジム</title>
+  <title>Udatsu | 声から始める思考資産プラットフォーム</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <link rel="icon" type="image/png" href="img/favicon.png">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -555,19 +555,19 @@ if (!empty($uid)) {
       <div class="features-grid">
         <!-- Feature 1 -->
         <div class="feature-card">
-          <div class="feature-icon"><i class="fas fa-dumbbell"></i></div>
+          <div class="feature-icon"><i class="fas fa-pen-nib"></i></div>
           <h3>キーボードで悩む時間を、喋る時間に変える。</h3>
           <p>何を書くか何時間も悩むのはやめましょう。歩きながら、思いついた瞬間にスマホに喋るだけ。あなたらしい言葉の癖や温度感を残したまま、読み応えのある記事へと整えます。</p>
         </div>
         <!-- Feature 2 -->
         <div class="feature-card">
-          <div class="feature-icon"><i class="fas fa-heartbeat"></i></div>
-          <h3>一獲千金のノウハウではなく、言語化の習慣</h3>
-          <p>書くための特別なスキルや時間は必要ありません。日々の気づきやアイデアを声で録音するだけで、自動で整理・整文化され、発信可能な記事として蓄積されてしていきます。</p>
+          <div class="feature-icon"><i class="fas fa-calendar-check"></i></div>
+          <h3>簡単だから続けられる、言語化の習慣</h3>
+          <p>書くための特別なスキルや時間は必要ありません。日々の気づきやアイデアを声で録音するだけで、自動で整理・整文化され、発信可能な記事として蓄積されていきます。</p>
         </div>
         <!-- Feature 3 -->
         <div class="feature-card">
-          <div class="feature-icon"><i class="fas fa-user-shield"></i></div>
+          <div class="feature-icon"><i class="fas fa-brain"></i></div>
           <h3>あなたの「思考の分身」をAIが学習</h3>
           <p>ただの文字起こしツールではありません。蓄積されたあなたのボイスデータから思考パターンや独自の口調を学習し、あなただけの「思考の分身AI」と対話できるようになります。</p>
         </div>
@@ -603,7 +603,7 @@ if (!empty($uid)) {
           <p>蓄積したジャーナルをもとに、AIがあなたの思考の分身を構築。さらに過去の投稿をもとにクイズを出題し、あなたの知識の定着やアウトプットを加速します。</p>
           <ul class="method-list">
             <li><i class="fas fa-check-circle"></i> 過去のジャーナルから学習した「思考の分身AIチャット」</li>
-            <li><i class="fas fa-check-circle"></i> 自分の知識から出題される「思考トレーニングクイズ」</li>
+            <li><i class="fas fa-check-circle"></i> 自分の知識から出題される「思考チェッククイズ」</li>
             <li><i class="fas fa-check-circle"></i> 気づきを促し、アイデアを再発見する対話エンジン</li>
           </ul>
         </div>
