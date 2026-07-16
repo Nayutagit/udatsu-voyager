@@ -2,39 +2,34 @@
 header('Content-Type: application/json; charset=UTF-8');
 header("Access-Control-Allow-Origin: *");
 
-$postsFile = __DIR__ . '/../users/GVqz3KfUDqMkhfADbjsyL7yhrXG3_posts.json';
+$samplePosts = [
+    [
+        'id' => 'sample_1',
+        'title' => '散歩をクリエイティブな時間に変える「ボイスジャーナリング」',
+        'summary' => '朝の散歩中にスマホに話しかけるだけで、今日の思考やアイデアを整理。キーボードに向かうことなく、頭の中のモヤモヤをクリアな文章に自動構築する習慣のメリットを紹介します。',
+        'text' => '朝の散歩は、脳の活性化に最適です。その時間を利用してスマホに喋りかけるだけで、今日の思考やアイデアが驚くほどきれいに整理されます。キーボードに向かって「何を書こうか」と悩む時間をゼロにし、頭の中のモヤモヤをそのまま有意義な文章アセットとして蓄積していく習慣をおすすめします。',
+        'date' => '2026-07-16',
+        'category' => 'ボイスジャーナリング',
+        'audio' => ''
+    ],
+    [
+        'id' => 'sample_2',
+        'title' => 'AI分身チャットを活用した「自己対話」による意思決定',
+        'summary' => '蓄積された過去のボイスジャーナリングから、自分の思考パターンを模倣したAI分身を構築。新しい課題に直面したとき、客観的な「自分自身」と対話することで思考のブレを防ぐ新しい意思決定法。',
+        'text' => '蓄積された過去のボイスデータから、あなたの思考パターンや口調を学習した「AIの分身」を作ることができます。客観的な立場になった「過去の自分自身」とチャット対話を行うことで、思考のブレを防ぎ、冷静で迅速な意思決定を行うことが可能になります。',
+        'date' => '2026-07-15',
+        'category' => 'ボイスジャーナリング',
+        'audio' => ''
+    ],
+    [
+        'id' => 'sample_3',
+        'title' => 'アウトプットを自動化する：声のブログ作成フロー',
+        'summary' => '移動時間や作業中の「音声メモ」をGemini AIが自動的にブログ下書きやSNS発信文に構成。文章作成の心理的ハードルを極限まで下げることで、情報発信を自然に習慣化するフロー。',
+        'text' => '通勤時間や家事の合間、ちょっとした移動時間での音声吹き込みを、Gemini AIが一瞬でブログ下書きや要約に変換します。文字を書くという心理的な障壁を完全になくすことで、アウトプットの頻度が圧倒的に向上し、発信活動の習慣化を実現します。',
+        'date' => '2026-07-14',
+        'category' => 'ボイスジャーナリング',
+        'audio' => ''
+    ]
+];
 
-if (!file_exists($postsFile)) {
-    echo json_encode([]);
-    exit;
-}
-
-$raw = file_get_contents($postsFile);
-$posts = json_decode($raw, true) ?: [];
-
-// 有効な（削除済でない）投稿のみを抽出
-$validPosts = [];
-foreach ($posts as $p) {
-    $status = $p['status'] ?? '';
-    if ($status !== '削除済' && !empty($p['summary'])) {
-        $validPosts[] = [
-            'id' => $p['id'] ?? uniqid('vj_'),
-            'title' => $p['title'] ?? '無題',
-            'summary' => $p['summary'] ?? '',
-            'text' => $p['text'] ?? '',
-            'date' => $p['date'] ?? '',
-            'category' => $p['category'] ?? 'ボイスジャーナル',
-            'audio' => !empty($p['audio_file']) ? $p['audio_file'] : ($p['audio'] ?? '')
-        ];
-    }
-}
-
-// 日付の降順でソート
-usort($validPosts, function($a, $b) {
-    return strcmp($b['date'], $a['date']);
-});
-
-// 最新の3件を取得
-$latestPosts = array_slice($validPosts, 0, 3);
-
-echo json_encode($latestPosts, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+echo json_encode($samplePosts, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
