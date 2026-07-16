@@ -228,7 +228,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$limitReached) {
               <h3 style="margin-bottom: 10px;">Click or Drag Audio File</h3>
               <p class="text-muted" style="font-size: 0.9rem;">Supported: m4a, mp3, wav</p>
               <input type="file" name="audioFile" id="audioFile" accept=".m4a,.mp3,.wav" style="display: none;">
-              <div id="file-name" class="text-neon" style="margin-top: 20px; font-weight: 700; min-height: 1.5em;"></div>
+              <div id="file-name" style="margin-top: 15px; font-size: 0.85rem; color: var(--text-muted); min-height: 1.5em; word-break: break-all;"></div>
             </label>
           </div>
 
@@ -317,7 +317,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   function updateFileName(file) {
     if (file) {
-      fileNameDisplay.textContent = `Selected: ${file.name}`;
+      fileNameDisplay.textContent = file.name;
       fileNameDisplay.style.opacity = '1';
     }
   }

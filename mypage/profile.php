@@ -187,7 +187,7 @@ $remainingPosts = max(0, $postLimit - count($visiblePosts));
     <div class="action-row">
       <?php if ($isOwnProfile): ?>
         <a href="edit_profile.php" class="btn btn-primary">プロフィールを編集</a>
-        <a href="../logout.php" class="btn-logout">ログアウト</a>
+        <a href="logout.php" class="btn-logout">ログアウト</a>
       <?php else: ?>
         <?php
           $myFollowing = file_exists($userDir . $uid . '_following.json') ? json_decode(file_get_contents($userDir . $uid . '_following.json'), true) : [];

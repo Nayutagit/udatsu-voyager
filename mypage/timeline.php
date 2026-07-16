@@ -203,7 +203,13 @@ $savedItems = file_exists($savedFile) ? (json_decode(file_get_contents($savedFil
       <!-- Title / Summary -->
       <?php if (!empty($displayCaption)): ?>
       <div class="post-caption collapsed" id="caption-<?= htmlspecialchars($postId) ?>">
-        <strong><?= htmlspecialchars($postTitle) ?></strong><br>
+        <strong><?= htmlspecialchars($postTitle) ?></strong>
+        <?php if (!empty($post['original_title'])): ?>
+          <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px;">
+            <i class="fas fa-file-audio"></i> 元ファイル名: <?= htmlspecialchars($post['original_title']) ?>
+          </div>
+        <?php endif; ?>
+        <br>
         <?= nl2br(htmlspecialchars($displayCaption)) ?>
       </div>
       <?php if ($hasFullText): ?>

@@ -117,7 +117,7 @@ unset($_SESSION['pending_plan']);
       反映までに時間がかかる場合があります。<br>
       24時間経っても反映されない場合は、お問い合わせください。
     </div>
-    <a class="btn" href="../logout.php">再ログインする</a>
+    <a class="btn" href="logout.php">再ログインする</a>
     <div class="footer">
       Udatsu Voyager
     </div>

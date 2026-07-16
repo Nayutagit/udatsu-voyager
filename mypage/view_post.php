@@ -216,6 +216,12 @@ $imagePath   = !empty($profile['image']) ? '../uploads/' . $targetUid . '/' . $p
     <?php endif; ?>
 
     <div id="view-title" class="vp-title"><?= htmlspecialchars($title) ?></div>
+    <?php $originalTitle = $post['original_title'] ?? ''; ?>
+    <?php if (!empty($originalTitle)): ?>
+      <div id="view-original-title" style="font-size: 0.8rem; color: var(--text-muted); margin-top: -4px; margin-bottom: 8px;">
+        <i class="fas fa-file-audio"></i> 元ファイル名: <span id="view-original-title-text"><?= htmlspecialchars($originalTitle) ?></span>
+      </div>
+    <?php endif; ?>
     <input id="edit-title" type="text" value="<?= htmlspecialchars($title) ?>" class="form-control" style="display:none;margin-bottom:8px;font-weight:700;">
 
     <div class="vp-meta">
@@ -377,6 +383,8 @@ function fmtTime(sec) {
 /* Edit mode */
 function toggleEdit() {
   document.getElementById('view-title').style.display = 'none';
+  const vot = document.getElementById('view-original-title');
+  if (vot) vot.style.display = 'none';
   document.getElementById('edit-title').style.display = 'block';
   document.getElementById('view-text').style.display  = 'none';
   document.getElementById('edit-text').style.display  = 'block';
@@ -385,6 +393,8 @@ function toggleEdit() {
 }
 function cancelEdit() {
   document.getElementById('view-title').style.display = 'block';
+  const vot = document.getElementById('view-original-title');
+  if (vot) vot.style.display = 'block';
   document.getElementById('edit-title').style.display = 'none';
   document.getElementById('view-text').style.display  = 'block';
   document.getElementById('edit-text').style.display  = 'none';
