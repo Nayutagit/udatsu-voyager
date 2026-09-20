@@ -13,7 +13,7 @@
     ],
     "preparation": "話したい場面を一つ、思い浮かべてお越しください。",
     "theme": "voice",
-    "price": 2500,
+    "price": 4400,
     "minutes": 60,
     "capacity": 6,
     "kind": "group"
@@ -32,7 +32,7 @@
     ],
     "preparation": "インターネットにつながるパソコンと、利用するAIのアカウント。",
     "theme": "ai",
-    "price": 2500,
+    "price": 4400,
     "minutes": 60,
     "capacity": 6,
     "kind": "group"
@@ -51,7 +51,7 @@
     ],
     "preparation": "普段教えている内容を、一つご用意ください。",
     "theme": "work",
-    "price": 2500,
+    "price": 4400,
     "minutes": 60,
     "capacity": 6,
     "kind": "group"
@@ -70,7 +70,7 @@
     ],
     "preparation": "普段のレッスンで使う説明をご用意ください。",
     "theme": "work",
-    "price": 2500,
+    "price": 4400,
     "minutes": 60,
     "capacity": 6,
     "kind": "group"
@@ -89,7 +89,7 @@
     ],
     "preparation": "特別な準備は不要です。",
     "theme": "voice",
-    "price": 2500,
+    "price": 4400,
     "minutes": 60,
     "capacity": 6,
     "kind": "group"
@@ -108,7 +108,7 @@
     ],
     "preparation": "個人名・社外秘を伏せた相談場面を一つ。",
     "theme": "work",
-    "price": 2500,
+    "price": 4400,
     "minutes": 60,
     "capacity": 6,
     "kind": "group"
@@ -127,7 +127,7 @@
     ],
     "preparation": "マイク付きパソコン、AIアカウント、作りたいもののアイデア。",
     "theme": "ai",
-    "price": 2500,
+    "price": 4400,
     "minutes": 60,
     "capacity": 6,
     "kind": "group"
@@ -146,7 +146,7 @@
     ],
     "preparation": "取り組みたい仕事を一つ。秘密の資料は持ち込まないでください。",
     "theme": "ai",
-    "price": 2500,
+    "price": 4400,
     "minutes": 60,
     "capacity": 6,
     "kind": "group"

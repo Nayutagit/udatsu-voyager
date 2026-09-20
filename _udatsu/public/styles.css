@@ -304,3 +304,6 @@ dialog h2{font-size:21px}
 .button{transition:none}
 }
 
+
+.hp-field{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
+.button.line-button{background:#06C755;color:white;margin:14px 0 6px}

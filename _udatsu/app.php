@@ -3,7 +3,7 @@ declare(strict_types=1);
 require_once __DIR__.'/lib.php';
 ini_set('display_errors','0');
 header('X-Content-Type-Options: nosniff');header('Referrer-Policy: no-referrer');header('X-Frame-Options: DENY');header('Cache-Control: no-store');
-header("Content-Security-Policy: default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'");
+header("Content-Security-Policy: default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; connect-src 'self' https://formspree.io; frame-ancestors 'none'; base-uri 'none'; form-action 'self' https://formspree.io");
 function respond(mixed $data,int $status=200): never {http_response_code($status);header('Content-Type: application/json; charset=utf-8');echo json_encode($data,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);exit;}
 function input(): array {$raw=file_get_contents('php://input',false,null,0,128001);if(strlen($raw)>128000)throw new UError('送信内容が大きすぎます。',413);$d=json_decode($raw,true,512,JSON_THROW_ON_ERROR);if(!is_array($d))throw new UError('入力内容をご確認ください。',400);return $d;}
 function admin(array $c): void {if(!$c['admin']||!hash_equals($c['admin'],preg_replace('/^Bearer /','',$_SERVER['HTTP_AUTHORIZATION']??$_SERVER['REDIRECT_HTTP_AUTHORIZATION']??'')))throw new UError('管理トークンを確認してください。',401);}

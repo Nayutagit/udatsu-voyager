@@ -18,7 +18,7 @@ dialog.addEventListener('click',e=>{if(e.target===dialog){const r=dialog.getBoun
 function errorMessage(error) { return `<p class="error" role="alert">${escape(error.message || error)}</p>`; }
 function courseCard(c) {
   const symbol = {voice:'“ ”',ai:'✳',work:'↗'}[c.theme];
-  return `<article class="course-card"><div class="card-art ${escape(c.theme)}"><span class="tag">${escape(c.category)}</span><span class="card-art-symbol" aria-hidden="true">${symbol}</span></div><div class="card-content"><p class="card-eyebrow">${escape(c.eyebrow)}</p><h3>${escape(c.title)}</h3><p class="card-description">${escape(c.description)}</p><div class="card-meta"><span>${c.minutes}分</span><span>定員${c.capacity}名</span><span>1回完結</span></div><div class="card-bottom"><strong class="card-price">2,500<small>円 / 人</small></strong><button class="card-button" data-course="${c.id}" aria-label="${escape(c.title)}の内容と日時を見る">内容と日時を見る ↗</button></div></div></article>`;
+  return `<article class="course-card"><div class="card-art ${escape(c.theme)}"><span class="tag">${escape(c.category)}</span><span class="card-art-symbol" aria-hidden="true">${symbol}</span></div><div class="card-content"><p class="card-eyebrow">${escape(c.eyebrow)}</p><h3>${escape(c.title)}</h3><p class="card-description">${escape(c.description)}</p><div class="card-meta"><span>${c.minutes}分</span><span>定員${c.capacity}名</span><span>1回完結</span></div><div class="card-bottom"><strong class="card-price">4,400<small>円 / 人</small></strong><button class="card-button" data-course="${c.id}" aria-label="${escape(c.title)}について無料で問い合わせる">無料で問い合わせる ↗</button></div></div></article>`;
 }
 function renderCourses() {
   $('#course-grid').innerHTML = data.courses.filter(c=>c.kind==='group'&&(filter==='all'||c.category===filter)).map(courseCard).join('');
@@ -57,7 +57,26 @@ for(const mode of ['open','available']) $('#show-'+mode).onclick=()=>{
   for(const other of ['open','available']){$('#show-'+other).classList.toggle('active',other===mode);$('#show-'+other).setAttribute('aria-pressed',other===mode);}
   renderSchedule();
 };
+const INQUIRY_ONLY = true; // true: 予約・決済を止めて無料お問い合わせのみ受付。false で予約・決済に戻る
+const LINE_URL = 'https://lin.ee/QPJ3dva', FORM_URL = 'https://formspree.io/f/xanzkprd';
+function showInquiry(courseId) {
+  const c = data.courses.find(x=>x.id===courseId), topic = c ? c.title : 'Udatsuについて';
+  open(`<h2 id="dialog-title">無料でお問い合わせ</h2><p class="dialog-meta">${escape(topic)}</p><p>開催日程や内容など、気になることをお気軽にどうぞ。お問い合わせは無料です。</p><a class="button line-button wide" href="${LINE_URL}" target="_blank" rel="noopener">LINEで問い合わせる ↗</a><form id="inquiry-form"><input type="hidden" name="_subject" value="Udatsu（udatsuageteko.com）からのお問い合わせ"><input type="hidden" name="topic" value="${escape(topic)}"><input class="hp-field" type="text" name="_gotcha" tabindex="-1" autocomplete="off"><label class="form-field">お名前<input name="name" required maxlength="80" autocomplete="name"></label><label class="form-field">メールアドレス<input type="email" name="email" required maxlength="200" autocomplete="email"></label><label class="form-field">メッセージ<textarea name="message" rows="5" required maxlength="3000"></textarea></label><button class="button dark wide" type="submit">送信する</button><p class="dialog-meta" id="inquiry-status" role="status"></p><p class="dialog-meta">いただいた内容は、お問い合わせへの返信のためだけに使います（受信にはFormspreeを利用しています）。</p></form>`);
+  $('#inquiry-form').addEventListener('submit', async event => {
+    event.preventDefault();
+    const form = event.currentTarget, button = form.querySelector('[type=submit]'), status = $('#inquiry-status');
+    button.disabled = true; status.textContent = '送信しています…';
+    try {
+      const r = await fetch(FORM_URL, {method:'POST', headers:{Accept:'application/json'}, body:new FormData(form)});
+      if (!r.ok) throw new Error('send failed');
+      form.innerHTML = '<h3>送信しました。ありがとうございます。</h3><p>内容を確認して、メールまたはLINEでご連絡します。</p>';
+    } catch (e) {
+      button.disabled = false; status.textContent = '送信できませんでした。時間をおくか、LINEからお問い合わせください。';
+    }
+  });
+}
 async function showCourse(courseId, preselected) {
+  if (INQUIRY_ONLY) return showInquiry(courseId);
   currentCourse=data.courses.find(c=>c.id===courseId);
   const c=currentCourse;
   open(`<h2 id="dialog-title">${escape(c.title)}</h2><p class="dialog-meta">${c.minutes}分 / ${yen(c.price)} ${c.kind==='group'?' / 定員'+c.capacity+'名':' / 1対1'}</p><p>${escape(c.description)}</p><div class="outcome"><strong>持ち帰れるもの</strong><br>${escape(c.outcome)}</div><h3>この講座でやること</h3><ol>${c.agenda.map(a=>`<li>${escape(a)}</li>`).join('')}</ol><h3>準備するもの</h3><p>${escape(c.preparation)}</p><h3>参加する日時を選ぶ</h3><p class="quiet">日本時間（JST） / 開始${data.leadHours}時間前まで受付</p><div id="course-slots">空き状況を確認しています…</div>`);
@@ -103,7 +122,7 @@ async function showBooking(bookingId, first=true) {
 }
 $('#consult-button').onclick=()=>showCourse('consultation');
 $('#privacy-button').onclick=()=>open(`<h2 id="dialog-title">個人情報の取り扱い</h2><p class="policy-copy">${escape(data.privacy)}</p>`);
-$('#legal-button').onclick=()=>open(`<h2 id="dialog-title">販売条件・特定商取引法に基づく表記</h2>${data.mode!=='live'?'<p class="booking-status">公開準備中の画面です。販売者情報と条件を確定してから本番の受付を開始します。</p>':''}<dl class="payment-summary"><dt>販売事業者</dt><dd>${escape(data.seller.name||'公開前に設定')}</dd><dt>所在地</dt><dd>${escape(data.seller.address||'公開前に設定')}</dd><dt>電話番号</dt><dd>${escape(data.seller.phone||'公開前に設定')}</dd><dt>お問い合わせ</dt><dd>${escape(data.supportEmail||'公開前に設定')}</dd><dt>販売価格</dt><dd>公開講座：2,500円 / 人<br>個別相談：4,400円 / 人<br>各60分・1回分のお支払い総額</dd><dt>その他の費用</dt><dd>オンライン受講時の通信費、対面会場までの交通費は受講者負担です。</dd><dt>支払い方法・時期</dt><dd>Stripeを通じたカード決済。申込時に支払い。</dd><dt>提供時期</dt><dd>お申し込み時に選んだ日時。</dd><dt>キャンセル</dt><dd class="policy-copy">${escape(data.cancellation)}</dd></dl>`);
+$('#legal-button').onclick=()=>open(`<h2 id="dialog-title">販売条件・特定商取引法に基づく表記</h2>${data.mode!=='live'?'<p class="booking-status">公開準備中の画面です。販売者情報と条件を確定してから本番の受付を開始します。</p>':''}<dl class="payment-summary"><dt>販売事業者</dt><dd>${escape(data.seller.name||'公開前に設定')}</dd><dt>所在地</dt><dd>${escape(data.seller.address||'公開前に設定')}</dd><dt>電話番号</dt><dd>${escape(data.seller.phone||'公開前に設定')}</dd><dt>お問い合わせ</dt><dd>${escape(data.supportEmail||'公開前に設定')}</dd><dt>販売価格</dt><dd>公開講座・個別相談：一律4,400円 / 人<br>各60分・1回分のお支払い総額</dd><dt>その他の費用</dt><dd>オンライン受講時の通信費、対面会場までの交通費は受講者負担です。</dd><dt>支払い方法・時期</dt><dd>Stripeを通じたカード決済。申込時に支払い。</dd><dt>提供時期</dt><dd>お申し込み時に選んだ日時。</dd><dt>キャンセル</dt><dd class="policy-copy">${escape(data.cancellation)}</dd></dl>`);
 async function init(){
   try{
     data=await api('/api/catalog');
