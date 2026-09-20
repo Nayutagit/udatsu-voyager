@@ -1,27 +1,36 @@
-name: Deploy to XServer
+name: Udatsu Xserver (manual, domain-verified)
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
+    inputs:
+      action:
+        description: checkは接続確認のみ、deployは対象ドメイン確認とバックアップ後に公開
+        type: choice
+        options:
+          - check
+          - deploy
+        default: check
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: udatsu-xserver-deploy
+  cancel-in-progress: false
 
 jobs:
-  web-deploy:
-    name: 🎉 Deploy
+  deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: 🚚 Get latest code
-        uses: actions/checkout@v4
-
-      - name: 📂 Sync files
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: ./
-          server-dir: ./
-          protocol: ftp
-          exclude: |
-            **/.git*
-            **/.git*/**
+      - uses: actions/checkout@v4
+      - name: Test PHP booking rules
+        run: php _udatsu/test.php
+      - name: Check or deploy only udatsuageteko.com
+        env:
+          XSERVER_FTP_HOST: ${{ secrets.FTP_SERVER }}
+          XSERVER_FTP_USER: ${{ secrets.FTP_USERNAME }}
+          XSERVER_FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          XSERVER_FTP_ROOT: ${{ vars.UDATSU_FTP_ROOT }}
+          DEPLOY_ACTION: ${{ inputs.action }}
+        run: python3 _udatsu/tools/deploy.py --"$DEPLOY_ACTION"

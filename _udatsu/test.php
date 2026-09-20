@@ -1,0 +1,32 @@
+<?php
+declare(strict_types=1);
+require __DIR__.'/lib.php';
+$passed=0;
+function check(bool $value,string $message='assertion failed'): void {if(!$value)throw new RuntimeException($message);}
+function rejects(callable $fn,string $part): void {try{$fn();}catch(UError $e){check(str_contains($e->getMessage(),$part),$e->getMessage());return;}throw new RuntimeException('拒否されませんでした：'.$part);}
+function fixture(): array {$s=new UStore(':memory:');foreach($s->catalog as &$c)if($c['kind']==='group')$c['capacity']=2;unset($c);$slot=$s->addSlot(['start'=>iso(time()+7*86400),'end'=>iso(time()+7*86400+3600),'format'=>'オンライン','location'=>'テスト会場']);return [$s,$slot];}
+function reserve(UStore $s,array $slot,string $course='speaking',string $email='one@example.com'): array {return $s->reserve(['slotId'=>$slot['id'],'courseId'=>$course,'name'=>'テスト受講者','email'=>$email,'policy'=>'テスト条件']);}
+function session(array $o,array $extra=[]): array {return array_replace(['id'=>'cs_test_'.$o['id'],'client_reference_id'=>$o['id'],'metadata'=>['order_id'=>$o['id']],'amount_total'=>$o['amount'],'currency'=>'jpy','payment_status'=>'paid','status'=>'complete','livemode'=>false],$extra);}
+function run(string $name,callable $fn): void {global $passed;$fn();$passed++;echo 'PASS '.$name."\n";}
+run('最初の手続き中は同時の別講座・同講座を拒否',function(){[$s,$slot]=fixture();reserve($s,$slot);rejects(fn()=>reserve($s,$slot,'ai-first','two@example.com'),'別の講座');rejects(fn()=>reserve($s,$slot,'speaking','two@example.com'),'最初の方');});
+run('支払後の相乗りと定員',function(){[$s,$slot]=fixture();$o=reserve($s,$slot);$s->settle(session($o),false);reserve($s,$slot,'speaking','two@example.com');rejects(fn()=>reserve($s,$slot,'speaking','three@example.com'),'満席');check($s->slot($slot['id'])['fixed']===1);});
+run('個別相談は60分4,400円・1名限定',function(){[$s,$slot]=fixture();$o=reserve($s,$slot,'consultation');check($o['amount']===4400&&$s->course('consultation')['minutes']===60);$s->settle(session($o),false);rejects(fn()=>reserve($s,$slot,'consultation','two@example.com'),'満席');});
+run('期限終了で未確定テーマを解放',function(){[$s,$slot]=fixture();$o=reserve($s,$slot);$s->release($o['id']);check($s->slot($slot['id'])['course_id']===null);reserve($s,$slot,'ai-first');});
+run('後続の期限終了と遅い通知で開催を消さない',function(){[$s,$slot]=fixture();$o=reserve($s,$slot);$s->settle(session($o),false);$next=reserve($s,$slot,'speaking','two@example.com');$s->release($next['id']);$s->release($o['id']);check($s->slot($slot['id'])['course_id']==='speaking'&&$s->order($o['id'])['status']==='paid');});
+run('金額・通貨・モード・参照ID改ざんを拒否',function(){[$s,$slot]=fixture();$o=reserve($s,$slot);foreach([['amount_total'=>1],['currency'=>'usd'],['livemode'=>true],['metadata'=>['order_id'=>'other']],['payment_status'=>'unpaid']] as $extra)rejects(fn()=>$s->settle(session($o,$extra),false),'一致');check($s->order($o['id'])['status']==='pending');});
+run('Webhook再送でも参加人数とジョブは一度だけ',function(){[$s,$slot]=fixture();$o=reserve($s,$slot);$s->settle(session($o),false);$s->settle(session($o),false);check($s->counts($slot['id'])['paid']===1);check($s->q('SELECT count(*) FROM jobs')->fetchColumn()===2);});
+run('重なる枠・過去の枠・60分未満を拒否',function(){[$s,$slot]=fixture();$input=['start'=>$slot['start'],'end'=>$slot['end'],'format'=>'オンライン','location'=>'会場'];rejects(fn()=>$s->addSlot($input),'重なって');rejects(fn()=>$s->addSlot(array_replace($input,['start'=>'2000-01-01','end'=>'2000-01-02'])),'未来');rejects(fn()=>$s->addSlot(array_replace($input,['end'=>iso(strtotime($slot['start'])+1800)])),'60分');});
+run('重複メール申込・申込済み枠の閉鎖を拒否',function(){[$s,$slot]=fixture();$o=reserve($s,$slot);$s->settle(session($o),false);rejects(fn()=>reserve($s,$slot,'speaking','ONE@example.com'),'メールアドレス');rejects(fn()=>$s->closeSlot($slot['id']),'申込者');});
+run('署名改ざんと古い署名を拒否',function(){$time=time();$body='{"type":"checkout.session.completed"}';$secret='whsec_test';$sign='t='.$time.',v1='.hash_hmac('sha256',$time.'.'.$body,$secret);check(webhook($body,$sign,$secret)['type']==='checkout.session.completed');rejects(fn()=>webhook('{}',$sign,$secret),'一致');rejects(fn()=>webhook($body,$sign,$secret,$time+301),'期限');});
+run('公開一覧に参加者や参加URLを出さない',function(){[$s,$slot]=fixture();$s->q('UPDATE slots SET meeting_url=? WHERE id=?',['https://example.com/secret',$slot['id']]);$o=reserve($s,$slot);$s->settle(session($o),false);$result=json_encode($s->publicSlot($s->slot($slot['id'])));check(!str_contains($result,'secret')&&!str_contains($result,'one@example.com')&&!str_contains($result,'name'));});
+class FakeStripe extends UIntegrations {public array $sessions=[];public bool $fail=false;public array $requestData=[];
+ public function createCheckout(array $o,array $s,array $course):array {if($this->fail)throw new UError('network',503);$r=session($o,['status'=>'open','payment_status'=>'unpaid','url'=>'https://checkout.stripe.com/test']);$this->sessions[$r['id']]=$r;return $r;}
+ public function getCheckout(string $id):array{return $this->sessions[$id];}
+ public function createEvent(array $s,array $c):void{}
+ public function email(array $o,array $s,array $c):void{}
+}
+run('決済の通信失敗では仮押さえを保持',function(){[$s,$slot]=fixture();$o=reserve($s,$slot);$i=new FakeStripe(['mode'=>'test']);$i->fail=true;rejects(fn()=>ensureCheckout($s,$i,$o),'network');check($s->order($o['id'])['status']==='pending');});
+run('API再照合で決済完了・期限切れを回復',function(){[$s,$slot]=fixture();$o=reserve($s,$slot);$i=new FakeStripe(['mode'=>'test']);$r=ensureCheckout($s,$i,$o);$i->sessions[$r['id']]=session($o);reconcile($s,$i,$s->order($o['id']));check($s->order($o['id'])['status']==='paid');$next=reserve($s,$slot,'speaking','two@example.com');$r=ensureCheckout($s,$i,$next);$i->sessions[$r['id']]['status']='expired';tick($s,$i);check($s->order($next['id'])['status']==='expired');});
+run('体験ではGoogleに通信せずテストでは予定を書かない',function(){$i=new UIntegrations(['mode'=>'demo']);check($i->busy('a','b')===[]);$i->createEvent([],[]);$i->c['mode']='test';$i->createEvent([],[]);});
+run('価格とStripe冪等キーをサーバーが確定',function(){[$s,$slot]=fixture();$o=reserve($s,$slot);$i=new class(['mode'=>'test','base'=>'https://example.com']) extends UIntegrations {public array $sent=[];public function stripe(string $path,?array $form=null,?string $key=null):array{$this->sent=[$path,$form,$key];return [];} };$i->createCheckout($o,$slot,$s->course('speaking'));check($i->sent[1]['line_items'][0]['price_data']['unit_amount']===2500);check($i->sent[1]['payment_method_types']===['card']);check($i->sent[2]==='udatsu-checkout-'.$o['id']);});
+echo json_encode(['passed'=>$passed,'failed'=>0])."\n";
