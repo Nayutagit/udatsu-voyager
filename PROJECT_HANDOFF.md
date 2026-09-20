@@ -40,8 +40,26 @@
 - https://udatsuageteko.com/ は 200・証明書検証OK。発行元 Let's Encrypt、有効期間 2026-09-20〜2026-12-19（自動更新の有無は未確認）。http は https へ301転送。
 - www.udatsuageteko.com は名前解決できない（DNS未設定）。wwwで開く導線が必要なら追加の判断が要る。
 
+## 2026-09-20 22:57 Stripe MCP接続（Claude Code）
+- Stripe公式MCP（https://mcp.stripe.com）をuserスコープで登録し、OAuth認証済み（権限は「読み取り」のみ）。`claude mcp list` で Connected。
+- ツールの読み込みにはClaude Codeの開き直しが必要。開き直し後にテスト商品・価格（4,400円）・Webhookの状態を確認する。
+- 商品作成など書き込みが要る場合は、その時に認証をやり直して権限を上げる。Webhook署名シークレットはMCPで取れない可能性があり、その場合はダッシュボードから本人が `private/.env` へ入れる。
+
+## 2026-09-20 夜の現在地（Claude Codeが記録）
+- 本番 https://udatsuageteko.com/ に公開済み（モード preview）。講座10件（「声からサイトを作る！バイブコーディング講座」を追加。説明文はClaudeの下書きで本人の確認待ち）。サーバー側バックアップ最新： `_udatsu_backups/20260920T134652Z-29e8be`。
+- 料金は一律4,400円。基本オンラインを明記。各講義カードに「受講予約」→月カレンダー→同意→送信（4クリック）。決済未接続の間は「予約リクエスト」（Formspree共通フォーム→contact@nyct.jp に着信確認済み、料金なし・枠確保なし）。`app.js` の `BOOKING_MODE`（inquiry / request / live）で切替。
+- 管理画面（/admin）：全幅カレンダーで枠を選んで登録、講師選択（初期は秋山 那由他、追加可）、受け付ける講義の絞り込み（初期は全部）、参考カレンダー（HAI）を斜線で重ね表示。テスト17件合格。ログイン後の実画面は本人がまだ確認していない部分あり。
+- 本番の /api/slots は空。カレンダーは「受付可能な日程なし＋問い合わせリンク」を表示する。
+- Git：ブランチ codex/udatsu-public-classes は b8a5c32 までpush済み。mainは未変更。
+- 公開スクリプト deploy.py は「講座数はローカルcatalogと一致」「管理API（busy/instructors）の通し」に修正済み。
+- 未検証：予約リクエストの最終送信（チェック→送信）を実際に押した確認、スマホ表示、確定メール・カレンダー予定への講師名記載（未実装）。
+- OAuth同意画面が「テスト中」のため、Googleのトークンは約7日で失効する可能性。
+
 ## 次の一手
-SSLは完了。最優先はStripeテストキー／Webhook、Googleカレンダー連携（GOOGLE_BOOKING_CALENDAR_ID）、メール、Cron。Stripeのキーは本人に用意してもらう。
+**本番の管理画面（https://udatsuageteko.com/admin）にログインできるようにする。**
+- 今は本番サーバーに管理トークン（ADMIN_TOKEN）が未設定で、ログインできない（401）。
+- 案：Claude Codeが、既存のFTPS接続で本番の `_udatsu/private/.env` に、ランダムな管理トークンを置く（既存 `.env` があれば上書きせず停止）。値は画面・チャットに出さず、Mac内 `_udatsu/private/production_admin_token.txt` に保存。**本人の「やって」待ち**（サーバー設定の新規作成のため確認中）。
+- そのあと：本番管理画面でカレンダーから募集枠を登録 → Googleカレンダー連携（本番の .env に GOOGLE_* を手入力。GOOGLE_BOOKING_CALENDAR_ID・GOOGLE_REFERENCE_CALENDAR_IDS=akiyama@hiroshimai.co.jp も）→ Stripe → メール・Cron。
 
 ## 引き継ぎ時の注意
 - `_udatsu/README.md` のDNS・FTP未接続という記載は古い。現状は本メモを優先する。技術手順はREADMEを参照。
