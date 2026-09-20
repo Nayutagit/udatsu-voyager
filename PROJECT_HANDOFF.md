@@ -36,8 +36,12 @@
 - 表示は「不在」と「予定あり」のみ。「不在」にはUdatsuに使える時間も含まれるため、アプリの自動除外（GOOGLE_BUSY_CALENDAR_IDS）にHAIは入れず primary のみとする。枠の提案時にHAIの空きを参照し、「不在」は本人に確認する。
 - 私（Claude Code）のGoogleカレンダー連携はHAI側アカウントに接続されており、個人側(nytaffi)は未接続。HAIの他メンバーのカレンダーは見ない。
 
+## 2026-09-20 SSL検証（Claude Code）
+- https://udatsuageteko.com/ は 200・証明書検証OK。発行元 Let's Encrypt、有効期間 2026-09-20〜2026-12-19（自動更新の有無は未確認）。http は https へ301転送。
+- www.udatsuageteko.com は名前解決できない（DNS未設定）。wwwで開く導線が必要なら追加の判断が要る。
+
 ## 次の一手
-本人のSSL操作結果を確認し、HTTPS証明書を検証する。その後、既存ファイルの退避と公開先照合を行う公開スクリプトでpreview公開へ進む。
+SSLは完了。最優先はStripeテストキー／Webhook、Googleカレンダー連携（GOOGLE_BOOKING_CALENDAR_ID）、メール、Cron。Stripeのキーは本人に用意してもらう。
 
 ## 引き継ぎ時の注意
 - `_udatsu/README.md` のDNS・FTP未接続という記載は古い。現状は本メモを優先する。技術手順はREADMEを参照。

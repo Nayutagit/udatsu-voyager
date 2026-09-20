@@ -36,7 +36,6 @@ try {
     }
     if($route==='/api/catalog'&&$method==='GET')respond(['courses'=>$s->catalog,'mode'=>$c['mode'],'leadHours'=>$c['lead'],'calendarConnected'=>$c['googleReady'],'cancellation'=>$c['cancellation'],'privacy'=>$c['privacy'],'supportEmail'=>$c['support'],'seller'=>['name'=>$c['seller'],'address'=>$c['address'],'phone'=>$c['phone']],'format'=>$c['format']]);
     if($route==='/api/slots'&&$method==='GET'){
-        if($c['mode']==='preview')respond(['slots'=>[]]);
         $slots=array_values(array_filter($s->slots(),fn($slot)=>strtotime($slot['start'])>=time()+$c['lead']*3600));
         if(!$slots)respond(['slots'=>[]]);
         $ends=array_column($slots,'end');$busy=$i->busy($slots[0]['start'],max($ends));

@@ -18,7 +18,7 @@ dialog.addEventListener('click',e=>{if(e.target===dialog){const r=dialog.getBoun
 function errorMessage(error) { return `<p class="error" role="alert">${escape(error.message || error)}</p>`; }
 function courseCard(c) {
   const symbol = {voice:'“ ”',ai:'✳',work:'↗'}[c.theme];
-  return `<article class="course-card"><div class="card-art ${escape(c.theme)}"><span class="tag">${escape(c.category)}</span><span class="card-art-symbol" aria-hidden="true">${symbol}</span></div><div class="card-content"><p class="card-eyebrow">${escape(c.eyebrow)}</p><h3>${escape(c.title)}</h3><p class="card-description">${escape(c.description)}</p><div class="card-meta"><span>${c.minutes}分</span><span>オンライン</span><span>定員${c.capacity}名</span><span>1回完結</span></div><div class="card-bottom"><strong class="card-price">4,400<small>円 / 人</small></strong><button class="card-button" data-course="${c.id}" aria-label="${escape(c.title)}について無料で問い合わせる">無料で問い合わせる ↗</button></div></div></article>`;
+  return `<article class="course-card"><div class="card-art ${escape(c.theme)}"><span class="tag">${escape(c.category)}</span><span class="card-art-symbol" aria-hidden="true">${symbol}</span></div><div class="card-content"><p class="card-eyebrow">${escape(c.eyebrow)}</p><h3>${escape(c.title)}</h3><p class="card-description">${escape(c.description)}</p><div class="card-meta"><span>${c.minutes}分</span><span>オンライン</span><span>定員${c.capacity}名</span><span>1回完結</span></div><div class="card-bottom"><strong class="card-price">4,400<small>円 / 人</small></strong><button class="card-button" data-course="${c.id}" aria-label="${escape(c.title)}の受講予約">${BOOKING_MODE==='inquiry'?'無料で問い合わせる':'受講予約'} ↗</button></div></div></article>`;
 }
 function renderCourses() {
   $('#course-grid').innerHTML = data.courses.filter(c=>c.kind==='group'&&(filter==='all'||c.category===filter)).map(courseCard).join('');
@@ -45,7 +45,7 @@ function renderSchedule() {
   }).join('');
   list.querySelectorAll('[data-slot]').forEach(b=>b.onclick=()=>{
     const slot=slots.find(s=>s.id===b.dataset.slot);
-    if(slot.courseId){currentCourse=data.courses.find(c=>c.id===slot.courseId);confirmBooking(slot);}
+    if(slot.courseId){currentCourse=data.courses.find(c=>c.id===slot.courseId);chooseSlot(slot);}
     else{
       open(`<h2 id="dialog-title">${date(slot.start)} ${time(slot.start)}<br>何を学びますか？</h2><p>最初の方のお支払いで、この時間の講座が決まります。</p><div class="slot-options">${data.courses.filter(c=>Date.parse(slot.end)-Date.parse(slot.start)>=c.minutes*60000&&(!slot.allowed?.length||slot.allowed.includes(c.id))).map(c=>`<button class="slot-option" data-pick="${c.id}"><span>${escape(c.title)}</span><small>${c.minutes}分 / ${yen(c.price)}${c.kind==='private'?' / 1対1':''}</small></button>`).join('')}</div>`);
       body.querySelectorAll('[data-pick]').forEach(button=>button.onclick=()=>{currentCourse=data.courses.find(c=>c.id===button.dataset.pick);showCourse(currentCourse.id,slot);});
@@ -57,7 +57,7 @@ for(const mode of ['open','available']) $('#show-'+mode).onclick=()=>{
   for(const other of ['open','available']){$('#show-'+other).classList.toggle('active',other===mode);$('#show-'+other).setAttribute('aria-pressed',other===mode);}
   renderSchedule();
 };
-const INQUIRY_ONLY = true; // true: 予約・決済を止めて無料お問い合わせのみ受付。false で予約・決済に戻る
+const BOOKING_MODE = 'request'; // 'inquiry'=問い合わせのみ / 'request'=決済なしの予約リクエスト / 'live'=Stripe決済まで
 const LINE_URL = 'https://lin.ee/QPJ3dva', FORM_URL = 'https://formspree.io/f/xanzkprd';
 function showInquiry(courseId) {
   const c = data.courses.find(x=>x.id===courseId), topic = c ? c.title : 'Udatsuについて';
@@ -76,17 +76,61 @@ function showInquiry(courseId) {
   });
 }
 async function showCourse(courseId, preselected) {
-  if (INQUIRY_ONLY) return showInquiry(courseId);
+  if (BOOKING_MODE==='inquiry') return showInquiry(courseId);
   currentCourse=data.courses.find(c=>c.id===courseId);
   const c=currentCourse;
-  open(`<h2 id="dialog-title">${escape(c.title)}</h2><p class="dialog-meta">${c.minutes}分 / ${yen(c.price)} ${c.kind==='group'?' / 定員'+c.capacity+'名':' / 1対1'}</p><p>${escape(c.description)}</p><div class="outcome"><strong>持ち帰れるもの</strong><br>${escape(c.outcome)}</div><h3>この講座でやること</h3><ol>${c.agenda.map(a=>`<li>${escape(a)}</li>`).join('')}</ol><h3>準備するもの</h3><p>${escape(c.preparation)}</p><h3>参加する日時を選ぶ</h3><p class="quiet">日本時間（JST） / 開始${data.leadHours}時間前まで受付</p><div id="course-slots">空き状況を確認しています…</div>`);
+  open(`<h2 id="dialog-title">${escape(c.title)}</h2><p class="dialog-meta">${c.minutes}分 / ${yen(c.price)}${c.kind==='group'?' / 定員'+c.capacity+'名':' / 1対1'} / オンライン</p><p>${escape(c.description)}</p><h3>参加する日時を選ぶ</h3><p class="quiet">日本時間（JST） / 開始${data.leadHours}時間前まで受付</p><div id="course-slots">空き状況を確認しています…</div><details class="course-details"><summary>この講座の内容・準備するもの</summary><div class="outcome"><strong>持ち帰れるもの</strong><br>${escape(c.outcome)}</div><h3>この講座でやること</h3><ol>${c.agenda.map(a=>`<li>${escape(a)}</li>`).join('')}</ol><h3>準備するもの</h3><p>${escape(c.preparation)}</p></details>`);
   await refreshSlots();
   if(!dialog.open||currentCourse.id!==c.id||!$('#course-slots'))return;
   if(slotsError){$('#course-slots').innerHTML=errorMessage(slotsError);return;}
   let available=slots.filter(s=>(s.status==='available'||(s.courseId===c.id&&s.remaining>0))&&Date.parse(s.end)-Date.parse(s.start)>=c.minutes*60000&&(!s.allowed?.length||s.allowed.includes(c.id)));
   if(preselected)available=available.filter(s=>s.id===preselected.id);
-  $('#course-slots').innerHTML=available.length?`<div class="slot-options">${available.map(s=>`<button class="slot-option" data-pick-slot="${s.id}"><span>${date(s.start)} ${time(s.start)}</span><small>${escape(s.format)} / ${s.courseId?'開催確定・相乗り参加':'このテーマで開催する'}</small></button>`).join('')}</div>`:'<p>ただいま、この講座の受付可能な枠はありません。次回の募集をお待ちください。</p>';
-  body.querySelectorAll('[data-pick-slot]').forEach(b=>b.onclick=()=>confirmBooking(slots.find(s=>s.id===b.dataset.pickSlot)));
+  if(preselected){const one=available.find(x=>x.id===preselected.id);if(one){chooseSlot(one);return;}}
+  renderSlotCalendar(available,c);
+}
+let calMonth = null; // 表示中の月（年*12+月、日本時間）
+const WD = ['日','月','火','水','木','金','土'];
+const jstDate = v => new Date(Date.parse(v) + 9*3600000);
+const monthKey = v => { const d = jstDate(v); return d.getUTCFullYear()*12 + d.getUTCMonth(); };
+function chooseSlot(slot) { return BOOKING_MODE==='live' ? confirmBooking(slot) : confirmRequest(slot); }
+function renderSlotCalendar(available, c) {
+  const box = $('#course-slots');
+  const askLink = '<p class="quiet slot-ask"><button class="text-button" id="ask-dates" type="button">希望の日程がない・質問がある方は、無料でお問い合わせ ↗</button></p>';
+  if (!available.length) { box.innerHTML = '<p>ただいま、この講座の受付可能な日程はありません。</p>' + askLink; $('#ask-dates').onclick = () => showInquiry(c.id); return; }
+  const months = [...new Set(available.map(s => monthKey(s.start)))].sort((a,b) => a-b);
+  if (calMonth === null || !months.includes(calMonth)) calMonth = months[0];
+  const y = Math.floor(calMonth/12), m = calMonth % 12;
+  const first = new Date(Date.UTC(y, m, 1)).getUTCDay(), days = new Date(Date.UTC(y, m+1, 0)).getUTCDate();
+  const idx = months.indexOf(calMonth);
+  let cells = WD.map(w => `<div class="slot-dow">${w}</div>`).join('') + '<div class="slot-day pad"></div>'.repeat(first);
+  for (let d = 1; d <= days; d++) {
+    const list = available.filter(s => monthKey(s.start) === calMonth && jstDate(s.start).getUTCDate() === d);
+    const dow = WD[(first + d - 1) % 7];
+    cells += `<div class="slot-day ${list.length ? '' : 'none'}"><span class="dnum">${d}<small>（${dow}）</small></span>${list.map(s => `<button type="button" class="slot-time ${s.courseId ? 'joined' : ''}" data-pick-slot="${s.id}" title="${escape(s.format)}${s.courseId ? '・開催確定（相乗り）' : ''}">${time(s.start)}</button>`).join('')}</div>`;
+  }
+  box.innerHTML = `<div class="slot-cal-head"><button type="button" class="button small" id="slot-prev" ${idx === 0 ? 'disabled' : ''}>← 前の月</button><strong>${y}年${m+1}月</strong><button type="button" class="button small" id="slot-next" ${idx === months.length-1 ? 'disabled' : ''}>次の月 →</button></div><div class="slot-cal-grid">${cells}</div><p class="quiet">時間のボタンを押すと、予約に進みます。緑の枠は、すでに開催が決まっている相乗りの枠です。</p>` + askLink;
+  $('#slot-prev').onclick = () => { calMonth = months[idx-1]; renderSlotCalendar(available, c); };
+  $('#slot-next').onclick = () => { calMonth = months[idx+1]; renderSlotCalendar(available, c); };
+  $('#ask-dates').onclick = () => showInquiry(c.id);
+  box.querySelectorAll('[data-pick-slot]').forEach(b => b.onclick = () => chooseSlot(slots.find(s => s.id === b.dataset.pickSlot)));
+}
+function confirmRequest(slot) {
+  selectedSlot = slot;
+  const c = currentCourse, end = new Date(Date.parse(slot.start) + c.minutes*60000), label = `${date(slot.start)} ${time(slot.start)}–${time(end)}`;
+  open(`<button class="back-button" id="back-course" type="button">← 日時を選び直す</button><h2 id="dialog-title">予約リクエストを送る</h2><dl class="payment-summary"><dt>講座</dt><dd>${escape(c.title)}</dd><dt>日時</dt><dd>${label}<br>日本時間 / ${c.minutes}分</dd><dt>開催形式</dt><dd>${escape(slot.format)}<br>${escape(slot.location)}${slot.instructor ? '<br>講師：' + escape(slot.instructor) : ''}</dd><dt>受講料</dt><dd><strong>${yen(c.price)}</strong><br>お支払いは、確定のご連絡のあとにご案内します。</dd></dl><p>送信後、内容を確認して、メールまたはLINEで確定のご連絡をします。リクエストの時点では、料金は発生せず、枠の確保もされません。</p><form id="request-form"><input type="hidden" name="_subject" value="【予約リクエスト】${escape(c.title)} ${escape(label)}"><input type="hidden" name="course" value="${escape(c.title)}"><input type="hidden" name="datetime" value="${escape(label)}（日本時間）"><input type="hidden" name="instructor" value="${escape(slot.instructor || '')}"><input type="hidden" name="slot_id" value="${escape(slot.id)}"><input type="hidden" name="price" value="${c.price}"><input class="hp-field" type="text" name="_gotcha" tabindex="-1" autocomplete="off"><label class="form-field">お名前<input name="name" autocomplete="name" maxlength="80" required></label><label class="form-field">メールアドレス<input name="email" type="email" autocomplete="email" maxlength="254" required></label><details><summary>キャンセル条件</summary><p class="policy-copy">${escape(data.cancellation)}</p></details><details><summary>個人情報の取り扱い</summary><p class="policy-copy">${escape(data.privacy)}</p></details><label class="check-field"><input type="checkbox" name="accepted" required><span>日時・受講料・キャンセル条件・個人情報の取り扱いを確認しました。</span></label><div id="form-error" role="alert"></div><button class="button dark wide" type="submit">この内容で予約リクエストを送る ↗</button></form>`);
+  $('#back-course').onclick = () => showCourse(c.id);
+  $('#request-form').onsubmit = async event => {
+    event.preventDefault();
+    const form = event.currentTarget, button = form.querySelector('[type=submit]');
+    button.disabled = true; $('#form-error').textContent = '';
+    try {
+      const r = await fetch(FORM_URL, {method:'POST', headers:{Accept:'application/json'}, body:new FormData(form)});
+      if (!r.ok) throw new Error('send failed');
+      body.innerHTML = `<h2 id="dialog-title">予約リクエストを受け付けました。</h2><p>${label}（日本時間）<br>${escape(c.title)}</p><p>内容を確認して、メールまたはLINEで確定のご連絡をします。ご連絡があるまで、お支払いは不要です。</p><a class="button line-button wide" href="${LINE_URL}" target="_blank" rel="noopener">LINEでも連絡する ↗</a>`;
+    } catch (e) {
+      button.disabled = false; $('#form-error').innerHTML = errorMessage('送信できませんでした。時間をおくか、LINEからお問い合わせください。');
+    }
+  };
 }
 function confirmBooking(slot) {
   selectedSlot=slot;

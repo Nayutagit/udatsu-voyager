@@ -343,3 +343,20 @@ dialog h2{font-size:21px}
 #cal-courses .check-field{margin:8px 0}
 #instructor-editor summary{cursor:pointer;font-size:15px;font-weight:650}
 #instructor-editor[open] summary{margin-bottom:12px}
+
+.slot-cal-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:12px 0}
+.slot-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.slot-dow{font-size:10px;text-align:center;color:var(--muted)}
+.slot-day{min-height:66px;border:1px solid #ecece4;border-radius:7px;padding:5px;display:flex;flex-direction:column;gap:4px;background:white;font-size:10px}
+.slot-day.pad{border:0;background:transparent}
+.slot-day.none{background:#fafaf6;color:#b5b8ae}
+.slot-day .dnum{font-size:11px}
+.slot-day .dnum small{font-size:9px}
+.slot-time{border:1px solid var(--ink);background:white;border-radius:6px;padding:6px 2px;font-size:12px;color:var(--ink)}
+.slot-time:hover{background:var(--ink);color:white}
+.slot-time.joined{background:var(--green)}
+.slot-ask{margin-top:14px}
+.text-button{border:0;background:transparent;padding:0;font-size:12px;text-decoration:underline;color:var(--ink)}
+.course-details{margin-top:22px}
+.course-details summary{cursor:pointer;font-weight:650;font-size:13px}
+@media(max-width:760px){.slot-cal-grid{grid-template-columns:1fr}.slot-dow,.slot-day.pad,.slot-day.none{display:none}.slot-day{flex-direction:row;flex-wrap:wrap;align-items:center;gap:8px;min-height:0;padding:10px}.slot-day .dnum{width:78px;font-size:13px}.slot-day .dnum small{font-size:11px}.slot-time{padding:9px 14px}}
