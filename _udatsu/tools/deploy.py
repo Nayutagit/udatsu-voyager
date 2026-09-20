@@ -117,7 +117,7 @@ RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 RewriteCond %{HTTPS} off
 RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
 RewriteRule ^_udatsu(?:_backups)?(?:/|$) - [F,L]
-RewriteRule ^(?:index\\.php|api/(?:catalog|slots|checkout|stripe/webhook|bookings/[a-f0-9]{40}|demo/pay|admin/(?:overview|slots|close|retry))|admin|styles\\.css|app\\.js|admin\\.js|instructor\\.png)?$ index.php [END]
+RewriteRule ^(?:index\\.php|api/(?:catalog|slots|checkout|stripe/webhook|bookings/[a-f0-9]{40}|demo/pay|admin/(?:overview|slots|close|retry|busy|instructors))|admin|styles\\.css|app\\.js|admin\\.js|instructor\\.png)?$ index.php [END]
 # END UD ATSU PUBLIC CLASSES
 '''
     files['.htaccess'] = prefix + old_htaccess
@@ -137,7 +137,7 @@ RewriteRule ^(?:index\\.php|api/(?:catalog|slots|checkout|stripe/webhook|booking
             upload(name, content)
         status, payload = http('/api/catalog')
         catalog = json.loads(payload)
-        if status != 200 or catalog.get('mode') != 'preview' or len(catalog.get('courses', [])) != 9:
+        if status != 200 or catalog.get('mode') != 'preview' or len(catalog.get('courses', [])) != len(json.loads((APP / 'catalog.json').read_text(encoding='utf-8'))):
             raise RuntimeError('公開後の講座API検証に失敗しました。')
         for private in ['/_udatsu/lib.php', '/_udatsu/private/.env', '/_udatsu_backups/']:
             if http(private)[0] != 403:
