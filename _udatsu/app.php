@@ -67,8 +67,10 @@ try {
     }
     if(str_starts_with($route,'/api/admin/')){
         admin($c);
-        if($route==='/api/admin/overview'&&$method==='GET')respond(['slots'=>$s->slots(),'orders'=>$s->q('SELECT * FROM orders ORDER BY created DESC')->fetchAll(),'jobs'=>$s->q('SELECT * FROM jobs WHERE done=0')->fetchAll(),'mode'=>$c['mode'],'calendarConnected'=>$c['googleReady']]);
+        if($route==='/api/admin/overview'&&$method==='GET')respond(['slots'=>$s->slots(),'orders'=>$s->q('SELECT * FROM orders ORDER BY created DESC')->fetchAll(),'jobs'=>$s->q('SELECT * FROM jobs WHERE done=0')->fetchAll(),'mode'=>$c['mode'],'calendarConnected'=>$c['googleReady'],'instructors'=>$s->instructors()]);
         if($route==='/api/admin/slots'&&$method==='POST'){$d=input();if($c['mode']==='live'&&($d['format']??'')==='オンライン'&&empty($d['meetingUrl']))throw new UError('オンライン枠には参加URLが必要です。',400);respond($s->addSlot($d),201);}
+        if($route==='/api/admin/busy'&&$method==='GET'){$a=strtotime((string)($_GET['from']??''));$b=strtotime((string)($_GET['to']??''));if(!$a||!$b||$b<=$a||$b-$a>15*86400)throw new UError('期間を確認してください。',400);respond($i->busyView(iso($a),iso($b)));}
+        if($route==='/api/admin/instructors'&&$method==='POST')respond($s->addInstructor((string)(input()['name']??'')),201);
         if($route==='/api/admin/close'&&$method==='POST'){$s->closeSlot(input()['slotId']??'');respond(['ok'=>true]);}
         if($route==='/api/admin/retry'&&$method==='POST'){tick($s,$i);respond(['ok'=>true]);}
     }

@@ -307,3 +307,39 @@ dialog h2{font-size:21px}
 
 .hp-field{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
 .button.line-button{background:#06C755;color:white;margin:14px 0 6px}
+
+.cal-toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:14px 0 8px}
+.cal-wrap{overflow:auto;max-height:560px;border:1px solid var(--line);border-radius:10px;background:white;margin:8px 0 14px}
+.cal-grid{border-collapse:collapse;width:100%;min-width:660px;font-size:11px}
+.cal-grid th{position:sticky;top:0;z-index:2;background:white;padding:8px 4px;border-bottom:1px solid var(--line);font-weight:650}
+.cal-grid td{padding:0;border-left:1px solid #eceee6}
+.cal-grid td.time{width:48px;text-align:right;padding-right:6px;color:var(--muted);vertical-align:top;border-left:0}
+.cal-cell{display:block;width:100%;height:22px;border:0;border-top:1px dashed #e6e8e0;background:white;font-size:10px;padding:0}
+.cal-cell:hover:not(:disabled){background:#eef4ea}
+.cal-cell.mine{background:#c9ccc4}
+.cal-cell.ref{background:repeating-linear-gradient(45deg,#e4e4e4,#e4e4e4 4px,#f7f7f7 4px,#f7f7f7 8px)}
+.cal-cell.existing{background:#cfe8cf}
+.cal-cell.selected{background:var(--ink);color:white}
+.cal-cell.past{background:#f4f4f0;cursor:not-allowed}
+
+.admin-main{max-width:1400px;padding-top:25px;padding-bottom:70px}
+.admin-login{max-width:520px}
+#admin-message{position:sticky;top:8px;z-index:6;background:white;border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:14px;line-height:1.7}
+#admin-message:empty{display:none}
+#admin-message.error{border-color:#c0392b}
+#slot-editor summary{cursor:pointer;font-size:15px;font-weight:650}
+#slot-editor[open] summary{margin-bottom:12px}
+.cal-wrap{max-height:72vh}
+.cal-grid{min-width:900px;font-size:12px}
+.cal-grid th{font-size:13px;padding:10px 4px}
+.cal-grid td.time{width:56px;font-size:12px}
+.cal-cell{height:30px;font-size:12px}
+.admin-table{font-size:13px}
+.admin-table button{font-size:12px}
+
+.course-pick{border:1px solid var(--line);border-radius:8px;padding:8px 14px 12px;margin:14px 0}
+.course-pick legend{font-size:12px;font-weight:650;padding:0 6px}
+#cal-courses{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:0 16px}
+#cal-courses .check-field{margin:8px 0}
+#instructor-editor summary{cursor:pointer;font-size:15px;font-weight:650}
+#instructor-editor[open] summary{margin-bottom:12px}

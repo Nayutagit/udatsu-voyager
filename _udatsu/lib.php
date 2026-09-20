@@ -20,6 +20,7 @@ function config(): array {
         'admin'=>$e['ADMIN_TOKEN']??'', 'stripe'=>$e['STRIPE_SECRET_KEY']??'', 'webhook'=>$e['STRIPE_WEBHOOK_SECRET']??'',
         'googleId'=>$e['GOOGLE_CLIENT_ID']??'', 'googleSecret'=>$e['GOOGLE_CLIENT_SECRET']??'', 'googleRefresh'=>$e['GOOGLE_REFRESH_TOKEN']??'',
         'busyIds'=>array_values(array_filter(array_map('trim',explode(',',$e['GOOGLE_BUSY_CALENDAR_IDS']??'primary')))),
+        'refIds'=>array_values(array_filter(array_map('trim',explode(',',$e['GOOGLE_REFERENCE_CALENDAR_IDS']??'')))),
         'bookingCalendar'=>$e['GOOGLE_BOOKING_CALENDAR_ID']??'', 'emailKey'=>$e['RESEND_API_KEY']??'', 'mailFrom'=>$e['MAIL_FROM']??'', 'mailTransport'=>$e['MAIL_TRANSPORT']??'php',
         'support'=>$e['SUPPORT_EMAIL']??'', 'seller'=>$e['SELLER_NAME']??'', 'address'=>$e['SELLER_ADDRESS']??'', 'phone'=>$e['SELLER_PHONE']??'',
         'cancellation'=>($e['CANCELLATION_POLICY']??'')?:'キャンセル条件は公開前に確定します。現在は予約を受け付けていません。',
@@ -44,7 +45,14 @@ class UStore {
           CREATE TABLE IF NOT EXISTS slots(id TEXT PRIMARY KEY,start TEXT NOT NULL,end TEXT NOT NULL,format TEXT NOT NULL,location TEXT NOT NULL,meeting_url TEXT NOT NULL DEFAULT '',course_id TEXT,fixed INTEGER NOT NULL DEFAULT 0,closed INTEGER NOT NULL DEFAULT 0);
           CREATE TABLE IF NOT EXISTS orders(id TEXT PRIMARY KEY,slot_id TEXT NOT NULL REFERENCES slots(id),course_id TEXT NOT NULL,name TEXT NOT NULL,email TEXT NOT NULL,amount INTEGER NOT NULL,status TEXT NOT NULL DEFAULT 'pending',session_id TEXT UNIQUE,checkout_url TEXT,created INTEGER NOT NULL,expires INTEGER NOT NULL,payment_intent TEXT,policy TEXT NOT NULL,note TEXT NOT NULL DEFAULT '');
           CREATE TABLE IF NOT EXISTS jobs(id TEXT PRIMARY KEY,kind TEXT NOT NULL,reference TEXT NOT NULL,done INTEGER NOT NULL DEFAULT 0,attempts INTEGER NOT NULL DEFAULT 0,last_error TEXT NOT NULL DEFAULT '');
-          CREATE TABLE IF NOT EXISTS rate_limits(ip TEXT PRIMARY KEY,count INTEGER NOT NULL,until INTEGER NOT NULL);");
+          CREATE TABLE IF NOT EXISTS rate_limits(ip TEXT PRIMARY KEY,count INTEGER NOT NULL,until INTEGER NOT NULL);
+          CREATE TABLE IF NOT EXISTS instructors(id TEXT PRIMARY KEY,name TEXT NOT NULL,active INTEGER NOT NULL DEFAULT 1);
+          INSERT OR IGNORE INTO instructors(id,name) VALUES('nayuta','秋山 那由他');");
+        $cols=array_column($this->db->query('PRAGMA table_info(slots)')->fetchAll(),'name');
+        try{
+            if(!in_array('instructor_id',$cols))$this->db->exec("ALTER TABLE slots ADD COLUMN instructor_id TEXT NOT NULL DEFAULT 'nayuta'");
+            if(!in_array('allowed',$cols))$this->db->exec("ALTER TABLE slots ADD COLUMN allowed TEXT NOT NULL DEFAULT ''");
+        }catch(PDOException $e){if(!str_contains($e->getMessage(),'duplicate column'))throw $e;}
     }
     public function q(string $sql,array $args=[]): PDOStatement { $s=$this->db->prepare($sql);$s->execute($args);return $s; }
     public function tx(callable $fn): mixed {
@@ -53,6 +61,13 @@ class UStore {
         catch(Throwable $e){$this->db->exec('ROLLBACK');throw $e;}
     }
     public function course(?string $id): ?array {foreach($this->catalog as $c)if($c['id']===$id)return $c;return null;}
+    public function instructors(): array {return $this->q('SELECT id,name FROM instructors WHERE active=1 ORDER BY rowid')->fetchAll();}
+    public function instructorName(string $id): string {return (string)($this->q('SELECT name FROM instructors WHERE id=?',[$id])->fetchColumn()?:'');}
+    public function addInstructor(string $name): array {
+        $name=trim($name);if($name===''||mb_strlen($name)>60)throw new UError('講師名を1〜60文字で入力してください。',400);
+        if($this->q('SELECT id FROM instructors WHERE name=? AND active=1',[$name])->fetch())throw new UError('同じ名前の講師がすでに登録されています。');
+        $id=uid();$this->q('INSERT INTO instructors(id,name) VALUES(?,?)',[$id,$name]);return ['id'=>$id,'name'=>$name];
+    }
     public function slot(string $id): ?array {return $this->q('SELECT * FROM slots WHERE id=?',[$id])->fetch()?:null;}
     public function order(string $id): ?array {return $this->q('SELECT * FROM orders WHERE id=?',[$id])->fetch()?:null;}
     public function counts(string $id): array {return $this->q("SELECT COALESCE(SUM(status='paid'),0) paid,COALESCE(SUM(status='pending'),0) pending FROM orders WHERE slot_id=?",[$id])->fetch();}
@@ -62,10 +77,15 @@ class UStore {
         if(!$a||!$b||$a<=time()||$b-$a<3600||$b-$a>14400)throw new UError('未来の日時で、60分以上4時間以内の枠を指定してください。',400);
         if(!in_array($input['format']??'',['オンライン','対面'],true)||empty(trim($input['location']??'')))throw new UError('開催形式と場所が必要です。',400);
         if(!empty($input['meetingUrl'])&&!str_starts_with($input['meetingUrl'],'https://'))throw new UError('参加URLはhttpsで指定してください。',400);
-        return $this->tx(function()use($input,$a,$b){
+        $instructors=$this->instructors();$iid=(string)($input['instructorId']??($instructors[0]['id']??'nayuta'));
+        if(!$this->q('SELECT id FROM instructors WHERE id=? AND active=1',[$iid])->fetch())throw new UError('講師を選び直してください。',400);
+        $allowed=array_values(array_unique(array_map('strval',(array)($input['allowedCourses']??[]))));
+        foreach($allowed as $cid)if(!$this->course($cid))throw new UError('受け付ける講座の指定を確認してください。',400);
+        if(count($allowed)===count($this->catalog))$allowed=[];
+        return $this->tx(function()use($input,$a,$b,$iid,$allowed){
             $start=iso($a);$end=iso($b);
             if($this->q('SELECT id FROM slots WHERE start<? AND end>? AND closed=0',[$end,$start])->fetch())throw new UError('ほかの募集枠と時間が重なっています。');
-            $id=uid();$this->q('INSERT INTO slots(id,start,end,format,location,meeting_url) VALUES(?,?,?,?,?,?)',[$id,$start,$end,$input['format'],mb_substr($input['location'],0,200),$input['meetingUrl']??'']);return $this->slot($id);
+            $id=uid();$this->q('INSERT INTO slots(id,start,end,format,location,meeting_url,instructor_id,allowed) VALUES(?,?,?,?,?,?,?,?)',[$id,$start,$end,$input['format'],mb_substr($input['location'],0,200),$input['meetingUrl']??'',$iid,implode(',',$allowed)]);return $this->slot($id);
         });
     }
     public function reserve(array $input,int $lead=24): array {
@@ -77,6 +97,7 @@ class UStore {
             $slot=$this->slot($input['slotId']??'');
             if(!$slot||$slot['closed']||strtotime($slot['start'])<time()+$lead*3600)throw new UError('この日時の受付は終了しました。');
             if(strtotime($slot['end'])-strtotime($slot['start'])<$course['minutes']*60)throw new UError('開催時間が不足しています。');
+            if(($slot['allowed']??'')!==''&&!in_array($course['id'],explode(',',$slot['allowed']),true))throw new UError('この時間では選べない講座です。別の講座か日時をお選びください。');
             if($slot['course_id']&&$slot['course_id']!==$course['id'])throw new UError('この時間は別の講座が選ばれています。別の日時をお選びください。');
             $count=$this->counts($slot['id']);
             if(!$slot['fixed']&&$count['pending']>0)throw new UError('最初の方がお支払い中です。少し時間をおいてご確認ください。');
@@ -118,7 +139,7 @@ class UStore {
     }
     public function publicSlot(array $s): array {
         $n=$this->counts($s['id']);$c=$this->course($s['course_id']);
-        return ['id'=>$s['id'],'start'=>$s['start'],'end'=>$s['end'],'format'=>$s['format'],'location'=>$s['location'],'courseId'=>$s['fixed']?$s['course_id']:null,'status'=>$s['fixed']?'open':($n['pending']?'held':'available'),'paid'=>$n['paid'],'remaining'=>$c?max(0,$c['capacity']-$n['paid']-$n['pending']):null];
+        return ['id'=>$s['id'],'start'=>$s['start'],'end'=>$s['end'],'format'=>$s['format'],'location'=>$s['location'],'instructor'=>$this->instructorName($s['instructor_id']??'nayuta'),'allowed'=>($s['allowed']??'')===''?[]:explode(',',$s['allowed']),'courseId'=>$s['fixed']?$s['course_id']:null,'status'=>$s['fixed']?'open':($n['pending']?'held':'available'),'paid'=>$n['paid'],'remaining'=>$c?max(0,$c['capacity']-$n['paid']-$n['pending']):null];
     }
 }
 function webhook(string $body,string $signature,string $secret,?int $now=null): array {
@@ -159,6 +180,13 @@ class UIntegrations {
         if(!$this->c['googleReady']){if($this->c['mode']==='live')throw new UError('カレンダーを確認できないため受付を一時停止しています。',503);return [];}
         $d=$this->request('https://www.googleapis.com/calendar/v3/freeBusy','POST',json_encode(['timeMin'=>$start,'timeMax'=>$end,'timeZone'=>'Asia/Tokyo','items'=>array_map(fn($id)=>['id'=>$id],$this->c['busyIds'])]),['Authorization: Bearer '.$this->token(),'Content-Type: application/json']);
         $busy=[];foreach($this->c['busyIds'] as $id){$cal=$d['calendars'][$id]??null;if(!$cal||!empty($cal['errors'])||!isset($cal['busy']))throw new UError('カレンダーを確認できません。',503);$busy=array_merge($busy,$cal['busy']);}return $busy;
+    }
+    public function busyView(string $start,string $end): array {
+        if(!($this->c['googleId']&&$this->c['googleSecret']&&$this->c['googleRefresh']))return ['configured'=>false,'mine'=>[],'reference'=>[],'unreadable'=>0];
+        $ref=array_values(array_diff($this->c['refIds']??[],$this->c['busyIds']));$ids=array_merge($this->c['busyIds'],$ref);
+        $d=$this->request('https://www.googleapis.com/calendar/v3/freeBusy','POST',json_encode(['timeMin'=>$start,'timeMax'=>$end,'timeZone'=>'Asia/Tokyo','items'=>array_map(fn($id)=>['id'=>$id],$ids)]),['Authorization: Bearer '.$this->token(),'Content-Type: application/json']);
+        $bad=0;$pick=function(array $list)use($d,&$bad){$out=[];foreach($list as $id){$cal=$d['calendars'][$id]??null;if(!$cal||!empty($cal['errors'])||!isset($cal['busy'])){$bad++;continue;}$out=array_merge($out,$cal['busy']);}return $out;};
+        return ['configured'=>true,'mine'=>$pick($this->c['busyIds']),'reference'=>$pick($ref),'unreadable'=>$bad];
     }
     public function createEvent(array $s,array $course): void {
         if($this->c['mode']!=='live')return;
