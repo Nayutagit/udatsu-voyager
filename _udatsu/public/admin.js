@@ -23,14 +23,15 @@ $('#retry').onclick=async()=>{try{await request('/api/admin/retry',{});await ref
 // ---- カレンダーで募集枠を選ぶ（日本時間で計算）
 const HOUR0=7,HOUR1=22,STEP=30*60000,DAY=86400000,JST=9*3600000,WD=['日','月','火','水','木','金','土'];
 function jstMidnight(ms){return Math.floor((ms+JST)/DAY)*DAY-JST;}
-function thisWeek(){const t=jstMidnight(Date.now());return t-new Date(t+JST).getUTCDay()*DAY;}
+const mobileMq=matchMedia('(max-width:760px)'),viewDays=()=>mobileMq.matches?1:7;
+function thisWeek(){const t=jstMidnight(Date.now());return viewDays()===1?t:t-new Date(t+JST).getUTCDay()*DAY;}
 function jparts(ms){const d=new Date(ms+JST);return {m:d.getUTCMonth()+1,d:d.getUTCDate(),h:d.getUTCHours(),n:d.getUTCMinutes(),w:d.getUTCDay()};}
 const hhmm=ms=>{const p=jparts(ms);return String(p.h).padStart(2,'0')+':'+String(p.n).padStart(2,'0');};
 const hit=(list,a,b)=>list.some(x=>Date.parse(x.start)<b&&Date.parse(x.end)>a);
 const isoJ=ms=>new Date(ms).toISOString();
 function selectedHit(a,b){return [...selected].some(t=>t<b&&t+2*STEP>a);}
 async function loadBusy(){
-  const my=++busyToken,from=weekStart,to=weekStart+7*DAY;
+  const my=++busyToken,from=weekStart,to=weekStart+viewDays()*DAY;
   try{const d=await request('/api/admin/busy?from='+encodeURIComponent(isoJ(from))+'&to='+encodeURIComponent(isoJ(to)));if(my!==busyToken)return;busyData=d;
     $('#cal-note').textContent=!d.configured?'Googleカレンダーが未接続のため、予定は表示されません。':d.unreadable?`読み取れないカレンダーが${d.unreadable}件あります（共有設定を確認してください）。`:'';}
   catch(e){if(my!==busyToken)return;busyData={mine:[],reference:[]};$('#cal-note').textContent='予定を読み込めませんでした。重なりの確認は登録時にサーバー側でも行います。';}
@@ -39,12 +40,13 @@ async function loadBusy(){
 function renderCalendar(){
   if(weekStart===null){weekStart=thisWeek();loadBusy();}
   const now=Date.now(),g=$('#cal-grid');
-  const first=jparts(weekStart),last=jparts(weekStart+6*DAY);
-  $('#cal-title').textContent=`${first.m}/${first.d}〜${last.m}/${last.d}`;
-  let html='<thead><tr><th></th>'+[...Array(7).keys()].map(i=>{const p=jparts(weekStart+i*DAY);return `<th>${p.m}/${p.d}（${WD[p.w]}）</th>`;}).join('')+'</tr></thead><tbody>';
+  const nd=viewDays(),first=jparts(weekStart),last=jparts(weekStart+(nd-1)*DAY);
+  $('#cal-title').textContent=nd===1?`${first.m}/${first.d}（${WD[first.w]}）`:`${first.m}/${first.d}〜${last.m}/${last.d}`;
+  $('#cal-prev').textContent=nd===1?'← 前の日':'← 前の週';$('#cal-next').textContent=nd===1?'次の日 →':'次の週 →';$('#cal-today').textContent=nd===1?'今日':'今週';
+  let html='<thead><tr><th></th>'+[...Array(nd).keys()].map(i=>{const p=jparts(weekStart+i*DAY);return `<th>${p.m}/${p.d}（${WD[p.w]}）</th>`;}).join('')+'</tr></thead><tbody>';
   for(let m=HOUR0*60;m<HOUR1*60;m+=30){
     html+=`<tr><td class="time">${m%60===0?String(m/60).padStart(2,'0')+':00':''}</td>`;
-    for(let i=0;i<7;i++){
+    for(let i=0;i<nd;i++){
       const a=weekStart+i*DAY+m*60000,b=a+STEP;
       const cls=['cal-cell'];let label='';
       if(b<=now+3600000)cls.push('past');
@@ -73,7 +75,8 @@ function toggleCell(a){
   selected.add(a);renderCalendar();
 }
 function moveWeek(days){weekStart=days===0?thisWeek():weekStart+days*DAY;busyData={mine:[],reference:[]};renderCalendar();loadBusy();}
-$('#cal-prev').onclick=()=>moveWeek(-7);$('#cal-next').onclick=()=>moveWeek(7);$('#cal-today').onclick=()=>moveWeek(0);
+$('#cal-prev').onclick=()=>moveWeek(-viewDays());$('#cal-next').onclick=()=>moveWeek(viewDays());
+mobileMq.addEventListener('change',()=>{weekStart=null;busyData={mine:[],reference:[]};if(!$('#slot-calendar').hidden)renderCalendar();});$('#cal-today').onclick=()=>moveWeek(0);
 $('#cal-form').onsubmit=async e=>{
   e.preventDefault();const f=Object.fromEntries(new FormData(e.currentTarget)),list=[...selected].sort((x,y)=>x-y),failed=[];let ok=0;
   const all=$('#cal-all').checked,picked=[...document.querySelectorAll('#cal-courses input:checked')].map(x=>x.value);

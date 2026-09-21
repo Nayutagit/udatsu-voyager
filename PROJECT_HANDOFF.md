@@ -55,11 +55,39 @@
 - 未検証：予約リクエストの最終送信（チェック→送信）を実際に押した確認、スマホ表示、確定メール・カレンダー予定への講師名記載（未実装）。
 - OAuth同意画面が「テスト中」のため、Googleのトークンは約7日で失効する可能性。
 
+## 2026-09-20 23:30 Stripeサンドボックス確認（Claude Code）
+- Stripe MCPにサンドボックス（Udatsu サンドボックス／acct_1RJlLXRs7HjoXT6s）を追加済み。本番（acct_1RJlLJRoMZhQzJfl）と合わせて2アカウント、権限は読み取りのみ。
+- サンドボックスにテスト商品2件を本人が作成、MCPで確認済み：
+  - Udatsu公開講座1回券 prod_VIMCvOVNZRSnV1 / price_1UHlUPRs7HjoXT6sIl4K94yy（1回限り・4,400円JPY）
+  - Udatsu個別相談1回券 prod_VIMDiQIZJ8ADJp / price_1UHlUtRs7HjoXT6ssZAvOlFi（1回限り・4,400円JPY）
+- 既存の「Udatsuライトプラン（月5回・980円・継続）」は今回の予約と無関係。
+- Webhookは0件（未登録）。tax_behaviorは未指定（税込扱い）。
+- 本番モードには何も作成していない。テスト用APIキー／Webhook署名シークレットは未設定。
+- 次の一手：サイトのPHPのWebhook受け口URLを確認 → 本人がサンドボックスでWebhook登録 → テストキーとシークレットを本人が private/.env へ入力 → テスト決済。
+
+## 2026-09-21 本番の管理トークン設置（本人が実行、Claude Code記録）
+- 本番 `_udatsu/private/.env` を新規作成（APP_MODE=preview、BASE_URL、ADMIN_TOKEN、LIVE_BOOKING_ENABLED=false、CRON_ENABLED=false のみ）。
+- トークンはMac内 `_udatsu/private/production_admin_token.txt`（本人のみ読める・Git対象外）。値は誰も表示していない。
+- 検証：`.env` 直接アクセス403／catalog 200／管理API 401（トークンなし）・200（トークンあり）。本番の管理画面にログインできる状態。
+- 注意：本番に .env ができたため、`deploy.py --deploy` は「既にUdatsuの接続設定があります」で停止する。次回の再デプロイ前にこのチェックの扱いを決める。
+- Claude Codeからの本番操作は権限判定で止まったため、本人が `!` で実行した。
+
+## 2026-09-21 スマホ対応（Claude Code）
+- 管理画面のカレンダーをスマホ幅（760px以下）で1日ずつ表示に変更（admin.js / styles.css）。ボタン・入力欄も指で押しやすいサイズに。
+- ダミーAPIで幅390pxの表示を確認（横スクロールなし・日送り・枠選択が動作）。実機、PHPテスト（この環境にPHPなし）は未実施。**本番未反映・未コミット。** 本番に .env があり deploy.py が止まるため、反映方法は要相談。
+
+## 2026-09-21 Stripeサンドボックス Webhook登録（本人が作成、Claude Codeが確認）
+- サンドボックスのWebhook作成済み・MCPで確認済み：we_1UHvz1Rs7HjoXT6sUHEDTSlx／URL https://udatsuageteko.com/api/stripe/webhook／イベント checkout.session.completed・async_payment_succeeded・expired／status enabled。
+- Webhook受け口はAPP_MODE が test または live のときだけ動く。本番は preview のため、今は404（意図どおり）。test にするには sk_test_・whsec_・32文字以上の管理トークンが必要（管理トークンは設置済み）。
+- 署名シークレット（whsec_）とテスト用秘密キー（sk_test_）は未設定。値はClaude Codeに見せない方針。
+- Claude Codeからの本番 .env 編集は権限判定で止まる可能性が高い。その場合は、スクリプトを用意して本人が `!` で実行し、値は貼り付け入力にする。
+
 ## 次の一手
-**本番の管理画面（https://udatsuageteko.com/admin）にログインできるようにする。**
-- 今は本番サーバーに管理トークン（ADMIN_TOKEN）が未設定で、ログインできない（401）。
-- 案：Claude Codeが、既存のFTPS接続で本番の `_udatsu/private/.env` に、ランダムな管理トークンを置く（既存 `.env` があれば上書きせず停止）。値は画面・チャットに出さず、Mac内 `_udatsu/private/production_admin_token.txt` に保存。**本人の「やって」待ち**（サーバー設定の新規作成のため確認中）。
-- そのあと：本番管理画面でカレンダーから募集枠を登録 → Googleカレンダー連携（本番の .env に GOOGLE_* を手入力。GOOGLE_BOOKING_CALENDAR_ID・GOOGLE_REFERENCE_CALENDAR_IDS=akiyama@hiroshimai.co.jp も）→ Stripe → メール・Cron。
+1. 本番 `.env` に STRIPE_WEBHOOK_SECRET と STRIPE_SECRET_KEY を入れる（本人。値は私に見せない）。
+2. APP_MODE=test に切り替えるか決める。切り替えると公開サイトの予約・決済がテストとして動き始めるため、サイトの見え方を先に確認する。
+3. テスト決済（テストカード 4242…）で、予約→決済→Webhook→確定を通しで確認。
+4. Googleカレンダー連携（GOOGLE_BOOKING_CALENDAR_ID など）、メール、Cron。
+- 注意：本番に .env があるため、deploy.py --deploy は「既にUdatsuの接続設定があります」で停止する。再デプロイ前に扱いを決める。
 
 ## 引き継ぎ時の注意
 - `_udatsu/README.md` のDNS・FTP未接続という記載は古い。現状は本メモを優先する。技術手順はREADMEを参照。

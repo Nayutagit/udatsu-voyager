@@ -360,3 +360,5 @@ dialog h2{font-size:21px}
 .course-details{margin-top:22px}
 .course-details summary{cursor:pointer;font-weight:650;font-size:13px}
 @media(max-width:760px){.slot-cal-grid{grid-template-columns:1fr}.slot-dow,.slot-day.pad,.slot-day.none{display:none}.slot-day{flex-direction:row;flex-wrap:wrap;align-items:center;gap:8px;min-height:0;padding:10px}.slot-day .dnum{width:78px;font-size:13px}.slot-day .dnum small{font-size:11px}.slot-time{padding:9px 14px}}
+
+@media(max-width:760px){.admin-header p{font-size:13px}.admin-card{padding:16px}.cal-wrap{max-height:none}.cal-grid{min-width:0;width:100%}.cal-grid td.time{width:52px}.cal-cell{height:46px;font-size:13px}.cal-toolbar .button.small{padding:12px 14px;font-size:12px}.cal-toolbar strong{width:100%;font-size:16px}.form-field input,.form-field select{font-size:16px}#cal-courses{grid-template-columns:1fr}.check-field{padding:4px 0}.table-scroll{overflow-x:auto}}
