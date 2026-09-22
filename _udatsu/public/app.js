@@ -57,7 +57,7 @@ for(const mode of ['open','available']) $('#show-'+mode).onclick=()=>{
   for(const other of ['open','available']){$('#show-'+other).classList.toggle('active',other===mode);$('#show-'+other).setAttribute('aria-pressed',other===mode);}
   renderSchedule();
 };
-const BOOKING_MODE = 'request'; // 'inquiry'=問い合わせのみ / 'request'=決済なしの予約リクエスト / 'live'=Stripe決済まで
+const BOOKING_MODE = 'inquiry'; // 'inquiry'=問い合わせのみ / 'request'=決済なしの予約リクエスト / 'live'=Stripe決済まで
 const LINE_URL = 'https://lin.ee/QPJ3dva', FORM_URL = 'https://formspree.io/f/xanzkprd';
 function showInquiry(courseId) {
   const c = data.courses.find(x=>x.id===courseId), topic = c ? c.title : 'Udatsuについて';
