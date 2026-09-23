@@ -74,4 +74,4 @@ try {
         if($route==='/api/admin/retry'&&$method==='POST'){tick($s,$i);respond(['ok'=>true]);}
     }
     throw new UError('ページが見つかりません。',404);
-}catch(Throwable $e){respond(['error'=>$e instanceof UError?$e->getMessage():($e instanceof JsonException?'入力内容を確認してください。':'接続を確認できませんでした。時間をおいてお試しください。')],$e instanceof UError?$e->http:($e instanceof JsonException?400:503));}
+}catch(Throwable $e){if(!($e instanceof UError)&&!($e instanceof JsonException))@file_put_contents(__DIR__.'/private/error.log',gmdate('c').' '.($route??'').' '.get_class($e).': '.mb_substr($e->getMessage(),0,300).' @'.basename($e->getFile()).':'.$e->getLine()."\n",FILE_APPEND|LOCK_EX);respond(['error'=>$e instanceof UError?$e->getMessage():($e instanceof JsonException?'入力内容を確認してください。':'接続を確認できませんでした。時間をおいてお試しください。')],$e instanceof UError?$e->http:($e instanceof JsonException?400:503));}

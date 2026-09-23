@@ -1,4 +1,4 @@
-"""画面まわりのファイル（admin.js / admin.html / styles.css / app.js）だけを本番へ反映。事前にサーバー側へバックアップ。.env は読まない・触らない。"""
+"""画面まわりのファイル（admin.js / admin.html / styles.css / app.js）と app.php だけを本番へ反映。事前にサーバー側へバックアップ。.env は読まない・触らない。"""
 import datetime
 import ftplib
 import io
@@ -11,6 +11,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 import deploy
 
 FILES = ['admin.js', 'admin.html', 'styles.css', 'app.js']
+SERVER_FILES = ['app.php']  # _udatsu 直下のサーバー側ファイル
 
 def main():
     env = deploy.settings()
@@ -25,18 +26,17 @@ def main():
     ftp.mkd(backup + '/_udatsu')
     ftp.mkd(backup + '/_udatsu/public')
     new = {}
-    for name in FILES:
-        path = '_udatsu/public/' + name
+    for path, local in [('_udatsu/public/' + n, deploy.APP / 'public' / n) for n in FILES] + [('_udatsu/' + n, deploy.APP / n) for n in SERVER_FILES]:
         old = io.BytesIO()
         ftp.retrbinary('RETR ' + path, old.write)
         ftp.storbinary('STOR ' + backup + '/' + path, io.BytesIO(old.getvalue()))
-        new[path] = (deploy.APP / 'public' / name).read_bytes()
-        assert new[path], name
+        new[path] = local.read_bytes()
+        assert new[path], path
     print('サーバー側バックアップ作成：', backup)
     try:
         for path, content in new.items():
             ftp.storbinary('STOR ' + path, io.BytesIO(content))
-        for name in ['/admin.js', '/styles.css', '/app.js', '/admin', '/']:
+        for name in ['/admin.js', '/styles.css', '/app.js', '/admin', '/', '/api/catalog']:
             status, _ = deploy.http(name)
             if status != 200:
                 raise RuntimeError(name + ' が表示できません（' + str(status) + '）')
