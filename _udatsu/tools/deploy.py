@@ -117,7 +117,7 @@ RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 RewriteCond %{HTTPS} off
 RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
 RewriteRule ^_udatsu(?:_backups)?(?:/|$) - [F,L]
-RewriteRule ^(?:index\\.php|api/(?:catalog|slots|checkout|stripe/webhook|bookings/[a-f0-9]{40}|demo/pay|admin/(?:overview|slots|close|retry|busy|instructors))|admin|styles\\.css|app\\.js|admin\\.js|instructor\\.png)?$ index.php [END]
+RewriteRule ^(?:index\\.php|api/(?:catalog|slots|checkout|stripe/webhook|bookings/[a-f0-9]{40}|demo/pay|admin/(?:overview|slots|close|retry|busy|instructors))|admin|styles\\.css|app\\.js|admin\\.js|instructor\\.png|og\\.png)?$ index.php [END]
 # END UD ATSU PUBLIC CLASSES
 '''
     files['.htaccess'] = prefix + old_htaccess
