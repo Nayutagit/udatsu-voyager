@@ -10,7 +10,7 @@ function admin(array $c): void {if(!$c['admin']||!hash_equals($c['admin'],preg_r
 function overlap(array $a,array $b): bool {return strtotime($a['start'])<strtotime($b['end'])&&strtotime($a['end'])>strtotime($b['start']);}
 try {
     $c=config();$route=parse_url($_SERVER['REQUEST_URI']??'/',PHP_URL_PATH);$method=$_SERVER['REQUEST_METHOD']??'GET';
-    $files=['/'=>'index.html','/index.php'=>'index.html','/styles.css'=>'styles.css','/app.js'=>'app.js','/admin'=>'admin.html','/admin.js'=>'admin.js','/instructor.png'=>'instructor.png'];
+    $files=['/'=>'index.html','/index.php'=>'index.html','/styles.css'=>'styles.css','/app.js'=>'app.js','/admin'=>'admin.html','/admin.js'=>'admin.js','/instructor.png'=>'instructor.png','/og.png'=>'og.png'];
     if($method==='GET'&&isset($files[$route])){
         $file=$files[$route];$ext=pathinfo($file,PATHINFO_EXTENSION);$mime=['html'=>'text/html; charset=utf-8','css'=>'text/css; charset=utf-8','js'=>'text/javascript; charset=utf-8','png'=>'image/png'][$ext];
         header('Content-Type: '.$mime);readfile(__DIR__.'/public/'.$file);exit;

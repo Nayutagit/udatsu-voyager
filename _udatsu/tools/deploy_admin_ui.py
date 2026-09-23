@@ -1,4 +1,4 @@
-"""画面まわりのファイル（admin.js / admin.html / styles.css / app.js）と app.php だけを本番へ反映。事前にサーバー側へバックアップ。.env は読まない・触らない。"""
+"""画面まわりのファイル（admin.js / admin.html / styles.css / app.js / index.html / og.png）と app.php だけを本番へ反映。事前にサーバー側へバックアップ。.env は読まない・触らない。"""
 import datetime
 import ftplib
 import io
@@ -10,7 +10,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 import deploy
 
-FILES = ['admin.js', 'admin.html', 'styles.css', 'app.js']
+FILES = ['admin.js', 'admin.html', 'styles.css', 'app.js', 'index.html', 'og.png']
 SERVER_FILES = ['app.php']  # _udatsu 直下のサーバー側ファイル
 
 def main():
@@ -26,23 +26,34 @@ def main():
     ftp.mkd(backup + '/_udatsu')
     ftp.mkd(backup + '/_udatsu/public')
     new = {}
+    added = []
     for path, local in [('_udatsu/public/' + n, deploy.APP / 'public' / n) for n in FILES] + [('_udatsu/' + n, deploy.APP / n) for n in SERVER_FILES]:
         old = io.BytesIO()
-        ftp.retrbinary('RETR ' + path, old.write)
-        ftp.storbinary('STOR ' + backup + '/' + path, io.BytesIO(old.getvalue()))
+        try:
+            ftp.retrbinary('RETR ' + path, old.write)
+            ftp.storbinary('STOR ' + backup + '/' + path, io.BytesIO(old.getvalue()))
+        except ftplib.error_perm:
+            added.append(path)  # サーバーにまだ無い新しいファイル
+            old = io.BytesIO()
         new[path] = local.read_bytes()
         assert new[path], path
     print('サーバー側バックアップ作成：', backup)
     try:
         for path, content in new.items():
             ftp.storbinary('STOR ' + path, io.BytesIO(content))
-        for name in ['/admin.js', '/styles.css', '/app.js', '/admin', '/', '/api/catalog']:
+        for name in ['/admin.js', '/styles.css', '/app.js', '/admin', '/', '/og.png', '/api/catalog']:
             status, _ = deploy.http(name)
             if status != 200:
                 raise RuntimeError(name + ' が表示できません（' + str(status) + '）')
     except Exception:
         print('問題が起きたため、バックアップから元に戻します。')
         for path in new:
+            if path in added:
+                try:
+                    ftp.delete(path)
+                except ftplib.error_perm:
+                    pass
+                continue
             data = io.BytesIO()
             ftp.retrbinary('RETR ' + backup + '/' + path, data.write)
             ftp.storbinary('STOR ' + path, io.BytesIO(data.getvalue()))
