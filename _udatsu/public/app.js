@@ -210,7 +210,8 @@ $('#legal-button').onclick=()=>{
 async function init(){
   try{
     data=await api('/api/catalog');
-    if(data.mode!=='live'){$('#preview').hidden=false;$('#preview').textContent=data.mode==='preview'?'公開準備中｜講座の内容をご覧いただけます。予約受付は準備が整い次第、開始します。':data.mode==='demo'?'体験版｜日程はサンプルです。実際の予約・請求は発生しません。':'Stripeテスト環境｜実際の開催・請求はありません。テスト用の情報でお試しください。';}
+    // 帯は「サイト上でStripe決済まで行う」時だけ出す。仮予約・問い合わせの手動運用中は、実際の開催なので出さない
+    if(BOOKING_MODE==='live'&&data.mode!=='live'){$('#preview').hidden=false;$('#preview').textContent=data.mode==='preview'?'公開準備中｜講座の内容をご覧いただけます。予約受付は準備が整い次第、開始します。':data.mode==='demo'?'体験版｜日程はサンプルです。実際の予約・請求は発生しません。':'Stripeテスト環境｜実際の開催・請求はありません。テスト用の情報でお試しください。';}
     $('#cancel-policy').textContent=cancelText();
     renderCourses();await refreshSlots();
     const bookingId=new URLSearchParams(location.search).get('booking');
