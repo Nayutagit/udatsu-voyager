@@ -32,7 +32,7 @@ try {
     if($method==='POST'){
         if(($_SERVER['HTTP_ORIGIN']??'')!==$c['base']||!str_starts_with($_SERVER['CONTENT_TYPE']??'','application/json'))throw new UError('この画面から操作してください。',403);
         $ip=hash('sha256',$_SERVER['REMOTE_ADDR']??'local');
-        $s->tx(function()use($s,$ip){$s->q('DELETE FROM rate_limits WHERE until<?',[time()]);$row=$s->q('SELECT count FROM rate_limits WHERE ip=?',[$ip])->fetch();if($row&&$row['count']>=30)throw new UError('少し時間をおいてお試しください。',429);$s->q('INSERT INTO rate_limits(ip,count,until) VALUES(?,1,?) ON CONFLICT(ip) DO UPDATE SET count=count+1',[$ip,time()+60]);});
+        $s->tx(function()use($s,$ip){$s->q('DELETE FROM rate_limits WHERE until<?',[time()]);$row=$s->q('SELECT count FROM rate_limits WHERE ip=?',[$ip])->fetch();if($row&&$row['count']>=30)throw new UError('少し時間をおいてお試しください。',429);if($row)$s->q('UPDATE rate_limits SET count=count+1 WHERE ip=?',[$ip]);else $s->q('INSERT INTO rate_limits(ip,count,until) VALUES(?,1,?)',[$ip,time()+60]);});
     }
     if($route==='/api/catalog'&&$method==='GET')respond(['courses'=>$s->catalog,'mode'=>$c['mode'],'leadHours'=>$c['lead'],'calendarConnected'=>$c['googleReady'],'cancellation'=>$c['cancellation'],'privacy'=>$c['privacy'],'supportEmail'=>$c['support'],'seller'=>['name'=>$c['seller'],'address'=>$c['address'],'phone'=>$c['phone']],'format'=>$c['format']]);
     if($route==='/api/slots'&&$method==='GET'){
