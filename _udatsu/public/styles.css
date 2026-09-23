@@ -89,6 +89,9 @@ small,.quiet{font-size:12px;color:var(--muted)}
 .card-price small{font-size:10px;font-weight:400}
 .card-button{border:0;background:transparent;font-size:11px;color:var(--ink);padding:8px 0;font-weight:650}
 .card-button:hover{text-decoration:underline}
+.card-actions{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+.card-book{border:0;border-radius:7px;background:var(--ink);color:#fff;font-size:12px;font-weight:650;padding:10px 16px;white-space:nowrap;cursor:pointer}
+.card-book:hover{opacity:.85}
 .how-section{background:#f0f0e8}
 .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:40px;margin-top:44px}
 .steps article{border-top:1px solid #c7cebe;padding-top:22px}
@@ -262,6 +265,8 @@ h2{font-size:27px}
 .card-meta{font-size:9px;gap:7px;flex-wrap:wrap}
 .card-bottom{align-items:flex-start;flex-direction:column;padding-top:12px}
 .card-button{font-size:10px}
+.card-actions{align-items:stretch;width:100%}
+.card-book{text-align:center}
 .card-price{font-size:18px}
 .steps{grid-template-columns:1fr;gap:24px;margin-top:28px}
 .steps article{padding-top:17px;display:grid;grid-template-columns:44px 1fr;gap:3px 12px}

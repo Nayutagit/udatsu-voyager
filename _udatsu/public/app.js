@@ -18,11 +18,12 @@ dialog.addEventListener('click',e=>{if(e.target===dialog){const r=dialog.getBoun
 function errorMessage(error) { return `<p class="error" role="alert">${escape(error.message || error)}</p>`; }
 function courseCard(c) {
   const symbol = {voice:'“ ”',ai:'✳',work:'↗'}[c.theme];
-  return `<article class="course-card"><div class="card-art ${escape(c.theme)}"><span class="tag">${escape(c.category)}</span><span class="card-art-symbol" aria-hidden="true">${symbol}</span></div><div class="card-content"><p class="card-eyebrow">${escape(c.eyebrow)}</p><h3>${escape(c.title)}</h3><p class="card-description">${escape(c.description)}</p><div class="card-meta"><span>${c.minutes}分</span><span>オンライン</span><span>定員${c.capacity}名</span><span>1回完結</span></div><div class="card-bottom"><strong class="card-price">4,400<small>円 / 人</small></strong><button class="card-button" data-course="${c.id}" aria-label="${escape(c.title)}の受講予約">${BOOKING_MODE==='inquiry'?'無料で問い合わせる':'受講予約'} ↗</button></div></div></article>`;
+  return `<article class="course-card"><div class="card-art ${escape(c.theme)}"><span class="tag">${escape(c.category)}</span><span class="card-art-symbol" aria-hidden="true">${symbol}</span></div><div class="card-content"><p class="card-eyebrow">${escape(c.eyebrow)}</p><h3>${escape(c.title)}</h3><p class="card-description">${escape(c.description)}</p><div class="card-meta"><span>${c.minutes}分</span><span>オンライン</span><span>定員${c.capacity}名</span><span>1回完結</span></div><div class="card-bottom"><strong class="card-price">4,400<small>円 / 人</small></strong><div class="card-actions">${BOOKING_MODE==='inquiry'?'':`<button class="card-book" data-course="${c.id}" aria-label="${escape(c.title)}の日程を見て予約">日程を見て予約 ↗</button>`}<button class="card-button" data-inquiry="${c.id}" aria-label="${escape(c.title)}について無料で問い合わせる">無料で問い合わせる</button></div></div></div></article>`;
 }
 function renderCourses() {
   $('#course-grid').innerHTML = data.courses.filter(c=>c.kind==='group'&&(filter==='all'||c.category===filter)).map(courseCard).join('');
   $('#course-grid').querySelectorAll('[data-course]').forEach(b=>b.onclick=()=>showCourse(b.dataset.course));
+  $('#course-grid').querySelectorAll('[data-inquiry]').forEach(b=>b.onclick=()=>showInquiry(b.dataset.inquiry));
 }
 document.querySelectorAll('[data-filter]').forEach(b=>b.addEventListener('click',()=>{
   filter=b.dataset.filter;
@@ -57,7 +58,7 @@ for(const mode of ['open','available']) $('#show-'+mode).onclick=()=>{
   for(const other of ['open','available']){$('#show-'+other).classList.toggle('active',other===mode);$('#show-'+other).setAttribute('aria-pressed',other===mode);}
   renderSchedule();
 };
-const BOOKING_MODE = 'inquiry'; // 'inquiry'=問い合わせのみ / 'request'=決済なしの予約リクエスト / 'live'=Stripe決済まで
+const BOOKING_MODE = 'request'; // 'inquiry'=問い合わせのみ / 'request'=決済なしの予約リクエスト / 'live'=Stripe決済まで
 const LINE_URL = 'https://lin.ee/QPJ3dva', FORM_URL = 'https://formspree.io/f/xanzkprd';
 // 手動決済（仮予約→確定メール→Stripe決済）運用中の販売条件。live では設定ファイルの条件を優先。
 const LEGAL = {
