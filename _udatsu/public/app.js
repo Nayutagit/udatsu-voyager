@@ -59,6 +59,28 @@ for(const mode of ['open','available']) $('#show-'+mode).onclick=()=>{
 };
 const BOOKING_MODE = 'inquiry'; // 'inquiry'=問い合わせのみ / 'request'=決済なしの予約リクエスト / 'live'=Stripe決済まで
 const LINE_URL = 'https://lin.ee/QPJ3dva', FORM_URL = 'https://formspree.io/f/xanzkprd';
+// 手動決済（仮予約→確定メール→Stripe決済）運用中の販売条件。live では設定ファイルの条件を優先。
+const LEGAL = {
+  seller: '秋山 那由他（屋号：ニストスタジオ）', manager: '秋山 那由他', email: 'contact@nyct.jp',
+  disclose: 'ご請求があった場合、遅滞なく電子メールで開示します。上記メールアドレスまでご連絡ください。',
+  cancellation: `・お支払い前（仮予約の段階）：いつでも無料で取り消せます。メールまたはLINEでご連絡ください。
+・お支払い後、開催の3日前（72時間前）まで：全額を返金します。1回に限り、別の日程への振替もできます。
+・開催の3日前を過ぎてから：返金はできません。開催の前日までにご連絡いただければ、1回に限り別の日程へ振り替えます。
+・開催当日のご連絡・無断欠席：返金・振替はできません。
+・講師の体調不良や通信障害など、こちらの都合で開催できない場合：全額返金、または別の日程への振替をお選びいただけます。
+・返金は、お支払いに使ったカードへStripeを通じて行います。反映の時期はカード会社によって異なります。`,
+  privacy: `ニストスタジオ（運営責任者：秋山 那由他）は、お申し込み・お問い合わせでいただいたお名前・メールアドレス・ご連絡内容を、次の目的にだけ使います。
+・予約の確認、日程の調整、お支払いのご案内
+・講座の提供、参加方法のご案内
+・お問い合わせへの返信
+
+カード情報は決済代行会社のStripeが処理します。当方がカード番号を受け取ったり保存したりすることはありません。
+フォームの受信（Formspree）、決済（Stripe）、日程とメールの管理（Google）、サイトの運用（エックスサーバー）に、必要な範囲で外部サービスを利用します。
+法令に基づく場合を除き、ご本人の同意なく第三者に提供しません。
+ご自身の情報の確認・訂正・削除をご希望の場合は、contact@nyct.jp までご連絡ください。`
+};
+const cancelText = () => data.mode==='live' ? data.cancellation : LEGAL.cancellation;
+const privacyText = () => data.mode==='live' ? data.privacy : LEGAL.privacy;
 function showInquiry(courseId) {
   const c = data.courses.find(x=>x.id===courseId), topic = c ? c.title : 'Udatsuについて';
   open(`<h2 id="dialog-title">無料でお問い合わせ</h2><p class="dialog-meta">${escape(topic)}</p><p>開催日程や内容など、気になることをお気軽にどうぞ。お問い合わせは無料です。講座は基本オンラインで開催します。</p><a class="button line-button wide" href="${LINE_URL}" target="_blank" rel="noopener">LINEで問い合わせる ↗</a><form id="inquiry-form"><input type="hidden" name="_subject" value="Udatsu（udatsuageteko.com）からのお問い合わせ"><input type="hidden" name="topic" value="${escape(topic)}"><input class="hp-field" type="text" name="_gotcha" tabindex="-1" autocomplete="off"><label class="form-field">お名前<input name="name" required maxlength="80" autocomplete="name"></label><label class="form-field">メールアドレス<input type="email" name="email" required maxlength="200" autocomplete="email"></label><label class="form-field">メッセージ<textarea name="message" rows="5" required maxlength="3000"></textarea></label><button class="button dark wide" type="submit">送信する</button><p class="dialog-meta" id="inquiry-status" role="status"></p><p class="dialog-meta">いただいた内容は、お問い合わせへの返信のためだけに使います（受信にはFormspreeを利用しています）。</p></form>`);
@@ -117,7 +139,7 @@ function renderSlotCalendar(available, c) {
 function confirmRequest(slot) {
   selectedSlot = slot;
   const c = currentCourse, end = new Date(Date.parse(slot.start) + c.minutes*60000), label = `${date(slot.start)} ${time(slot.start)}–${time(end)}`;
-  open(`<button class="back-button" id="back-course" type="button">← 日時を選び直す</button><h2 id="dialog-title">予約リクエストを送る</h2><dl class="payment-summary"><dt>講座</dt><dd>${escape(c.title)}</dd><dt>日時</dt><dd>${label}<br>日本時間 / ${c.minutes}分</dd><dt>開催形式</dt><dd>${escape(slot.format)}<br>${escape(slot.location)}${slot.instructor ? '<br>講師：' + escape(slot.instructor) : ''}</dd><dt>受講料</dt><dd><strong>${yen(c.price)}</strong><br>お支払いは、確定のご連絡のあとにご案内します。</dd></dl><p>送信後、内容を確認して、メールまたはLINEで確定のご連絡をします。リクエストの時点では、料金は発生せず、枠の確保もされません。</p><form id="request-form"><input type="hidden" name="_subject" value="【予約リクエスト】${escape(c.title)} ${escape(label)}"><input type="hidden" name="course" value="${escape(c.title)}"><input type="hidden" name="datetime" value="${escape(label)}（日本時間）"><input type="hidden" name="instructor" value="${escape(slot.instructor || '')}"><input type="hidden" name="slot_id" value="${escape(slot.id)}"><input type="hidden" name="price" value="${c.price}"><input class="hp-field" type="text" name="_gotcha" tabindex="-1" autocomplete="off"><label class="form-field">お名前<input name="name" autocomplete="name" maxlength="80" required></label><label class="form-field">メールアドレス<input name="email" type="email" autocomplete="email" maxlength="254" required></label><details><summary>キャンセル条件</summary><p class="policy-copy">${escape(data.cancellation)}</p></details><details><summary>個人情報の取り扱い</summary><p class="policy-copy">${escape(data.privacy)}</p></details><label class="check-field"><input type="checkbox" name="accepted" required><span>日時・受講料・キャンセル条件・個人情報の取り扱いを確認しました。</span></label><div id="form-error" role="alert"></div><button class="button dark wide" type="submit">この内容で予約リクエストを送る ↗</button></form>`);
+  open(`<button class="back-button" id="back-course" type="button">← 日時を選び直す</button><h2 id="dialog-title">仮予約を送る</h2><dl class="payment-summary"><dt>講座</dt><dd>${escape(c.title)}</dd><dt>日時</dt><dd>${label}<br>日本時間 / ${c.minutes}分</dd><dt>開催形式</dt><dd>${escape(slot.format)}<br>${escape(slot.location)}${slot.instructor ? '<br>講師：' + escape(slot.instructor) : ''}</dd><dt>受講料</dt><dd><strong>${yen(c.price)}</strong><br>お支払いは、日程確定のご連絡メールでご案内します。</dd></dl><ol class="request-steps"><li>いま：お名前とメールアドレスで仮予約（料金はかかりません）</li><li>講師が日程を確認し、お支払いのご案内をメールでお送りします</li><li>メールのリンクからカードでお支払い → 予約確定・参加URLをお送りします</li></ol><p class="quiet">仮予約の時点では枠は確保されません。お支払いの期限はご案内メールに記載します。</p><form id="request-form"><input type="hidden" name="_subject" value="【仮予約】${escape(c.title)} ${escape(label)}"><input type="hidden" name="course" value="${escape(c.title)}"><input type="hidden" name="datetime" value="${escape(label)}（日本時間）"><input type="hidden" name="instructor" value="${escape(slot.instructor || '')}"><input type="hidden" name="slot_id" value="${escape(slot.id)}"><input type="hidden" name="price" value="${c.price}"><input class="hp-field" type="text" name="_gotcha" tabindex="-1" autocomplete="off"><label class="form-field">お名前<input name="name" autocomplete="name" maxlength="80" required></label><label class="form-field">メールアドレス<input name="email" type="email" autocomplete="email" maxlength="254" required></label><details><summary>キャンセル条件</summary><p class="policy-copy">${escape(cancelText())}</p></details><details><summary>個人情報の取り扱い</summary><p class="policy-copy">${escape(privacyText())}</p></details><label class="check-field"><input type="checkbox" name="accepted" required><span>日時・受講料・キャンセル条件・個人情報の取り扱いを確認しました。</span></label><div id="form-error" role="alert"></div><button class="button dark wide" type="submit">この内容で仮予約する（無料） ↗</button></form>`);
   $('#back-course').onclick = () => showCourse(c.id);
   $('#request-form').onsubmit = async event => {
     event.preventDefault();
@@ -126,7 +148,7 @@ function confirmRequest(slot) {
     try {
       const r = await fetch(FORM_URL, {method:'POST', headers:{Accept:'application/json'}, body:new FormData(form)});
       if (!r.ok) throw new Error('send failed');
-      body.innerHTML = `<h2 id="dialog-title">予約リクエストを受け付けました。</h2><p>${label}（日本時間）<br>${escape(c.title)}</p><p>内容を確認して、メールまたはLINEで確定のご連絡をします。ご連絡があるまで、お支払いは不要です。</p><a class="button line-button wide" href="${LINE_URL}" target="_blank" rel="noopener">LINEでも連絡する ↗</a>`;
+      body.innerHTML = `<h2 id="dialog-title">仮予約を受け付けました。</h2><p>${label}（日本時間）<br>${escape(c.title)}</p><p>日程を確認して、お支払いのご案内をメールでお送りします（目安：1日以内）。ご案内が届くまで、お支払いは不要です。</p><p class="quiet">メールが届かない場合は、迷惑メールフォルダをご確認いただくか、LINEでご連絡ください。</p><a class="button line-button wide" href="${LINE_URL}" target="_blank" rel="noopener">LINEでも連絡する ↗</a>`;
     } catch (e) {
       button.disabled = false; $('#form-error').innerHTML = errorMessage('送信できませんでした。時間をおくか、LINEからお問い合わせください。');
     }
@@ -135,7 +157,7 @@ function confirmRequest(slot) {
 function confirmBooking(slot) {
   selectedSlot=slot;
   const c=currentCourse;
-  open(`<button class="back-button" id="back-course">← 講座・日時に戻る</button><h2 id="dialog-title">お申し込み内容の確認</h2><dl class="payment-summary"><dt>講座</dt><dd>${escape(c.title)}</dd><dt>日時</dt><dd>${date(slot.start)} ${time(slot.start)}–${time(new Date(Date.parse(slot.start)+c.minutes*60000))}<br>日本時間 / ${c.minutes}分</dd><dt>開催形式</dt><dd>${escape(slot.format)}<br>${escape(slot.location)}${slot.instructor?'<br>講師：'+escape(slot.instructor):''}</dd><dt>参加人数</dt><dd>1名${c.kind==='private'?'（1対1の個別相談）':''}</dd><dt>お支払い総額</dt><dd><strong>${yen(c.price)}</strong><br>今回1回分。自動更新はありません。</dd></dl><p>${c.kind==='private'?'個別相談には、ほかの方が相乗りすることはありません。':slot.courseId?'開催確定済みの講座へのお申し込みです。':'最初の方の決済が完了すると開催が確定します。以降、同じ講座にほかの方も参加できます。'}</p><form id="booking-form"><label class="form-field">お名前<input name="name" autocomplete="name" maxlength="80" required ${data.mode==='demo'?'placeholder="体験用のお名前"':''}></label><label class="form-field">メールアドレス<input name="email" type="email" autocomplete="email" maxlength="254" required ${data.mode==='demo'?'placeholder="sample@example.com"':''}></label><details><summary>キャンセル条件</summary><p class="policy-copy">${escape(data.cancellation)}</p></details><details><summary>個人情報の取り扱い</summary><p class="policy-copy">${escape(data.privacy)}</p></details><label class="check-field"><input type="checkbox" name="accepted" required><span>日時・料金・キャンセル条件・個人情報の取り扱いを確認しました。</span></label><div id="form-error" role="alert"></div><button class="button dark wide" type="submit">${data.mode==='demo'?'体験用のお申し込みへ':yen(c.price)+'をStripeで支払う'} ↗</button><p class="quiet">${data.mode==='demo'?'体験版です。実際の請求やメール送信はありません。':'カード情報はStripeの決済画面で入力します。お支払い成功後に予約が確定します。'}</p></form>`);
+  open(`<button class="back-button" id="back-course">← 講座・日時に戻る</button><h2 id="dialog-title">お申し込み内容の確認</h2><dl class="payment-summary"><dt>講座</dt><dd>${escape(c.title)}</dd><dt>日時</dt><dd>${date(slot.start)} ${time(slot.start)}–${time(new Date(Date.parse(slot.start)+c.minutes*60000))}<br>日本時間 / ${c.minutes}分</dd><dt>開催形式</dt><dd>${escape(slot.format)}<br>${escape(slot.location)}${slot.instructor?'<br>講師：'+escape(slot.instructor):''}</dd><dt>参加人数</dt><dd>1名${c.kind==='private'?'（1対1の個別相談）':''}</dd><dt>お支払い総額</dt><dd><strong>${yen(c.price)}</strong><br>今回1回分。自動更新はありません。</dd></dl><p>${c.kind==='private'?'個別相談には、ほかの方が相乗りすることはありません。':slot.courseId?'開催確定済みの講座へのお申し込みです。':'最初の方の決済が完了すると開催が確定します。以降、同じ講座にほかの方も参加できます。'}</p><form id="booking-form"><label class="form-field">お名前<input name="name" autocomplete="name" maxlength="80" required ${data.mode==='demo'?'placeholder="体験用のお名前"':''}></label><label class="form-field">メールアドレス<input name="email" type="email" autocomplete="email" maxlength="254" required ${data.mode==='demo'?'placeholder="sample@example.com"':''}></label><details><summary>キャンセル条件</summary><p class="policy-copy">${escape(cancelText())}</p></details><details><summary>個人情報の取り扱い</summary><p class="policy-copy">${escape(privacyText())}</p></details><label class="check-field"><input type="checkbox" name="accepted" required><span>日時・料金・キャンセル条件・個人情報の取り扱いを確認しました。</span></label><div id="form-error" role="alert"></div><button class="button dark wide" type="submit">${data.mode==='demo'?'体験用のお申し込みへ':yen(c.price)+'をStripeで支払う'} ↗</button><p class="quiet">${data.mode==='demo'?'体験版です。実際の請求やメール送信はありません。':'カード情報はStripeの決済画面で入力します。お支払い成功後に予約が確定します。'}</p></form>`);
   $('#back-course').onclick=()=>showCourse(c.id);
   $('#booking-form').onsubmit=async event=>{
     event.preventDefault();const form=event.currentTarget,button=form.querySelector('[type=submit]');button.disabled=true;
@@ -165,13 +187,31 @@ async function showBooking(bookingId, first=true) {
   }catch(e){open('<h2 id="dialog-title">予約を確認できませんでした</h2>'+errorMessage(e));}
 }
 $('#consult-button').onclick=()=>showCourse('consultation');
-$('#privacy-button').onclick=()=>open(`<h2 id="dialog-title">個人情報の取り扱い</h2><p class="policy-copy">${escape(data.privacy)}</p>`);
-$('#legal-button').onclick=()=>open(`<h2 id="dialog-title">販売条件・特定商取引法に基づく表記</h2>${data.mode!=='live'?'<p class="booking-status">公開準備中の画面です。販売者情報と条件を確定してから本番の受付を開始します。</p>':''}<dl class="payment-summary"><dt>販売事業者</dt><dd>${escape(data.seller.name||'公開前に設定')}</dd><dt>所在地</dt><dd>${escape(data.seller.address||'公開前に設定')}</dd><dt>電話番号</dt><dd>${escape(data.seller.phone||'公開前に設定')}</dd><dt>お問い合わせ</dt><dd>${escape(data.supportEmail||'公開前に設定')}</dd><dt>販売価格</dt><dd>公開講座・個別相談：一律4,400円 / 人<br>各60分・1回分のお支払い総額</dd><dt>その他の費用</dt><dd>オンライン受講時の通信費、対面会場までの交通費は受講者負担です。</dd><dt>支払い方法・時期</dt><dd>Stripeを通じたカード決済。申込時に支払い。</dd><dt>提供時期</dt><dd>お申し込み時に選んだ日時。</dd><dt>キャンセル</dt><dd class="policy-copy">${escape(data.cancellation)}</dd></dl>`);
+$('#privacy-button').onclick=()=>open(`<h2 id="dialog-title">個人情報の取り扱い</h2><p class="policy-copy">${escape(privacyText())}</p>`);
+$('#legal-button').onclick=()=>{
+  const live=BOOKING_MODE==='live', disclose=escape(LEGAL.disclose), row=(t,d)=>`<dt>${t}</dt><dd>${d}</dd>`;
+  open(`<h2 id="dialog-title">特定商取引法に基づく表記</h2><dl class="payment-summary legal-list">${[
+    row('販売事業者',escape(data.seller.name||LEGAL.seller)),
+    row('運営責任者',escape(LEGAL.manager)),
+    row('所在地',data.seller.address?escape(data.seller.address):disclose),
+    row('電話番号',data.seller.phone?escape(data.seller.phone):disclose),
+    row('メールアドレス',escape(data.supportEmail||LEGAL.email)),
+    row('サービス名','Udatsu（ウダツ）公開講座・個別相談'),
+    row('販売価格','公開講座・個別相談：各60分 4,400円 / 1名<br>表示価格がお支払い総額です。'),
+    row('商品代金以外の必要料金','オンライン受講時のインターネット通信費、対面開催時の会場までの交通費は、受講者のご負担です。'),
+    row('お支払い方法','クレジットカード決済（Stripe）'),
+    row('お支払い時期',live?'お申し込み時にお支払いいただきます。':'仮予約のあと、日程確定のご案内メールに記載する決済ページからお支払いいただきます。お支払い期限はご案内メールに記載します（開催日の前日まで）。'),
+    row('申し込みの有効期限',live?'決済ページの有効期限内にお支払いが完了しない場合、お申し込みは取り消されます。':'お支払い期限までにお支払いが確認できない場合、仮予約は取り消されます。'),
+    row('サービスの提供時期','お申し込み時に選んだ日時に実施します。参加URLなどの参加方法は、お支払いの確認後にメールでお送りします。'),
+    row('キャンセル・返金','<span class="policy-copy">'+escape(cancelText())+'</span><br>講座は役務の提供のため、受講後の返品・返金はお受けしていません。'),
+    row('動作環境','オンライン開催はGoogle Meetなどのビデオ通話を使います。パソコンまたはスマートフォン、安定したインターネット接続、マイク（できればカメラも）をご用意ください。')
+  ].join('')}</dl>`);
+};
 async function init(){
   try{
     data=await api('/api/catalog');
     if(data.mode!=='live'){$('#preview').hidden=false;$('#preview').textContent=data.mode==='preview'?'公開準備中｜講座の内容をご覧いただけます。予約受付は準備が整い次第、開始します。':data.mode==='demo'?'体験版｜日程はサンプルです。実際の予約・請求は発生しません。':'Stripeテスト環境｜実際の開催・請求はありません。テスト用の情報でお試しください。';}
-    $('#cancel-policy').textContent=data.cancellation;
+    $('#cancel-policy').textContent=cancelText();
     renderCourses();await refreshSlots();
     const bookingId=new URLSearchParams(location.search).get('booking');
     if(bookingId)await showBooking(bookingId);

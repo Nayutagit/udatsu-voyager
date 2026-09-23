@@ -1,4 +1,4 @@
-"""画面まわりのファイル（admin.js / styles.css / app.js）だけを本番へ反映。事前にサーバー側へバックアップ。.env は読まない・触らない。"""
+"""画面まわりのファイル（admin.js / admin.html / styles.css / app.js）だけを本番へ反映。事前にサーバー側へバックアップ。.env は読まない・触らない。"""
 import datetime
 import ftplib
 import io
@@ -10,7 +10,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 import deploy
 
-FILES = ['admin.js', 'styles.css', 'app.js']
+FILES = ['admin.js', 'admin.html', 'styles.css', 'app.js']
 
 def main():
     env = deploy.settings()

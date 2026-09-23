@@ -1,7 +1,35 @@
 <!doctype html><html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>講座管理｜Udatsu</title><link rel="stylesheet" href="/styles.css"><script type="module" src="/admin.js"></script></head><body><header class="wrap admin-header"><a class="brand" href="/">Udatsu <span class="brand-sub">講座管理</span></a><p>募集枠を登録し、決済済みの参加者と連携状況を確認できます。</p></header><main class="wrap admin-main">
 <section class="admin-card admin-login"><h2>管理者ログイン</h2><form id="login"><label class="form-field">管理トークン<input id="token" type="password" autocomplete="off" required></label><button class="button dark wide">管理画面を開く</button></form><p class="quiet">設定ファイルのADMIN_TOKENを入力。ブラウザには保存しません。</p><button id="logout" class="back-button" hidden>ログアウト</button></section>
 <div id="admin-message" role="status" class="admin-message"></div>
-<section class="admin-card" id="slot-calendar" hidden>
+<div id="dashboard" hidden>
+<section class="admin-card"><h2>いまの状況</h2><div id="summary" class="stat-row"></div><p id="connection" class="quiet"></p><div id="jobs"></div><button class="button small" id="retry" type="button">決済・連携を再確認</button></section>
+<section class="admin-card"><h2>仮予約が来たら</h2><ol class="flow-steps">
+<li><strong>通知メールを確認</strong>件名「【仮予約】」のメールが contact@nyct.jp に届きます。<a class="inline-link" href="https://formspree.io/forms/xanzkprd/submissions" target="_blank" rel="noopener">届いた仮予約の一覧（Formspree）↗</a></li>
+<li><strong>日程を確認して返信</strong>下の「メールのひな形」で「お支払いのご案内」を作って送ります。都合が悪ければ「日程変更のお願い」。</li>
+<li><strong>入金を確認</strong><a class="inline-link" href="https://dashboard.stripe.com/payments" target="_blank" rel="noopener">Stripeの支払い一覧 ↗</a> で、予約番号（client_reference_id）とメールアドレスを照合します。</li>
+<li><strong>予約確定メールを送る</strong>「予約確定・参加URL」を送れば完了。前日に「前日のリマインド」も送ると安心です。</li>
+</ol><p class="quiet">お支払い期限を過ぎたら「仮予約の取り消し」を送ります。</p></section>
+<section class="admin-card" id="mail-tool"><h2>メールのひな形</h2>
+<p class="quiet">種類と宛先を選ぶと、件名と本文ができます。登録した枠を選ぶと日時と参加URLが入ります。</p>
+<form id="mail-form" class="mail-grid">
+<label class="form-field wide-field">種類<select name="kind" id="mail-kind"></select></label>
+<label class="form-field wide-field">登録した枠から選ぶ<select name="slot" id="mail-slot"></select></label>
+<label class="form-field">お名前<input name="name" maxlength="80" placeholder="山田 花子"></label>
+<label class="form-field">メールアドレス<input name="email" type="email" maxlength="254" placeholder="hanako@example.com"></label>
+<label class="form-field">講座<select name="course" id="mail-course"></select></label>
+<label class="form-field">日時<input name="when" maxlength="60" placeholder="10月5日（日）14:00–15:00"></label>
+<label class="form-field" data-for="pay">お支払い期限<input name="deadline" maxlength="60"></label>
+<label class="form-field" data-for="confirm">入金を確認した日<input name="paidOn" maxlength="30"></label>
+<label class="form-field" data-for="confirm remind">参加URL<input name="meetingUrl" type="url" placeholder="https://meet.google.com/..."></label>
+<label class="form-field" data-for="pay confirm remind cancel">予約番号<input name="ref" maxlength="40"></label>
+</form>
+<label class="form-field">件名<input id="mail-subject"></label>
+<label class="form-field">本文<textarea id="mail-body" rows="16"></textarea></label>
+<p class="quiet">本文はここで直接直せます（上の入力を変えると作り直されます）。</p>
+<div class="dialog-actions"><button class="button small dark" type="button" id="mail-gmail">Gmailで下書きを開く ↗</button><button class="button small" type="button" id="mail-app">メールアプリで開く</button><button class="button small" type="button" id="copy-subject">件名をコピー</button><button class="button small" type="button" id="copy-body">本文をコピー</button><button class="button small" type="button" id="copy-link">決済リンクだけコピー</button></div>
+<p id="mail-note" class="quiet" role="status"></p>
+</section>
+<section class="admin-card" id="slot-calendar">
 <h2>カレンダーで募集枠を選ぶ</h2>
 <p class="quiet">空いている時間をクリックすると、そこから60分の枠が選ばれます（もう一度押すと取り消し）。灰色は自分の予定、斜線は参考カレンダー（HAIなど・時間のみ）、緑は登録済みの枠です。</p>
 <div class="cal-toolbar"><button class="button small" id="cal-prev" type="button">← 前の週</button><button class="button small" id="cal-today" type="button">今週</button><button class="button small" id="cal-next" type="button">次の週 →</button><strong id="cal-title"></strong></div>
@@ -17,7 +45,9 @@
 <button class="button dark wide" id="cal-submit" disabled>選んだ枠をまとめて登録する</button>
 </form>
 </section>
-<div id="dashboard" hidden><section class="admin-card"><h2>接続と処理状況</h2><p id="connection"></p><button class="button small" id="retry">決済・連携を再確認</button><div id="jobs"></div></section><section class="admin-card"><h2>登録した募集枠</h2><div id="slots" class="table-scroll"></div></section><section class="admin-card"><h2>お申し込み</h2><p class="quiet">決済済みの方が参加確定です。「手続き中」は参加者として数えません。</p><div id="orders" class="table-scroll"></div></section></div>
+<section class="admin-card"><h2>登録した募集枠</h2><div id="slots" class="table-scroll"></div><details id="past-slots-box" hidden><summary>終わった枠</summary><div id="past-slots" class="table-scroll"></div></details></section>
+<section class="admin-card"><h2>サイトからの決済</h2><p class="quiet" id="orders-note"></p><label class="check-field"><input type="checkbox" id="show-expired">期限が終わった手続きも表示する</label><div id="orders" class="table-scroll"></div></section>
+</div>
 <details class="admin-card" id="slot-editor" hidden><summary>手入力で募集枠を追加する（日時を直接入力）</summary><form id="slot-form"><label class="form-field">開始日時（日本時間）<input name="start" type="datetime-local" required></label><label class="form-field">終了日時（日本時間）<input name="end" type="datetime-local" required></label><label class="form-field">開催形式<select name="format"><option>オンライン</option><option>対面</option></select></label><label class="form-field">公開する会場・案内<input name="location" maxlength="200" placeholder="例：オンライン（Google Meet）" required></label><label class="form-field">購入者だけに見せる参加URL<input name="meetingUrl" type="url" placeholder="https://meet.google.com/..."></label><p class="quiet">各講座60分です。枠は60分以上で登録してください。間の休憩は、次の枠の開始時刻を空けて確保します。</p><button class="button dark wide">この枠を登録する</button></form></details>
 <details class="admin-card" id="instructor-editor" hidden><summary>講師を追加する</summary><form id="instructor-form"><label class="form-field">講師名<input name="name" maxlength="60" required></label><button class="button dark wide">講師を追加する</button></form></details>
 </main></body></html>
