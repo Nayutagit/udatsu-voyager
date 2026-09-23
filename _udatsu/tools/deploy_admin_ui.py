@@ -38,15 +38,16 @@ def main():
         new[path] = local.read_bytes()
         assert new[path], path
     # 入口の .htaccess で og.png も Udatsu に渡す（無ければ1語だけ追加）
+    # 過去の公開でUdatsuの設定が重複しているため、実際に効く先頭の行だけを直す
     old = io.BytesIO()
     ftp.retrbinary('RETR .htaccess', old.write)
     rule_old = rb'instructor\.png)?$ index.php [END]'
     rule_new = rb'instructor\.png|og\.png)?$ index.php [END]'
     if rule_new not in old.getvalue():
-        if old.getvalue().count(rule_old) != 1:
+        if rule_old not in old.getvalue():
             raise RuntimeError('.htaccess の Udatsu の行が見つからないため停止しました')
         ftp.storbinary('STOR ' + backup + '/.htaccess', io.BytesIO(old.getvalue()))
-        new['.htaccess'] = old.getvalue().replace(rule_old, rule_new)
+        new['.htaccess'] = old.getvalue().replace(rule_old, rule_new, 1)
     print('サーバー側バックアップ作成：', backup)
     try:
         for path, content in new.items():
